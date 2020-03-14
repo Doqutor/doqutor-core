@@ -17,3 +17,5 @@ cdk.out
 [._]ss[a-gi-z]
 [._]sw[a-p]
 
+*/.idea/*
+.idea/*
