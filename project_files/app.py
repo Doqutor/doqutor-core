@@ -3,6 +3,7 @@
 from aws_cdk import core
 
 from db_stack.db_stack import Database_Stack
+from cognito_stack.cognito_stack import Cognito_stack
 
 app = core.App()
 Database_Stack(app, "database",
