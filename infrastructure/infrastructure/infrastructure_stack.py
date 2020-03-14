@@ -1,4 +1,4 @@
-from aws_cdk import core, aws_dynamodb, aws_lambda
+from aws_cdk import core, aws_dynamodb, aws_lambda, aws_apigateway
 
 
 class InfrastructureStack(core.Stack):
@@ -22,3 +22,6 @@ class InfrastructureStack(core.Stack):
         # IAM policy
         table.grant_read_write_data(function)
         function.add_environment("TABLE_NAME", table.table_name)
+
+        # api gateway
+        api = aws_apigateway.LambdaRestApi(self, "api", handler=function)
