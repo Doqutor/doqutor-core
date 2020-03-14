@@ -12,4 +12,4 @@ class Cognito_Stack(core.Stack):
             user_pool_name="doctor-userpool"
         )
 
-        
+        #userpoolclient = cognito.UserPoolClient(self, scope: core.Construct, id: str)
