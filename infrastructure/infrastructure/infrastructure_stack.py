@@ -1,4 +1,4 @@
-from aws_cdk import core, aws_dynamodb
+from aws_cdk import core, aws_dynamodb, aws_lambda
 
 
 class InfrastructureStack(core.Stack):
@@ -11,3 +11,8 @@ class InfrastructureStack(core.Stack):
                                    partition_key=aws_dynamodb.Attribute(
                                        name="id",
                                        type=aws_dynamodb.AttributeType.STRING))
+
+        function = aws_lambda.Function(self, "backend",
+                                       runtime=aws_lambda.Runtime.PYTHON_3_7,
+                                       handler="handler.main",
+                                       code=aws_lambda.Code.asset('./lambda'))
