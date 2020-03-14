@@ -1,4 +1,5 @@
 from aws_cdk import core, aws_dynamodb, aws_lambda, aws_apigateway
+from cdk_watchful import Watchful
 
 
 class InfrastructureStack(core.Stack):
@@ -25,3 +26,7 @@ class InfrastructureStack(core.Stack):
 
         # api gateway
         api = aws_apigateway.LambdaRestApi(self, "api", handler=function)
+
+        # Monitoring system
+        wf = Watchful(self, 'monitoring', alarm_email='747b13b7.groups.unsw.edu.au@apac.teams.ms')
+        wf.watch_scope(self)
