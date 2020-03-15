@@ -64,9 +64,6 @@ class InfrastructureStack(core.Stack):
         doctors_delete.add_environment("TABLE_NAME", table.table_name)
         api = aws_apigateway.LambdaRestApi(self, "api_doctors_delete", handler=doctors_delete)
 
-        # Monitoring system
-        wf = Watchful(self, 'monitoring', alarm_email='747b13b7.groups.unsw.edu.au@apac.teams.ms')
-        wf.watch_scope(self)
 
         # Cognito lambda (on successful creation of doctor in cognito, write to db)
         cognito_lambda = aws_lambda.Function(self, "cognito_trigger",
@@ -74,6 +71,7 @@ class InfrastructureStack(core.Stack):
                                        handler="cognito.main",
                                        code=aws_lambda.Code.asset('./lambda')
         )
+        table.grant_read_write_data(cognito_lambda)
         cognito_trigger = aws_cognito.UserPoolTriggers(post_confirmation=cognito_lambda)
 
 
@@ -83,3 +81,6 @@ class InfrastructureStack(core.Stack):
             lambda_triggers=cognito_trigger,
         )
 
+        # Monitoring system
+        wf = Watchful(self, 'monitoring', alarm_email='747b13b7.groups.unsw.edu.au@apac.teams.ms')
+        wf.watch_scope(self)

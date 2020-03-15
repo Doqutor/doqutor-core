@@ -6,10 +6,11 @@ import uuid
 
 
 def main(event, context):
+    # TODO: much more resilant testing
     if event["request"]["userAttributes"]["sub"]:
         write_to_ddb(event)
 
-def write_to_dbb(event):
+def write_to_ddb(event):
     table_name = os.environ.get('TABLE_NAME')
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
@@ -18,11 +19,11 @@ def write_to_dbb(event):
     event_data = event["request"]["userAttributes"]
     u_id = str(uuid.uuid4())[0:8]
     table.put_item(Item={
-        'u_id': u_id, 
+        'id': u_id, 
         'doctor_id': event_data["sub"],
-        'given_name': event_data["given_name"],
+        'name': event_data["name"],
         'age': event_data["age"],
-        'field': event_data["field"]
+        'spec': event_data["spec"]
     })
 
     return {
