@@ -1,5 +1,4 @@
 -e .
-
 aws-cdk.core
 aws-cdk.aws-dynamodb
 aws-cdk.aws-events
@@ -7,3 +6,5 @@ aws-cdk.aws-lambda
 aws-cdk.aws-s3
 aws-cdk.aws-cloudwatch
 aws-cdk.aws-cognito
+boto3
+cdk-watchful
