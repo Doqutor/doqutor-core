@@ -18,19 +18,19 @@ def main(event, context):
     if id is None:
         return None
     
-    return doctor_get(id)
+    return doctor_delete(id)
 
-def doctor_get(id):
+def doctor_delete(id):
     table_name = os.environ.get('TABLE_NAME')
 
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
-    response = table.get_item(Key={
-        'id': id
-    })
+    response = table.delete_item(Key={ 
+        'id': id 
+    }) 
 
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'text/plain'},
-        'body': f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Yeeting you over doctor: {response["Item"]}'
+        'body': f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Deleting doctor: {id}'
     }
