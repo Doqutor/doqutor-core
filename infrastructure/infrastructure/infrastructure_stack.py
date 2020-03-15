@@ -1,4 +1,4 @@
-from aws_cdk import core, aws_dynamodb, aws_lambda, aws_apigateway
+from aws_cdk import core, aws_dynamodb, aws_lambda, aws_apigateway, aws_cognito
 from cdk_watchful import Watchful
 
 
@@ -30,3 +30,8 @@ class InfrastructureStack(core.Stack):
         # Monitoring system
         wf = Watchful(self, 'monitoring', alarm_email='747b13b7.groups.unsw.edu.au@apac.teams.ms')
         wf.watch_scope(self)
+
+        # create cognito instance
+        userpool = aws_cognito.UserPool(self, "myuserpool",
+            user_pool_name="doctor-userpool"
+        )

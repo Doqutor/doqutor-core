@@ -12,3 +12,4 @@ cdk.out
 # virtualenv directories
 v/
 venv/
+.env
