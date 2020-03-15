@@ -39,17 +39,15 @@ def doctor_create(id, name, age, field):
 
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
-    table.put_item(
-        Item={
-            'id': id,
-            'name': name,
-            'age': age,
-            'field': field,
-        }
-    )
+    response = table.put_item(Item={
+        'id': id,
+        'name': name,
+        'age': age,
+        'field': field,
+    })
 
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'text/plain'},
-        'body': f'doctor created with name: {name} and id: {id}'
+        'body': f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Doctor created with name: {name} and id: {id}'
     }

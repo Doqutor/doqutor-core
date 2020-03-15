@@ -22,9 +22,9 @@ class InfrastructureStack(core.Stack):
 
         table.grant_read_write_data(doctors_create)
         doctors_create.add_environment("TABLE_NAME", table.table_name)
-        api = aws_apigateway.LambdaRestApi(self, "api", handler=doctors_create)
+        api = aws_apigateway.LambdaRestApi(self, "api_doctors_create", handler=doctors_create)
 
-        # Create doctor lambda
+        # Get doctor lambda
         doctors_get = aws_lambda.Function(self, "doctors_get",
                                         runtime=aws_lambda.Runtime.PYTHON_3_7,
                                         handler="doctors_get.main",
@@ -32,7 +32,17 @@ class InfrastructureStack(core.Stack):
 
         table.grant_read_write_data(doctors_get)
         doctors_get.add_environment("TABLE_NAME", table.table_name)
-        api = aws_apigateway.LambdaRestApi(self, "api2", handler=doctors_get)
+        api = aws_apigateway.LambdaRestApi(self, "api_doctors_get", handler=doctors_get)
+
+        # Delete doctor lambda
+        doctors_delete = aws_lambda.Function(self, "doctors_delete",
+                                        runtime=aws_lambda.Runtime.PYTHON_3_7,
+                                        handler="doctors_delete.main",
+                                        code=aws_lambda.Code.asset('./lambda'))
+
+        table.grant_read_write_data(doctors_delete)
+        doctors_delete.add_environment("TABLE_NAME", table.table_name)
+        api = aws_apigateway.LambdaRestApi(self, "api_doctors_delete", handler=doctors_delete)
 
         # Monitoring system
         wf = Watchful(self, 'monitoring', alarm_email='747b13b7.groups.unsw.edu.au@apac.teams.ms')
