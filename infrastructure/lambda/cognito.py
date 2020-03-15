@@ -21,10 +21,8 @@ def write_to_dbb(event):
         'u_id': u_id, 
         'doctor_id': event_data["sub"],
         'given_name': event_data["given_name"],
-        'family_name': event_data["family_name"],
-        'spec': event_data["spec"],
-        'email': event_data["email"],
-        'password': event_data["password"]
+        'age': event_data["age"],
+        'field': event_data["field"]
     })
 
     return {

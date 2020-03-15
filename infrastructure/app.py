@@ -4,7 +4,6 @@ from aws_cdk import core
 from infrastructure.infrastructure_stack import InfrastructureStack
 
 app = core.App()
-InfrastructureStack(app, "infrastructure",
-        env={'region': 'ap-southeast-2'})
+InfrastructureStack(app, "infrastructure-zeph", env={'region': 'ap-southeast-2'})
 
 app.synth()
