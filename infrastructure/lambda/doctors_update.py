@@ -15,7 +15,10 @@ def main(event, context):
     if body is None:
         return None
 
-    id = str(uuid.uuid4())[0:8]
+    id = body['id']
+    LOG.info("id: " + id)
+    if id is None:
+        return None
 
     name = body['name']
     LOG.info("name: " + name)
@@ -32,9 +35,9 @@ def main(event, context):
     if field is None:
         return None
     
-    return doctor_create(id, name, age, field)
+    return doctor_update(id, name, age, field)
 
-def doctor_create(id, name, age, field):
+def doctor_update(id, name, age, field):
     table_name = os.environ.get('TABLE_NAME')
 
     dynamodb = boto3.resource('dynamodb')

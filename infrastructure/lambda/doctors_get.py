@@ -8,7 +8,7 @@ LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
 def main(event, context):
-    LOG.info("EVENT (delete): " + json.dumps(event))
+    LOG.info("EVENT: " + json.dumps(event))
 
     params = event['queryStringParameters']
     if params is None:
@@ -32,5 +32,5 @@ def doctor_get(id):
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'text/plain'},
-        'body': f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Yeeting you over doctor: {response["Item"]}'
+        'body': response["Item"]
     }
