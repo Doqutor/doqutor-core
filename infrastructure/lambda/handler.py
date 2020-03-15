@@ -33,5 +33,5 @@ def create_doctor(event):
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'text/plain'},
-        'body': f'doctor created with name : {name}'
+        'body': 'doctor created with name : {name}'
     }

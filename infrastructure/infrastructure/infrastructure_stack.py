@@ -24,6 +24,21 @@ class InfrastructureStack(core.Stack):
         table.grant_read_write_data(function)
         function.add_environment("TABLE_NAME", table.table_name)
 
+        # Cognito lambda (on successful creation of doctor in cognito, write to db)
+        cognito_lambda = aws_lambda.Function(self, "cognito_trigger",
+                                       runtime=aws_lambda.Runtime.PYTHON_3_7,
+                                       handler="cognito.main",
+                                       code=aws_lambda.Code.asset('./lambda')
+        )
+        cognito_trigger = aws_cognito.UserPoolTriggers(post_confirmation=cognito_lambda)
+
+
+        # create cognito instance attach ddb/cognito write lambda
+        userpool = aws_cognito.UserPool(self, "myuserpool",
+            user_pool_name="doctor-userpool",
+            lambda_triggers=cognito_trigger,
+        )
+
         # api gateway
         api = aws_apigateway.LambdaRestApi(self, "api", handler=function)
 
@@ -31,7 +46,3 @@ class InfrastructureStack(core.Stack):
         wf = Watchful(self, 'monitoring', alarm_email='747b13b7.groups.unsw.edu.au@apac.teams.ms')
         wf.watch_scope(self)
 
-        # create cognito instance
-        userpool = aws_cognito.UserPool(self, "myuserpool",
-            user_pool_name="doctor-userpool"
-        )
