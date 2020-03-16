@@ -15,42 +15,76 @@ def main(event, context):
     if body is None:
         return None
 
-    id = body['id']
-    LOG.info("id: " + id)
-    if id is None:
-        return None
+    id_ = body['id']
+    name = body['name'] 
+    age = body['age'] 
+    spec = body['spec']
+    inputError = validateInput(id_, name, age, spec)
+    if inputError is not None:
+        return inputError
+    else:
+        return doctor_update(id_, name, age, spec)
 
-    name = body['name']
-    LOG.info("name: " + name)
-    if name is None:
-        return None
-    
-    age = body['age']
-    LOG.info("age: " + str(age))
-    if age is None:
-        return None
-    
-    field = body['field']
-    LOG.info("field: " + field)
-    if field is None:
-        return None
-    
-    return doctor_update(id, name, age, field)
-
-def doctor_update(id, name, age, field):
+def doctor_update(id_, name, age, spec):
     table_name = os.environ.get('TABLE_NAME')
 
     dynamodb = boto3.resource('dynamodb')
+    dynamodbexceptions = boto3.client('dynamodb').exceptions
     table = dynamodb.Table(table_name)
-    response = table.put_item(Item={
-        'id': id,
+
+    try:
+        response = table.put_item(Item={
+        'id': id_,
         'name': name,
         'age': age,
-        'field': field,
-    })
+        'spec': spec,
+        },
+        ConditionExpression='attribute_exists(id)')
+    except dynamodbexceptions.ConditionalCheckFailedException:
+        statusCode = 400
+        body = f'{{"error": "Doctor with {id_} does not exist and cannot be updated. A new doctor has not been created."}}'
+    else:
+        statusCode = 200
+        body = f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Updating doctor id {id_} with new information Name: {name}. Age: {age}. Specialisation: {spec}'
 
     return {
-        'statusCode': 200,
+        'statusCode': statusCode,
         'headers': {'Content-Type': 'text/plain'},
-        'body': f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Doctor created with name: {name} and id: {id}'
+        'body': body
     }
+
+def validateInput(id_, name, age, spec):
+    statusCode = 400
+    LOG.info("id: " + id_)
+    if id_ == "":
+        return {
+        'statusCode': statusCode,
+        'headers': {'Content-Type': 'text/plain'},
+        'body': f'{{"error": "Doctor not updated. ID cannot be empty."}}'
+        }
+
+    LOG.info("name: " + name)
+    if name == "":
+        return {
+        'statusCode': statusCode,
+        'headers': {'Content-Type': 'text/plain'},
+        'body': f'{{"error": "Doctor not created. Name cannot be empty."}}'
+        }
+    
+    LOG.info("age: " + str(age))
+    if not isinstance(age, int) or age < 0 or age > 200: # should it allow number as string?
+        return {
+        'statusCode': statusCode,
+        'headers': {'Content-Type': 'text/plain'},
+        'body': f'{{"error": "Doctor not created. Age must be an integer 0-200"}}'
+        }
+    
+    LOG.info("spec: " + spec)
+    if spec == '':
+        return {
+        'statusCode': statusCode,
+        'headers': {'Content-Type': 'text/plain'},
+        'body': f'{{"error": "Doctor not created. Specialsation cannot be empty."}}'
+        }
+
+    return None

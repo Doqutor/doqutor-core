@@ -14,24 +14,41 @@ def main(event, context):
     if params is None:
         return None
 
-    id = params['id']
-    if id is None:
-        return None
+    id_ = params['id']
+    if id_ == '':
+        return {
+        'statusCode': 400,
+        'headers': {'Content-Type': 'text/plain'},
+        'body': f'{{"error": "id cannot be empty."}}'
+    }
     
-    return doctor_delete(id)
+    return doctor_delete(id_)
 
-def doctor_delete(id):
+def doctor_delete(id_):
     table_name = os.environ.get('TABLE_NAME')
 
     dynamodb = boto3.resource('dynamodb')
+    dynamodbexceptions = boto3.client('dynamodb').exceptions
     table = dynamodb.Table(table_name)
 
-    response = table.delete_item(Key={ 
-        'id': id 
-    }) 
+    #print(id_)
+    #headers = {'Content-Type': 'text/plain'}
     
+    try:
+        response = table.delete_item(
+        Key={ 
+            'id': id_
+        }, 
+        ConditionExpression='attribute_exists(id)')
+    except dynamodbexceptions.ConditionalCheckFailedException:
+        statusCode = 400
+        body = f'{{"error": "Doctor with id {id_} does not exist and cannot be deleted."}}'
+    else:
+        statusCode = 200
+        body = f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Deleting doctor: {id_}'
+        
     return {
-        'statusCode': 200,
+        'statusCode': statusCode,
         'headers': {'Content-Type': 'text/plain'},
-        'body': f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Deleting doctor: {id}'
+        'body': body
     }

@@ -10,9 +10,9 @@ LOG.setLevel(logging.INFO)
 def main(event, context):
     LOG.info("EVENT (delete): " + json.dumps(event))
     
-    return doctor_list(id)
+    return doctor_list()
 
-def doctor_list(id):
+def doctor_list():
     table_name = os.environ.get('TABLE_NAME')
 
     dynamodb = boto3.resource('dynamodb')
@@ -22,6 +22,8 @@ def doctor_list(id):
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'text/plain'},
-        'body': response["Items"]
+        'body': str(response["Items"])
+            # aws requires body in quotes or crash
+            # but this doesn't work quite right
     }
     

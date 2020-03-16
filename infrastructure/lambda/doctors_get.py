@@ -14,23 +14,37 @@ def main(event, context):
     if params is None:
         return None
 
-    id = params['id']
-    if id is None:
-        return None
+    id_ = params['id']
+    if id_ == '':
+        return {
+        'statusCode': 400,
+        'headers': {'Content-Type': 'text/plain'},
+        'body': f'{{"error": "id cannot be empty."}}'
+    }
     
-    return doctor_get(id)
+    return doctor_get(id_)
 
-def doctor_get(id):
+def doctor_get(id_):
     table_name = os.environ.get('TABLE_NAME')
 
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
     response = table.get_item(Key={
-        'id': id
+        'id': id_
     })
+    if "Item" in response:
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'text/plain'},
+            'body': str(response["Item"])
+            # aws requires body in quotes or crash
+            # but this doesn't work right - says Decimal('60') for number
+        }
+    else:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'text/plain'},
+            'body': f'{{"error": "Doctor with id {id_} does not exist."}}'
+        }
 
-    return {
-        'statusCode': 200,
-        'headers': {'Content-Type': 'text/plain'},
-        'body': response["Item"]
-    }
+        
