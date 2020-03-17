@@ -21,14 +21,12 @@ def main(event, context):
     except KeyError:
         return {
             'statusCode': 400,
-            'headers': {'Content-Type': 'text/plain'},
             'body': '{"error": "Missing field: id."}'
         }
     else:
         if id_ == '':
             return {
             'statusCode': 400,
-            'headers': {'Content-Type': 'text/plain'},
             'body': '{"error": "id cannot be empty."}'
         }
     

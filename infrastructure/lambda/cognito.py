@@ -28,6 +28,5 @@ def write_to_ddb(event):
 
     return {
         'statusCode': 200,
-        'headers': {'Content-Type': 'text/plain'},
-        'body': 'doctor created with name : {given_name} {family_name}'
+        'body': json.dumps({'message': 'doctor created with name : {given_name} {family_name}'})
     }

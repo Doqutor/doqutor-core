@@ -22,15 +22,13 @@ def main(event, context):
     except KeyError:
         return {
             'statusCode': 400,
-            'headers': {'Content-Type': 'text/plain'},
-            'body': '{"error": "Missing field: id."}'
-        }
+            'body': json.dumps({"error": "Missing field: id."})
+1        }
     else:
         if id_ == '':
             return {
             'statusCode': 400,
-            'headers': {'Content-Type': 'text/plain'},
-            'body': '{"error": "id cannot be empty."}'
+            'body': json.dumps({"error": "id cannot be empty."})
         }
     
     return doctor_get(id_)
@@ -46,15 +44,13 @@ def doctor_get(id_):
     if "Item" in response:
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'text/plain'},
             'body': json.dumps(response["Item"], default=decimal_default)
         }
         # 'body': f'{{"id": "{response["Item"]["id"]}", "name": "{response["Item"]["name"]}", "age": {response["Item"]["age"]}, "spec": "{response["Item"]["spec"]}"}}'
     else:
         return {
             'statusCode': 400,
-            'headers': {'Content-Type': 'text/plain'},
-            'body': f'{{"error": "Doctor with id {id_} does not exist."}}'
+            'body': json.dumps({"error": "Doctor with id {id_} does not exist."})
         }
 
 def decimal_default(obj):

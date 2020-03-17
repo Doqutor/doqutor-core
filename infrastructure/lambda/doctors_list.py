@@ -22,7 +22,6 @@ def doctor_list():
 
     return {
         'statusCode': 200,
-        'headers': {'Content-Type': 'text/plain'},
         'body': json.dumps(response["Items"], default=decimal_default)
     }
     #'body': str(response["Items"])

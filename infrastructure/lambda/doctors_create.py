@@ -26,11 +26,10 @@ def main(event, context):
     except KeyError:
         return {
         'statusCode': 400,
-        'headers': {'Content-Type': 'text/plain'},
-        'body': '{"error": "Missing argument field(s). Need name, age and spec."}'
+        'body': json.dumps({"error": "Missing argument field(s). Need name, age and spec."})
         }
     else:
-        inputError = validateInput(name, age, spec)
+        inputError = validate_input(name, age, spec)
         if inputError is not None:
             return inputError
         else:
@@ -44,53 +43,48 @@ def doctor_create(id_, name, age, spec):
 
     try:
         response = table.put_item(Item={
-        'id': id_,
-        'name': name,
-        'age': age,
-        'spec': spec,
+            'id': id_,
+            'name': name,
+            'age': age,
+            'spec': spec,
         },
         ConditionExpression='attribute_not_exists(id)')
     except dynamodbexceptions.ConditionalCheckFailedException:
         statusCode = 400
         return {
-        'statusCode': statusCode,
-        'headers': {'Content-Type': 'text/plain'},
-        'body': f'{{"error": "Doctor with {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."}}'
+            'statusCode': statusCode,
+            'body': json.dumps({"error": "Doctor with {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."})
         }
     else:
         statusCode = 200
         return {
-        'statusCode': statusCode,
-        'headers': {'Content-Type': 'text/plain'},
-        'body': f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Doctor created with name: {name} and id: {id_}'
+            'statusCode': statusCode,
+            'body': ({"message": f"Doctor created with name: {name} and id: {id_}"})
         }
         
-def validateInput(name, age, spec):
+def validate_input(name, age, spec):
     LOG.info("name: " + name)
     if name == "":
         statusCode = 400
         return {
-        'statusCode': statusCode,
-        'headers': {'Content-Type': 'text/plain'},
-        'body': f'{{"error": "Doctor not created. Name cannot be empty."}}'
+            'statusCode': statusCode,
+            'body': json.dumps({"error": "Doctor not created. Name cannot be empty."})
         }
     
     LOG.info("age: " + str(age))
     if not isinstance(age, int) or age < 0 or age > 200: # should it allow number as string?
         statusCode = 400
         return {
-        'statusCode': statusCode,
-        'headers': {'Content-Type': 'text/plain'},
-        'body': f'{{"error": "Doctor not created. Age must be an integer 0-200"}}'
+            'statusCode': statusCode,
+            'body': json.dumps({"error": "Doctor not created. Age must be an integer 0-200"})
         }
     
     LOG.info("spec: " + spec)
     if spec == '':
         statusCode = 400
         return {
-        'statusCode': statusCode,
-        'headers': {'Content-Type': 'text/plain'},
-        'body': f'{{"error": "Doctor not created. Specialsation cannot be empty."}}'
+            'statusCode': statusCode,
+            'body': json.dumps({"error": "Doctor not created. Specialsation cannot be empty."})
         }
 
     return None
