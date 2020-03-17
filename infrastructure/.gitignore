@@ -13,3 +13,6 @@ cdk.out
 v/
 venv/
 .env
+
+# config information
+config.json
