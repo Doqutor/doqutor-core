@@ -3,6 +3,7 @@ import logging
 import json
 import os
 import uuid
+from decimal import Decimal
 
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
@@ -22,8 +23,13 @@ def doctor_list():
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'text/plain'},
-        'body': str(response["Items"])
-            # aws requires body in quotes or crash
-            # but this doesn't work quite right
+        'body': json.dumps(response["Items"], default=decimal_default)
     }
+    #'body': str(response["Items"])
+    # AWS is requiring body be a string, str(response["Items"]) gives Decimal('60') for numbers. hence the json.dumps
+    
+def decimal_default(obj):
+    if isinstance(obj, Decimal):
+        return int(obj)
+    return obj
     

@@ -12,15 +12,25 @@ def main(event, context):
 
     params = event['queryStringParameters']
     if params is None:
-        return None
-
-    id_ = params['id']
-    if id_ == '':
         return {
         'statusCode': 400,
-        'headers': {'Content-Type': 'text/plain'},
-        'body': f'{{"error": "id cannot be empty."}}'
-    }
+        }
+
+    try:
+        id_ = params['id']
+    except KeyError:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'text/plain'},
+            'body': '{"error": "Missing field: id."}'
+        }
+    else:
+        if id_ == '':
+            return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'text/plain'},
+            'body': '{"error": "id cannot be empty."}'
+        }
     
     return doctor_delete(id_)
 

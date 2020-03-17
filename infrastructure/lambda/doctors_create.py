@@ -12,19 +12,29 @@ def main(event, context):
 
     body = json.loads(event['body'])
     LOG.info("BODY: " + json.dumps(body))
-    if body is None:
-        return None
+    if body == {}:
+        return {
+        'statusCode': 400,
+        }
 
     id_ = str(uuid.uuid4())[0:8]
     
-    name = body['name'] 
-    age = body['age'] 
-    spec = body['spec']
-    inputError = validateInput(name, age, spec)
-    if inputError is not None:
-        return inputError
+    try:
+        name = body['name'] 
+        age = body['age'] 
+        spec = body['spec']
+    except KeyError:
+        return {
+        'statusCode': 400,
+        'headers': {'Content-Type': 'text/plain'},
+        'body': '{"error": "Missing argument field(s). Need name, age and spec."}'
+        }
     else:
-        return doctor_create(id_, name, age, spec)
+        inputError = validateInput(name, age, spec)
+        if inputError is not None:
+            return inputError
+        else:
+            return doctor_create(id_, name, age, spec)
 
 def doctor_create(id_, name, age, spec):
     table_name = os.environ.get('TABLE_NAME')

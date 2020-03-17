@@ -3,6 +3,7 @@ import logging
 import json
 import os
 import uuid
+from decimal import Decimal
 
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
@@ -12,15 +13,25 @@ def main(event, context):
 
     params = event['queryStringParameters']
     if params is None:
-        return None
-
-    id_ = params['id']
-    if id_ == '':
         return {
         'statusCode': 400,
-        'headers': {'Content-Type': 'text/plain'},
-        'body': f'{{"error": "id cannot be empty."}}'
-    }
+        }
+
+    try:
+        id_ = params['id']
+    except KeyError:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'text/plain'},
+            'body': '{"error": "Missing field: id."}'
+        }
+    else:
+        if id_ == '':
+            return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'text/plain'},
+            'body': '{"error": "id cannot be empty."}'
+        }
     
     return doctor_get(id_)
 
@@ -36,10 +47,9 @@ def doctor_get(id_):
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'text/plain'},
-            'body': str(response["Item"])
-            # aws requires body in quotes or crash
-            # but this doesn't work right - says Decimal('60') for number
+            'body': json.dumps(response["Item"], default=decimal_default)
         }
+        # 'body': f'{{"id": "{response["Item"]["id"]}", "name": "{response["Item"]["name"]}", "age": {response["Item"]["age"]}, "spec": "{response["Item"]["spec"]}"}}'
     else:
         return {
             'statusCode': 400,
@@ -47,4 +57,7 @@ def doctor_get(id_):
             'body': f'{{"error": "Doctor with id {id_} does not exist."}}'
         }
 
-        
+def decimal_default(obj):
+    if isinstance(obj, Decimal):
+        return int(obj)
+    return obj

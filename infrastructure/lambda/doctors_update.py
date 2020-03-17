@@ -12,18 +12,28 @@ def main(event, context):
 
     body = json.loads(event['body'])
     LOG.info("BODY: " + json.dumps(body))
-    if body is None:
-        return None
+    if body == {}:
+        return {
+        'statusCode': 400,
+        }
 
-    id_ = body['id']
-    name = body['name'] 
-    age = body['age'] 
-    spec = body['spec']
-    inputError = validateInput(id_, name, age, spec)
-    if inputError is not None:
-        return inputError
+    try:
+        id_ = body['id']
+        name = body['name'] 
+        age = body['age'] 
+        spec = body['spec']
+    except KeyError:
+        return {
+        'statusCode': 400,
+        'headers': {'Content-Type': 'text/plain'},
+        'body': '{"error": "Missing argument field(s). Need id, name, age and spec."}'
+        }
     else:
-        return doctor_update(id_, name, age, spec)
+        inputError = validateInput(id_, name, age, spec)
+        if inputError is not None:
+            return inputError
+        else:
+            return doctor_update(id_, name, age, spec)
 
 def doctor_update(id_, name, age, spec):
     table_name = os.environ.get('TABLE_NAME')
@@ -42,7 +52,7 @@ def doctor_update(id_, name, age, spec):
         ConditionExpression='attribute_exists(id)')
     except dynamodbexceptions.ConditionalCheckFailedException:
         statusCode = 400
-        body = f'{{"error": "Doctor with {id_} does not exist and cannot be updated. A new doctor has not been created."}}'
+        body = f'{{"error": "Doctor with id {id_} does not exist and cannot be updated. A new doctor has not been created."}}'
     else:
         statusCode = 200
         body = f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Updating doctor id {id_} with new information Name: {name}. Age: {age}. Specialisation: {spec}'
