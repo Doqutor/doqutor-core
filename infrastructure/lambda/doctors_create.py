@@ -15,6 +15,7 @@ def main(event, context):
     if body == {}:
         return {
         'statusCode': 400,
+        'body': json.dumps({"error": "Missing argument field(s). Need name, age and spec."})
         }
 
     id_ = str(uuid.uuid4())[0:8]
@@ -37,9 +38,11 @@ def main(event, context):
 
 def doctor_create(id_, name, age, spec):
     table_name = os.environ.get('TABLE_NAME')
+    #LOG.info("c1")
 
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
+    #LOG.info("c2")
 
     try:
         response = table.put_item(Item={
@@ -49,17 +52,21 @@ def doctor_create(id_, name, age, spec):
             'spec': spec,
         },
         ConditionExpression='attribute_not_exists(id)')
+        #LOG.info("c3")
     except dynamodbexceptions.ConditionalCheckFailedException:
+        #LOG.info("except")
         statusCode = 400
         return {
             'statusCode': statusCode,
-            'body': json.dumps({"error": "Doctor with {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."})
+            'body': json.dumps({"error": f"Doctor with {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."})
         }
+        
     else:
+        #LOG.info("else")
         statusCode = 200
         return {
             'statusCode': statusCode,
-            'body': ({"message": f"Doctor created with name: {name} and id: {id_}"})
+            'body': json.dumps({"message": f"Doctor created with name: {name} and id: {id_}"})
         }
         
 def validate_input(name, age, spec):
@@ -84,7 +91,7 @@ def validate_input(name, age, spec):
         statusCode = 400
         return {
             'statusCode': statusCode,
-            'body': json.dumps({"error": "Doctor not created. Specialsation cannot be empty."})
+            'body': json.dumps({"error": "Doctor not created. Specialisation cannot be empty."})
         }
 
     return None

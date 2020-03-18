@@ -88,3 +88,18 @@ class InfrastructureStack(core.Stack):
         # Monitoring system
         wf = Watchful(self, 'monitoring', alarm_email='747b13b7.groups.unsw.edu.au@apac.teams.ms')
         wf.watch_scope(self)
+
+        # Combined API attempt
+        apiC = aws_apigateway.RestApi(self, "api_CRUD")
+        doctors_list_integration = aws_apigateway.LambdaIntegration(doctors_list)
+        doctors_create_integration = aws_apigateway.LambdaIntegration(doctors_create)
+        doctors_get_integration = aws_apigateway.LambdaIntegration(doctors_get)
+        doctors_delete_integration = aws_apigateway.LambdaIntegration(doctors_delete)
+        doctors_update_integration = aws_apigateway.LambdaIntegration(doctors_update)
+
+        apiC.root.add_method("GET", doctors_list_integration)
+        apiC.root.add_method("POST", doctors_create_integration)
+        doctor_id = apiC.root.add_resource("{id}")
+        doctor_id.add_method("GET", doctors_get_integration)
+        doctor_id.add_method("PUT", doctors_update_integration)
+        doctor_id.add_method("DELETE", doctors_delete_integration)

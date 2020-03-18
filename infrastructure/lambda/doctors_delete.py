@@ -10,10 +10,12 @@ LOG.setLevel(logging.INFO)
 def main(event, context):
     LOG.info("EVENT: " + json.dumps(event))
 
-    params = event['queryStringParameters']
+    #params = event['queryStringParameters']
+    params = event['pathParameters']
     if params is None:
         return {
         'statusCode': 400,
+        'body': '{"error": "aws wtf"}'
         }
 
     try:
@@ -21,13 +23,13 @@ def main(event, context):
     except KeyError:
         return {
             'statusCode': 400,
-            'body': '{"error": "Missing field: id."}'
+            'body': '{"error": "aws no. Missing field: id."}'
         }
     else:
         if id_ == '':
             return {
             'statusCode': 400,
-            'body': '{"error": "id cannot be empty."}'
+            'body': '{"error": "aws bad. id cannot be empty."}'
         }
     
     return doctor_delete(id_)
@@ -53,7 +55,7 @@ def doctor_delete(id_):
         body = f'{{"error": "Doctor with id {id_} does not exist and cannot be deleted."}}'
     else:
         statusCode = 200
-        body = f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Deleting doctor: {id_}'
+        body = f'{{"message": "Deleting doctor: {id_}."}}'
         
     return {
         'statusCode': statusCode,
