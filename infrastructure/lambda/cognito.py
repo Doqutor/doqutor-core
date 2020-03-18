@@ -4,9 +4,13 @@ import json
 import os
 import uuid
 
+LOG = logging.getLogger()
+LOG.setLevel(logging.INFO)
 
 def main(event, context):
     # TODO: much more resilant testing
+    # remove after debug and change fields delievered by cognito json
+    LOG.info("EVENT: " + json.dumps(event))
     if event["request"]["userAttributes"]["sub"]:
         write_to_ddb(event)
 
@@ -28,5 +32,5 @@ def write_to_ddb(event):
 
     return {
         'statusCode': 200,
-        'body': json.dumps({'message': 'doctor created with name : {given_name} {family_name}'})
+        'body': json.dumps({'message': 'COGNITO: doctor created with name : {name} age: {age} spec: {spec}'})
     }

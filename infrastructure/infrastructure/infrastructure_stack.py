@@ -73,13 +73,17 @@ class InfrastructureStack(core.Stack):
         )
         table.grant_read_write_data(cognito_lambda)
         cognito_trigger = aws_cognito.UserPoolTriggers(post_confirmation=cognito_lambda)
+        api = aws_apigateway.LambdaRestApi(self, "api_cognito_doctors_create", handler=cognito_lambda)
 
 
         # create cognito instance attach ddb/cognito write lambda
-        userpool = aws_cognito.UserPool(self, "myuserpool",
+        userpool = aws_cognito.UserPool(self, "doc_userpool",
             user_pool_name="doctor-userpool",
             lambda_triggers=cognito_trigger,
         )
+
+        # defining a userpool client
+        userpool_client = aws_cognito.UserPoolClient(self, "doc_userpool_client", user_pool=userpool, user_pool_client_name="doctor-userpool-client")
 
         # Monitoring system
         wf = Watchful(self, 'monitoring', alarm_email='747b13b7.groups.unsw.edu.au@apac.teams.ms')
