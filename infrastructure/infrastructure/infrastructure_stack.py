@@ -91,15 +91,25 @@ class InfrastructureStack(core.Stack):
 
         # Combined API attempt
         apiC = aws_apigateway.RestApi(self, "api_CRUD")
+
         doctors_list_integration = aws_apigateway.LambdaIntegration(doctors_list)
         doctors_create_integration = aws_apigateway.LambdaIntegration(doctors_create)
         doctors_get_integration = aws_apigateway.LambdaIntegration(doctors_get)
         doctors_delete_integration = aws_apigateway.LambdaIntegration(doctors_delete)
         doctors_update_integration = aws_apigateway.LambdaIntegration(doctors_update)
 
-        apiC.root.add_method("GET", doctors_list_integration)
-        apiC.root.add_method("POST", doctors_create_integration)
-        doctor_id = apiC.root.add_resource("{id}")
+        doctors = apiC.root.add_resource("doctors")
+        doctors.add_method("GET", doctors_list_integration)
+        doctors.add_method("POST", doctors_create_integration)
+        doctor_id = doctors.add_resource("{id}")
         doctor_id.add_method("GET", doctors_get_integration)
         doctor_id.add_method("PUT", doctors_update_integration)
         doctor_id.add_method("DELETE", doctors_delete_integration)
+
+        patients = apiC.root.add_resource("patients")
+        patients.add_method("GET")
+        patients.add_method("POST")
+        patient_id = patients.add_resource("{id}")
+        patient_id.add_method("GET")
+        patient_id.add_method("PUT")
+        patient_id.add_method("DELETE")
