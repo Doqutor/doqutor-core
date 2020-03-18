@@ -14,7 +14,8 @@ def main(event, context):
     params = event['queryStringParameters']
     if params is None:
         return {
-        'statusCode': 400,
+            'statusCode': 400,
+            'body': '{"error": "Missing field: id."}'
         }
 
     try:
@@ -23,13 +24,13 @@ def main(event, context):
         return {
             'statusCode': 400,
             'body': json.dumps({"error": "Missing field: id."})
-1        }
+        }
     else:
         if id_ == '':
             return {
             'statusCode': 400,
             'body': json.dumps({"error": "id cannot be empty."})
-        }
+            }
     
     return doctor_get(id_)
 
@@ -50,7 +51,7 @@ def doctor_get(id_):
     else:
         return {
             'statusCode': 400,
-            'body': json.dumps({"error": "Doctor with id {id_} does not exist."})
+            'body': json.dumps({"error": f"Doctor with id {id_} does not exist."})
         }
 
 def decimal_default(obj):

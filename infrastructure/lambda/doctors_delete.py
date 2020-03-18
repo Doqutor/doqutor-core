@@ -13,7 +13,8 @@ def main(event, context):
     params = event['queryStringParameters']
     if params is None:
         return {
-        'statusCode': 400,
+            'statusCode': 400,
+            'body': '{"error": "Missing field: id."}'
         }
 
     try:
@@ -50,10 +51,10 @@ def doctor_delete(id_):
         ConditionExpression='attribute_exists(id)')
     except dynamodbexceptions.ConditionalCheckFailedException:
         statusCode = 400
-        body = f'{{"error": "Doctor with id {id_} does not exist and cannot be deleted."}}'
+        body = json.dumps({"error": f"Doctor with id {id_} does not exist and cannot be deleted."})
     else:
         statusCode = 200
-        body = f'[Status: {response["ResponseMetadata"]["HTTPStatusCode"]}] Deleting doctor: {id_}'
+        body = json.dumps({"message": f"Deleting doctor: {id_}"})
         
     return {
         'statusCode': statusCode,

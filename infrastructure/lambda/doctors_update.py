@@ -15,6 +15,7 @@ def main(event, context):
     if body == {}:
         return {
             'statusCode': 400,
+            'body': json.dumps({"error": "Missing argument field(s). Need id, name, age and spec."})
         }
 
     try:
@@ -53,10 +54,10 @@ def doctor_update(id_, name, age, spec):
         statusCode = 400
         body = json.dumps({
             "error": f"Doctor with id {id_} does not exist and cannot be updated. A new doctor has not been created."
-        })
+            })
     else:
         statusCode = 200
-        body = "Updating doctor id {id_} with new information Name: {name}. Age: {age}. Specialisation: {spec}"
+        body = json.dumps({"message": f"Updating doctor id {id_} with new information Name: {name}. Age: {age}. Specialisation: {spec}"})
 
     return {
         'statusCode': statusCode,
@@ -79,7 +80,7 @@ def validateInput(id_, name, age, spec):
         return {
             'statusCode': statusCode,
             'body': json.dumps({
-                "error": "Doctor not created. Name cannot be empty."
+                "error": "Doctor not updated. Name cannot be empty."
             })
         }
     
@@ -88,7 +89,7 @@ def validateInput(id_, name, age, spec):
         return {
             'statusCode': statusCode,
             'body': json.dumps({
-                "error": "Doctor not created. Age must be an integer 0-200"
+                "error": "Doctor not updated. Age must be an integer 0-200"
             })
         }
     
@@ -97,7 +98,7 @@ def validateInput(id_, name, age, spec):
         return {
             'statusCode': statusCode,
             'body': json.dumps({
-                "error": "Doctor not created. Specialsation cannot be empty."
+                "error": "Doctor not updated. Specialisation cannot be empty."
             })
         }
 

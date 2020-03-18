@@ -15,6 +15,7 @@ def main(event, context):
     if body == {}:
         return {
         'statusCode': 400,
+        'body': json.dumps({"error": "Missing argument field(s). Need name, age and spec."})
         }
 
     id_ = str(uuid.uuid4())[0:8]
@@ -50,41 +51,36 @@ def doctor_create(id_, name, age, spec):
         },
         ConditionExpression='attribute_not_exists(id)')
     except dynamodbexceptions.ConditionalCheckFailedException:
-        statusCode = 400
         return {
-            'statusCode': statusCode,
-            'body': json.dumps({"error": "Doctor with {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."})
+            'statusCode': 400,
+            'body': json.dumps({"error": f"Doctor with {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."})
         }
     else:
-        statusCode = 200
         return {
-            'statusCode': statusCode,
-            'body': ({"message": f"Doctor created with name: {name} and id: {id_}"})
+            'statusCode': 200,
+            'body': json.dumps({"message": f"Doctor created with name: {name} and id: {id_}"})
         }
         
 def validate_input(name, age, spec):
     LOG.info("name: " + name)
     if name == "":
-        statusCode = 400
         return {
-            'statusCode': statusCode,
+            'statusCode': 400,
             'body': json.dumps({"error": "Doctor not created. Name cannot be empty."})
         }
     
     LOG.info("age: " + str(age))
     if not isinstance(age, int) or age < 0 or age > 200: # should it allow number as string?
-        statusCode = 400
         return {
-            'statusCode': statusCode,
+            'statusCode': 400,
             'body': json.dumps({"error": "Doctor not created. Age must be an integer 0-200"})
         }
     
     LOG.info("spec: " + spec)
     if spec == '':
-        statusCode = 400
         return {
-            'statusCode': statusCode,
-            'body': json.dumps({"error": "Doctor not created. Specialsation cannot be empty."})
+            'statusCode': 400,
+            'body': json.dumps({"error": "Doctor not created. Specialisation cannot be empty."})
         }
 
     return None
