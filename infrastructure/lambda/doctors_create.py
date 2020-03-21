@@ -17,8 +17,6 @@ def main(event, context):
         'statusCode': 400,
         'body': json.dumps({"error": "Missing argument field(s). Need name, age and spec."})
         }
-
-    id_ = str(uuid.uuid4())[0:8]
     
     try:
         name = body['name'] 
@@ -34,6 +32,7 @@ def main(event, context):
         if inputError is not None:
             return inputError
         else:
+            id_ = str(uuid.uuid4())[0:8]
             return doctor_create(id_, name, age, spec)
 
 def doctor_create(id_, name, age, spec):
@@ -54,7 +53,7 @@ def doctor_create(id_, name, age, spec):
     except dynamodbexceptions.ConditionalCheckFailedException:
         return {
             'statusCode': 400,
-            'body': json.dumps({"error": f"Doctor with {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."})
+            'body': json.dumps({"error": f"Doctor with id {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."})
         }
         
     else:
