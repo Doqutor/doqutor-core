@@ -22,7 +22,7 @@ class InfrastructureStack(core.Stack):
 
         table.grant_read_write_data(doctors_create)
         doctors_create.add_environment("TABLE_NAME", table.table_name)
-        api = aws_apigateway.LambdaRestApi(self, "api_doctors_create", handler=doctors_create)
+        #api = aws_apigateway.LambdaRestApi(self, "api_doctors_create", handler=doctors_create)
         
         # Update doctor lambda
         doctors_update = aws_lambda.Function(self, "doctors_update",
@@ -32,7 +32,7 @@ class InfrastructureStack(core.Stack):
 
         table.grant_read_write_data(doctors_update)
         doctors_update.add_environment("TABLE_NAME", table.table_name)
-        api = aws_apigateway.LambdaRestApi(self, "api_doctors_update", handler=doctors_update)
+        #api = aws_apigateway.LambdaRestApi(self, "api_doctors_update", handler=doctors_update)
 
         # Get doctor lambda
         doctors_get = aws_lambda.Function(self, "doctors_get",
@@ -42,7 +42,7 @@ class InfrastructureStack(core.Stack):
 
         table.grant_read_write_data(doctors_get)
         doctors_get.add_environment("TABLE_NAME", table.table_name)
-        api = aws_apigateway.LambdaRestApi(self, "api_doctors_get", handler=doctors_get)
+        #api = aws_apigateway.LambdaRestApi(self, "api_doctors_get", handler=doctors_get)
 
         # List doctor lambda
         doctors_list = aws_lambda.Function(self, "doctors_list",
@@ -52,7 +52,7 @@ class InfrastructureStack(core.Stack):
 
         table.grant_read_write_data(doctors_list)
         doctors_list.add_environment("TABLE_NAME", table.table_name)
-        api = aws_apigateway.LambdaRestApi(self, "api_doctors_list", handler=doctors_list)
+        #api = aws_apigateway.LambdaRestApi(self, "api_doctors_list", handler=doctors_list)
 
         # Delete doctor lambda
         doctors_delete = aws_lambda.Function(self, "doctors_delete",
@@ -62,7 +62,7 @@ class InfrastructureStack(core.Stack):
 
         table.grant_read_write_data(doctors_delete)
         doctors_delete.add_environment("TABLE_NAME", table.table_name)
-        api = aws_apigateway.LambdaRestApi(self, "api_doctors_delete", handler=doctors_delete)
+        #api = aws_apigateway.LambdaRestApi(self, "api_doctors_delete", handler=doctors_delete)
 
 
         # Cognito lambda (on successful creation of doctor in cognito, write to db)
@@ -88,3 +88,30 @@ class InfrastructureStack(core.Stack):
         # Monitoring system
         wf = Watchful(self, 'monitoring', alarm_email='747b13b7.groups.unsw.edu.au@apac.teams.ms')
         wf.watch_scope(self)
+
+        # Combined API attempt
+        apiC = aws_apigateway.RestApi(self, "api_CRUD")
+
+        doctors = apiC.root.add_resource("doctors")
+        doctors.add_cors_preflight(
+            allow_origins=aws_apigateway.Cors.ALL_ORIGINS, # TODO: change allowed origin to specific
+            allow_methods=["GET", "POST"]
+        )
+        doctors.add_method("GET", aws_apigateway.LambdaIntegration(doctors_list))
+        doctors.add_method("POST", aws_apigateway.LambdaIntegration(doctors_create))
+        doctor_id = doctors.add_resource("{id}")
+        doctor_id.add_cors_preflight(
+            allow_origins=aws_apigateway.Cors.ALL_ORIGINS,
+            allow_methods=["GET", "PUT", "DELETE"]
+        )
+        doctor_id.add_method("GET", aws_apigateway.LambdaIntegration(doctors_get))
+        doctor_id.add_method("PUT", aws_apigateway.LambdaIntegration(doctors_update))
+        doctor_id.add_method("DELETE", aws_apigateway.LambdaIntegration(doctors_delete))
+
+        patients = apiC.root.add_resource("patients")
+        patients.add_method("GET")
+        patients.add_method("POST")
+        patient_id = patients.add_resource("{id}")
+        patient_id.add_method("GET")
+        patient_id.add_method("PUT")
+        patient_id.add_method("DELETE")

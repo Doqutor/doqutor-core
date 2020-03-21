@@ -10,11 +10,12 @@ LOG.setLevel(logging.INFO)
 def main(event, context):
     LOG.info("EVENT: " + json.dumps(event))
 
-    params = event['queryStringParameters']
+    #params = event['queryStringParameters']
+    params = event['pathParameters']
     if params is None:
         return {
-            'statusCode': 400,
-            'body': '{"error": "Missing field: id."}'
+        'statusCode': 400,
+        'body': '{"error": "aws wtf"}'
         }
 
     try:
@@ -22,13 +23,13 @@ def main(event, context):
     except KeyError:
         return {
             'statusCode': 400,
-            'body': '{"error": "Missing field: id."}'
+            'body': '{"error": "aws no. Missing field: id."}'
         }
     else:
         if id_ == '':
             return {
             'statusCode': 400,
-            'body': '{"error": "id cannot be empty."}'
+            'body': '{"error": "aws bad. id cannot be empty."}'
         }
     
     return doctor_delete(id_)
@@ -40,9 +41,6 @@ def doctor_delete(id_):
     dynamodbexceptions = boto3.client('dynamodb').exceptions
     table = dynamodb.Table(table_name)
 
-    #print(id_)
-    #headers = {'Content-Type': 'text/plain'}
-    
     try:
         response = table.delete_item(
         Key={ 
