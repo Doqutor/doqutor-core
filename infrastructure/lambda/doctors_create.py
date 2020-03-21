@@ -17,8 +17,6 @@ def main(event, context):
         'statusCode': 400,
         'body': json.dumps({"error": "Missing argument field(s). Need name, age and spec."})
         }
-
-    id_ = str(uuid.uuid4())[0:8]
     
     try:
         name = body['name'] 
@@ -34,12 +32,14 @@ def main(event, context):
         if inputError is not None:
             return inputError
         else:
+            id_ = str(uuid.uuid4())[0:8]
             return doctor_create(id_, name, age, spec)
 
 def doctor_create(id_, name, age, spec):
     table_name = os.environ.get('TABLE_NAME')
 
     dynamodb = boto3.resource('dynamodb')
+    dynamodbexceptions = boto3.client('dynamodb').exceptions
     table = dynamodb.Table(table_name)
 
     try:
@@ -53,33 +53,35 @@ def doctor_create(id_, name, age, spec):
     except dynamodbexceptions.ConditionalCheckFailedException:
         return {
             'statusCode': 400,
-            'body': json.dumps({"error": f"Doctor with {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."})
+            'body': json.dumps({"error": f"Doctor with id {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."})
         }
+        
     else:
         return {
             'statusCode': 200,
-            'body': json.dumps({"message": f"Doctor created with name: {name} and id: {id_}"})
+            'body': json.dumps({"message": f"Doctor created with name: {name}, age: {age}, spec: {spec} and id: {id_}"})
         }
         
 def validate_input(name, age, spec):
+    failCode = 400
     LOG.info("name: " + name)
     if name == "":
         return {
-            'statusCode': 400,
+            'statusCode': failCode,
             'body': json.dumps({"error": "Doctor not created. Name cannot be empty."})
         }
     
     LOG.info("age: " + str(age))
     if not isinstance(age, int) or age < 0 or age > 200: # should it allow number as string?
         return {
-            'statusCode': 400,
+            'statusCode': failCode,
             'body': json.dumps({"error": "Doctor not created. Age must be an integer 0-200"})
         }
     
     LOG.info("spec: " + spec)
     if spec == '':
         return {
-            'statusCode': 400,
+            'statusCode': failCode,
             'body': json.dumps({"error": "Doctor not created. Specialisation cannot be empty."})
         }
 

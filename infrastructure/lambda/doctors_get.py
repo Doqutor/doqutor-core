@@ -11,11 +11,12 @@ LOG.setLevel(logging.INFO)
 def main(event, context):
     LOG.info("EVENT: " + json.dumps(event))
 
-    params = event['queryStringParameters']
+    #params = event['queryStringParameters']
+    params = event['pathParameters']
     if params is None:
         return {
-            'statusCode': 400,
-            'body': '{"error": "Missing field: id."}'
+        'statusCode': 400,
+        'body': json.dumps({"error": "aws plz"})
         }
 
     try:
@@ -23,14 +24,14 @@ def main(event, context):
     except KeyError:
         return {
             'statusCode': 400,
-            'body': json.dumps({"error": "Missing field: id."})
+            'body': json.dumps({"error": "aws wtf. Missing field: id."})
         }
     else:
         if id_ == '':
             return {
             'statusCode': 400,
-            'body': json.dumps({"error": "id cannot be empty."})
-            }
+            'body': json.dumps({"error": "aws has errored. id cannot be empty."})
+        }
     
     return doctor_get(id_)
 
@@ -47,7 +48,6 @@ def doctor_get(id_):
             'statusCode': 200,
             'body': json.dumps(response["Item"], default=decimal_default)
         }
-        # 'body': f'{{"id": "{response["Item"]["id"]}", "name": "{response["Item"]["name"]}", "age": {response["Item"]["age"]}, "spec": "{response["Item"]["spec"]}"}}'
     else:
         return {
             'statusCode': 400,

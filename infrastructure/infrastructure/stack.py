@@ -1,8 +1,9 @@
-from aws_cdk import core, aws_dynamodb, aws_lambda, aws_apigateway, aws_cognito
+from aws_cdk import core
 from cdk_watchful import Watchful
 from dynamodb import DynamoDB
 from lambdas import Lambdas
 from cognito import Cognito
+from api_gateway import Api
 
 class InfrastructureStack(core.Stack):
 
@@ -12,6 +13,7 @@ class InfrastructureStack(core.Stack):
         self.dynamodb = DynamoDB(self)
         self.lambdas = Lambdas(self, self.dynamodb)
         self.cognito = Cognito(self, self.lambdas.cognito_lambda)
+        self.api = Api(self, self.lambdas)
 
         ###
         # Monitoring
