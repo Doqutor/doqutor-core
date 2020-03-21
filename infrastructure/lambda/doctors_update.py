@@ -36,7 +36,7 @@ def main(event, context):
             'body': json.dumps({"error": "Missing body field(s). Need name, age and spec."})
         }
     else:
-        inputError = validateInput(id_, name, age, spec)
+        inputError = validate_input(id_, name, age, spec)
         if inputError is not None:
             return inputError
         else:
@@ -73,13 +73,13 @@ def doctor_update(id_, name, age, spec):
         'body': body
     }
 
-def validateInput(id_, name, age, spec):
-    statusCode = 400
+def validate_input(id_, name, age, spec):
+    failCode = 400
     LOG.info("id: " + id_)
     LOG.info("name: " + name)
     if id_ == "":
         return {
-            'statusCode': statusCode,
+            'statusCode': failCode,
             'body': json.dumps({
                 "error": "Doctor not updated. ID cannot be empty."
             })
@@ -88,7 +88,7 @@ def validateInput(id_, name, age, spec):
     
     if name == "":
         return {
-            'statusCode': statusCode,
+            'statusCode': failCode,
             'body': json.dumps({
                 "error": "Doctor not updated. Name cannot be empty."
             })
@@ -97,7 +97,7 @@ def validateInput(id_, name, age, spec):
     LOG.info("age: " + str(age))
     if not isinstance(age, int) or age < 0 or age > 200: # should it allow number as string?
         return {
-            'statusCode': statusCode,
+            'statusCode': failCode,
             'body': json.dumps({
                 "error": "Doctor not updated. Age must be an integer 0-200."
             })
@@ -106,7 +106,7 @@ def validateInput(id_, name, age, spec):
     LOG.info("spec: " + spec)
     if spec == '':
         return {
-            'statusCode': statusCode,
+            'statusCode': failCode,
             'body': json.dumps({
                 "error": "Doctor not updated. Specialisation cannot be empty."
             })

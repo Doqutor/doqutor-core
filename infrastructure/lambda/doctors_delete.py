@@ -41,9 +41,6 @@ def doctor_delete(id_):
     dynamodbexceptions = boto3.client('dynamodb').exceptions
     table = dynamodb.Table(table_name)
 
-    #print(id_)
-    #headers = {'Content-Type': 'text/plain'}
-    
     try:
         response = table.delete_item(
         Key={ 
@@ -52,10 +49,10 @@ def doctor_delete(id_):
         ConditionExpression='attribute_exists(id)')
     except dynamodbexceptions.ConditionalCheckFailedException:
         statusCode = 400
-        body = f'{{"error": "Doctor with id {id_} does not exist and cannot be deleted."}}'
+        body = json.dumps({"error": f"Doctor with id {id_} does not exist and cannot be deleted."})
     else:
         statusCode = 200
-        body = f'{{"message": "Deleting doctor: {id_}."}}'
+        body = json.dumps({"message": f"Deleting doctor: {id_}"})
         
     return {
         'statusCode': statusCode,

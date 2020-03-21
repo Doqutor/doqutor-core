@@ -48,7 +48,6 @@ def doctor_get(id_):
             'statusCode': 200,
             'body': json.dumps(response["Item"], default=decimal_default)
         }
-        # 'body': f'{{"id": "{response["Item"]["id"]}", "name": "{response["Item"]["name"]}", "age": {response["Item"]["age"]}, "spec": "{response["Item"]["spec"]}"}}'
     else:
         return {
             'statusCode': 400,

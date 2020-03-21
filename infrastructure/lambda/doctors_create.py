@@ -38,11 +38,10 @@ def main(event, context):
 
 def doctor_create(id_, name, age, spec):
     table_name = os.environ.get('TABLE_NAME')
-    #LOG.info("c1")
 
     dynamodb = boto3.resource('dynamodb')
+    dynamodbexceptions = boto3.client('dynamodb').exceptions
     table = dynamodb.Table(table_name)
-    #LOG.info("c2")
 
     try:
         response = table.put_item(Item={
@@ -52,45 +51,38 @@ def doctor_create(id_, name, age, spec):
             'spec': spec,
         },
         ConditionExpression='attribute_not_exists(id)')
-        #LOG.info("c3")
     except dynamodbexceptions.ConditionalCheckFailedException:
-        #LOG.info("except")
-        statusCode = 400
         return {
-            'statusCode': statusCode,
+            'statusCode': 400,
             'body': json.dumps({"error": f"Doctor with {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."})
         }
         
     else:
-        #LOG.info("else")
-        statusCode = 200
         return {
-            'statusCode': statusCode,
-            'body': json.dumps({"message": f"Doctor created with name: {name} and id: {id_}"})
+            'statusCode': 200,
+            'body': json.dumps({"message": f"Doctor created with name: {name}, age: {age}, spec: {spec} and id: {id_}"})
         }
         
 def validate_input(name, age, spec):
+    failCode = 400
     LOG.info("name: " + name)
     if name == "":
-        statusCode = 400
         return {
-            'statusCode': statusCode,
+            'statusCode': failCode,
             'body': json.dumps({"error": "Doctor not created. Name cannot be empty."})
         }
     
     LOG.info("age: " + str(age))
     if not isinstance(age, int) or age < 0 or age > 200: # should it allow number as string?
-        statusCode = 400
         return {
-            'statusCode': statusCode,
+            'statusCode': failCode,
             'body': json.dumps({"error": "Doctor not created. Age must be an integer 0-200"})
         }
     
     LOG.info("spec: " + spec)
     if spec == '':
-        statusCode = 400
         return {
-            'statusCode': statusCode,
+            'statusCode': failCode,
             'body': json.dumps({"error": "Doctor not created. Specialisation cannot be empty."})
         }
 
