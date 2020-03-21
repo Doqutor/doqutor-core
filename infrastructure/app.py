@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from aws_cdk import core
-from infrastructure.infrastructure_stack import InfrastructureStack
+from infrastructure.stack import InfrastructureStack
 from config import get_config
 
 # fix for multiple people trying to deploy
