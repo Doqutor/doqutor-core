@@ -26,10 +26,9 @@ export class InfraStack extends cdk.Stack {
     lambdaCognitoHandler.addEnvironment("DOCTOR_TABLE", dynamoDoctorsTable.tableName)
     lambdaCognitoHandler.addEnvironment("PATIENT_TABLE", dynamoPatientsTable.tableName)
     
-    const authPool = new cognito.UserPool(this, 'users', {
+    const authPool = new cognito.UserPool(this, 'crm-users', {
       customAttributes: {
-        type: new cognito.StringAttribute(),
-        patientId: new cognito.StringAttribute()
+        type: new cognito.StringAttribute()
       },
       requiredAttributes: {
         email: true,
@@ -41,6 +40,10 @@ export class InfraStack extends cdk.Stack {
         postConfirmation: lambdaCognitoHandler
       }
     });
+    new cognito.CfnUserPoolDomain(this, 'crm-users-login', {
+      domain: `login-${this.stackName}`,
+      userPoolId: authPool.userPoolId
+    });
     
     const authClient = new cognito.UserPoolClient(this, 'app_client', {
       userPool: authPool,
@@ -48,6 +51,8 @@ export class InfraStack extends cdk.Stack {
     });
     const cfnAuthClient = authClient.node.defaultChild as cognito.CfnUserPoolClient;
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
+    cfnAuthClient.allowedOAuthFlows = ['implicit'];
+    cfnAuthClient.allowedOAuthScopes = ['openid'];
     cfnAuthClient.callbackUrLs = ['http://localhost'];
     
     
@@ -56,6 +61,11 @@ export class InfraStack extends cdk.Stack {
     // const lambdaDoctorGet = createPythonLambda(this, 'doctors_get');
     // const lambdaDoctorList = createPythonLambda(this, 'doctors_list');
     // const lambdaDoctorDelete = createPythonLambda(this, 'doctors_delete');
+    
+    // lambdaDoctorCreate.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
+    // lambdaDoctorGet.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
+    // lambdaDoctorList.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
+    // lambdaDoctorDelete.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
     
     // dynamoDoctorsTable.grantReadWriteData(lambdaDoctorCreate);
     // dynamoDoctorsTable.grantReadData(lambdaDoctorGet);
