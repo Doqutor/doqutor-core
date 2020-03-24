@@ -76,6 +76,7 @@ export class InfraStack extends cdk.Stack {
     dynamoDoctorsTable.grantReadData(lambdaDoctorGet);
     dynamoDoctorsTable.grantReadData(lambdaDoctorList);
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorDelete);
+    dynamoDoctorsTable.grantReadWriteData(lambdaDoctorUpdate)
 
     
   
@@ -88,7 +89,7 @@ export class InfraStack extends cdk.Stack {
     resourceDoctors.addCorsPreflight({
       // TODO: specific allow origins
       allowOrigins: apigateway.Cors.ALL_ORIGINS,
-      allowMethods: ['GET', 'P{OST']
+      allowMethods: ['GET', 'POST']
     })
     resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList));
     resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate));

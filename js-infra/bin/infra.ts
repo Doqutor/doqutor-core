@@ -6,7 +6,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import {randomBytes} from 'crypto';
 
-let config: {prefix: String} = {prefix: os.userInfo().username + '-' + randomBytes(3).toString('hex')};
+let config: {prefix: String} = {prefix: os.userInfo().username.toLowerCase() + '-' + randomBytes(3).toString('hex')};
+// crm-users-login domain name won't allow upper case letters
 
 if (fs.existsSync(__dirname + '/../config.json')) {
     config = require(__dirname + '/../config.json');
