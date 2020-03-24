@@ -3,6 +3,7 @@ import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
 import { createPythonLambda } from './common/lambda';
+import {Watchful} from 'cdk-watchful';
 
 export class InfraStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -77,6 +78,10 @@ export class InfraStack extends cdk.Stack {
     dynamoDoctorsTable.grantReadData(lambdaDoctorList);
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorDelete);
 
+    /*
+     * Lambdas for IR
+     */
+    const lambdaSwitchOffCloudWatch = createPythonLambda(this, 'switch_off_cloudwatch');
     
   
     /*
@@ -102,5 +107,12 @@ export class InfraStack extends cdk.Stack {
     resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet));
     resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate));
     resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete));
+
+    /*
+     * Monitoring
+     */
+    const wf = new Watchful(this, 'watchful', {
+      alarmEmail: '747b13b7.groups.unsw.edu.au@apac.teams.ms'
+    });
   }
 }
