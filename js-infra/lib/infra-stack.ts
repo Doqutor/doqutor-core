@@ -114,5 +114,8 @@ export class InfraStack extends cdk.Stack {
     const wf = new Watchful(this, 'watchful', {
       alarmEmail: '747b13b7.groups.unsw.edu.au@apac.teams.ms'
     });
+    wf.watchApiGateway('Watcher API Gateway', api);
+    wf.watchDynamoTable('Watcher Db Doctors', dynamoDoctorsTable);
+    wf.watchDynamoTable('Watcher Db Patients', dynamoPatientsTable);
   }
 }
