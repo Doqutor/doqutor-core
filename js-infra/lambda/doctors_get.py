@@ -8,14 +8,18 @@ from decimal import Decimal
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
+CORSheaders = { 'Access-Control-Allow-Origin': '*' }
+
 def main(event, context):
     LOG.info("EVENT: " + json.dumps(event))
 
     #params = event['queryStringParameters']
     params = event['pathParameters']
+    ####
     if params is None:
         return {
         'statusCode': 400,
+        'headers': CORSheaders,
         'body': json.dumps({"error": "aws plz"})
         }
 
@@ -24,14 +28,17 @@ def main(event, context):
     except KeyError:
         return {
             'statusCode': 400,
+            'headers': CORSheaders,
             'body': json.dumps({"error": "aws wtf. Missing field: id."})
         }
     else:
         if id_ == '':
             return {
             'statusCode': 400,
+            'headers': CORSheaders,
             'body': json.dumps({"error": "aws has errored. id cannot be empty."})
         }
+    ####
     
     return doctor_get(id_)
 
@@ -46,11 +53,13 @@ def doctor_get(id_):
     if "Item" in response:
         return {
             'statusCode': 200,
+            'headers': CORSheaders,
             'body': json.dumps(response["Item"], default=decimal_default)
         }
     else:
         return {
             'statusCode': 400,
+            'headers': CORSheaders,
             'body': json.dumps({"error": f"Doctor with id {id_} does not exist."})
         }
 
