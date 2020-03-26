@@ -7,14 +7,19 @@ import uuid
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
+CORSheaders = {'Access-Control-Allow-Origin': '*' }
+
 def main(event, context):
     LOG.info("EVENT: " + json.dumps(event))
 
     #params = event['queryStringParameters']
     params = event['pathParameters']
+
+    # TODO: probably remove this checking
     if params is None:
         return {
         'statusCode': 400,
+        'headers': CORSheaders,
         'body': '{"error": "aws wtf"}'
         }
 
@@ -23,14 +28,17 @@ def main(event, context):
     except KeyError:
         return {
             'statusCode': 400,
+            'headers': CORSheaders,
             'body': '{"error": "aws no. Missing field: id."}'
         }
     else:
         if id_ == '':
             return {
             'statusCode': 400,
+            'headers': CORSheaders,
             'body': '{"error": "aws bad. id cannot be empty."}'
         }
+    # end remove
     
     return doctor_delete(id_)
 
@@ -56,6 +64,8 @@ def doctor_delete(id_):
         
     return {
         'statusCode': statusCode,
-        'headers': {'Content-Type': 'text/plain'},
+        'headers': CORSheaders,
         'body': body
     }
+
+# 'headers': {'Content-Type': 'text/plain'},
