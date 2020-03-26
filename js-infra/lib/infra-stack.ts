@@ -77,6 +77,7 @@ export class InfraStack extends cdk.Stack {
     dynamoDoctorsTable.grantReadData(lambdaDoctorGet);
     dynamoDoctorsTable.grantReadData(lambdaDoctorList);
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorDelete);
+    dynamoDoctorsTable.grantReadWriteData(lambdaDoctorUpdate)
 
     /*
      * Lambdas for IR
