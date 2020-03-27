@@ -2,7 +2,7 @@ import * as cdk from '@aws-cdk/core';
 import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
-import { createPythonLambda } from './common/lambda';
+import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
 import {Watchful} from 'cdk-watchful';
 
 export class InfraStack extends cdk.Stack {
@@ -41,7 +41,7 @@ export class InfraStack extends cdk.Stack {
         postConfirmation: lambdaCognitoHandler
       },
     });
-    (authPool.node.defaultChild as cognito.CfnUserPool).userPoolAddOns = {advancedSecurityMode: 'YES'}; 
+    (authPool.node.defaultChild as cognito.CfnUserPool).userPoolAddOns = {advancedSecurityMode: 'AUDIT'};
     new cognito.CfnUserPoolDomain(this, 'crm-users-login', {
       domain: `login-${this.stackName}`,
       userPoolId: authPool.userPoolId
@@ -83,7 +83,7 @@ export class InfraStack extends cdk.Stack {
     /*
      * Lambdas for IR
      */
-    const lambdaSwitchOffCloudWatch = createPythonLambda(this, 'switch_off_cloudwatch');
+    const helloWorldLambda = createTypeScriptLambda(this, 'hello_world');
     
   
     /*
@@ -109,6 +109,16 @@ export class InfraStack extends cdk.Stack {
     resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet));
     resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate));
     resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete));
+
+    const test_gateway = new apigateway.RestApi(this, 'test_gateway');
+
+    const helloworld_resource = test_gateway.root.addResource("helloworld");
+    helloworld_resource.addCorsPreflight({
+      // TODO: specific allow origins
+      allowOrigins: apigateway.Cors.ALL_ORIGINS,
+      allowMethods: ['GET', 'POST']
+    });
+    helloworld_resource.addMethod('GET', new apigateway.LambdaIntegration(helloWorldLambda));
 
     /*
      * Monitoring
