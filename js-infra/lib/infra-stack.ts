@@ -4,11 +4,13 @@ import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
 import {Watchful} from 'cdk-watchful';
+import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
 
 export class InfraStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-    
+
+
     const dynamoDoctorsTable = new dynamodb.Table(this, "doctors", {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING }
     });
@@ -24,8 +26,8 @@ export class InfraStack extends cdk.Stack {
     const lambdaCognitoHandler = createPythonLambda(this, 'cognito_trigger');
     dynamoDoctorsTable.grantReadWriteData(lambdaCognitoHandler);
     dynamoPatientsTable.grantReadWriteData(lambdaCognitoHandler);
-    lambdaCognitoHandler.addEnvironment("DOCTOR_TABLE", dynamoDoctorsTable.tableName)
-    lambdaCognitoHandler.addEnvironment("PATIENT_TABLE", dynamoPatientsTable.tableName)
+    lambdaCognitoHandler.addEnvironment("DOCTOR_TABLE", dynamoDoctorsTable.tableName);
+    lambdaCognitoHandler.addEnvironment("PATIENT_TABLE", dynamoPatientsTable.tableName);
     
     const authPool = new cognito.UserPool(this, 'crm-users', {
       customAttributes: {
@@ -78,12 +80,12 @@ export class InfraStack extends cdk.Stack {
     dynamoDoctorsTable.grantReadData(lambdaDoctorGet);
     dynamoDoctorsTable.grantReadData(lambdaDoctorList);
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorDelete);
-    dynamoDoctorsTable.grantReadWriteData(lambdaDoctorUpdate)
+    dynamoDoctorsTable.grantReadWriteData(lambdaDoctorUpdate);
 
     /*
      * Lambdas for IR
      */
-    const helloWorldLambda = createTypeScriptLambda(this, 'hello_world');
+
     
   
     /*
@@ -96,7 +98,7 @@ export class InfraStack extends cdk.Stack {
       // TODO: specific allow origins
       allowOrigins: apigateway.Cors.ALL_ORIGINS,
       allowMethods: ['GET', 'POST']
-    })
+    });
     resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList));
     resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate));
     
@@ -110,15 +112,6 @@ export class InfraStack extends cdk.Stack {
     resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate));
     resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete));
 
-    const test_gateway = new apigateway.RestApi(this, 'test_gateway');
-
-    const helloworld_resource = test_gateway.root.addResource("helloworld");
-    helloworld_resource.addCorsPreflight({
-      // TODO: specific allow origins
-      allowOrigins: apigateway.Cors.ALL_ORIGINS,
-      allowMethods: ['GET', 'POST']
-    });
-    helloworld_resource.addMethod('GET', new apigateway.LambdaIntegration(helloWorldLambda));
 
     /*
      * Monitoring
@@ -129,5 +122,12 @@ export class InfraStack extends cdk.Stack {
     wf.watchApiGateway('Watcher API Gateway', api);
     wf.watchDynamoTable('Watcher Db Doctors', dynamoDoctorsTable);
     wf.watchDynamoTable('Watcher Db Patients', dynamoPatientsTable);
+
+    /*
+     * CloudTrail
+     */
+    const trail = new cloudtrail.Trail(this, 'cloudwatch', {
+      sendToCloudWatchLogs: true
+    });
   }
 }
