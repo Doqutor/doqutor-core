@@ -40,7 +40,7 @@ export class InfraStack extends cdk.Stack {
         postConfirmation: lambdaCognitoHandler
       },
     });
-    (authPool.node.defaultChild as cognito.CfnUserPool).userPoolAddOns = {advancedSecurityMode: 'AUDIT'}; 
+    (authPool.node.defaultChild as cognito.CfnUserPool).userPoolAddOns = {advancedSecurityMode: 'ENFORCED'}; 
     new cognito.CfnUserPoolDomain(this, 'crm-users-login', {
       domain: `login-${this.stackName}`,
       userPoolId: authPool.userPoolId
