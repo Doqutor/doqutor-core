@@ -5,6 +5,7 @@ import * as cognito from '@aws-cdk/aws-cognito';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
 import {Watchful} from 'cdk-watchful';
 import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
+import * as events from '@aws-cdk/aws-events';
 
 export class InfraStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -85,7 +86,7 @@ export class InfraStack extends cdk.Stack {
     /*
      * Lambdas for IR
      */
-
+    const hello_world_lambda = createTypeScriptLambda(this, 'helloWorldLambda');
     
   
     /*
@@ -129,5 +130,17 @@ export class InfraStack extends cdk.Stack {
     const trail = new cloudtrail.Trail(this, 'cloudwatch', {
       sendToCloudWatchLogs: true
     });
+
+
+    const eventPattern: events.EventPattern = {
+          // to be filled
+    };
+    const optionsCloudTrailEvent: events.OnEventOptions = {
+      description: 'Description: if logging is stopped this event will fire',
+      eventPattern: eventPattern,
+      ruleName: 'ruleName',
+      // target
+    };
+    trail.onCloudTrailEvent('eventStopLoggingCDK', optionsCloudTrailEvent);
   }
 }
