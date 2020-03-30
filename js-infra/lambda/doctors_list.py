@@ -8,10 +8,8 @@ from decimal import Decimal
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
-CORSheaders = { 'Access-Control-Allow-Origin': '*' }
-
 def main(event, context):
-    LOG.info("EVENT (delete): " + json.dumps(event))
+    LOG.info("EVENT (list): " + json.dumps(event))
     
     return doctor_list()
 
@@ -24,7 +22,6 @@ def doctor_list():
 
     return {
         'statusCode': 200,
-        'headers': CORSheaders,
         'body': json.dumps(response["Items"], default=decimal_default)
     }
     #'body': str(response["Items"])

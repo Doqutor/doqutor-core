@@ -5,6 +5,7 @@ import * as cognito from '@aws-cdk/aws-cognito';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
 import {Watchful} from 'cdk-watchful';
 import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
+import { RemovalPolicy } from '@aws-cdk/core';
 
 export class InfraStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -12,11 +13,13 @@ export class InfraStack extends cdk.Stack {
 
 
     const dynamoDoctorsTable = new dynamodb.Table(this, "doctors", {
-        partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING }
+        partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+        removalPolicy: RemovalPolicy.DESTROY
     });
     
     const dynamoPatientsTable = new dynamodb.Table(this, "patients", {
-        partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING }
+        partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+        removalPolicy: RemovalPolicy.DESTROY
     });
     
     
@@ -34,16 +37,21 @@ export class InfraStack extends cdk.Stack {
         type: new cognito.StringAttribute()
       },
       requiredAttributes: {
-        email: true,
-        phoneNumber: true,
-        fullname: true,
-        birthdate: true
+        email: true
       },
       lambdaTriggers: {
         postConfirmation: lambdaCognitoHandler
-      },
+      }
     });
-    (authPool.node.defaultChild as cognito.CfnUserPool).userPoolAddOns = {advancedSecurityMode: 'ENFORCED'};
+    const cfnAuthPool = authPool.node.defaultChild as cognito.CfnUserPool;
+    cfnAuthPool.userPoolAddOns = {
+      advancedSecurityMode: 'ENFORCED'
+    };
+    cfnAuthPool.usernameConfiguration = { caseSensitive: false };
+    // (authPool.node.defaultChild as cognito.CfnUserPool).emailConfiguration = {
+    //   sourceArn: "arn:aws:ses:us-west-2:018904123317:identity/z5122502.cs9447@cse.unsw.edu.au"
+    // };
+
     new cognito.CfnUserPoolDomain(this, 'crm-users-login', {
       domain: `login-${this.stackName}`,
       userPoolId: authPool.userPoolId
@@ -51,14 +59,16 @@ export class InfraStack extends cdk.Stack {
     
     const authClient = new cognito.UserPoolClient(this, 'app_client', {
       userPool: authPool,
-      enabledAuthFlows: [cognito.AuthFlow.USER_PASSWORD]
+      enabledAuthFlows: [cognito.AuthFlow.USER_PASSWORD],
+      generateSecret: true
     });
     const cfnAuthClient = authClient.node.defaultChild as cognito.CfnUserPoolClient;
+    cfnAuthClient.readAttributes = ['email', 'email_verified', 'phone_number', 'phone_number_verified','custom:type'];
+    cfnAuthClient.preventUserExistenceErrors = "ENABLED";
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
-    cfnAuthClient.allowedOAuthFlows = ['implicit'];
-    cfnAuthClient.allowedOAuthScopes = ['openid'];
+    cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
+    cfnAuthClient.allowedOAuthScopes = ['openid', 'phone'];
     cfnAuthClient.callbackUrLs = ['http://localhost'];
-    
     
     
     /*
@@ -91,27 +101,39 @@ export class InfraStack extends cdk.Stack {
     /*
      * API Gateway
      */
-    const api = new apigateway.RestApi(this, 'application');
-    
-    const resourceDoctors = api.root.addResource("doctors");
-    resourceDoctors.addCorsPreflight({
-      // TODO: specific allow origins
-      allowOrigins: apigateway.Cors.ALL_ORIGINS,
-      allowMethods: ['GET', 'POST']
+    const api = new apigateway.RestApi(this, 'application', {
+      defaultCorsPreflightOptions: {
+
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
+      }
     });
-    resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList));
-    resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate));
+    const apiAuth = new apigateway.CfnAuthorizer(this, 'cognito-auth', {
+      name: 'cognito-auth',
+      identitySource: 'method.request.header.Authorization',
+      restApiId: api.restApiId,
+      type: apigateway.AuthorizationType.COGNITO,
+      providerArns: [authPool.userPoolArn]
+    });
+    const resourceDoctors = api.root.addResource('doctors');
+    resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList), {
+      authorizer: {
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+        authorizerId: apiAuth.ref
+      }
+    });
+    resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate), {
+      authorizer: {
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+        authorizerId: apiAuth.ref
+      }
+    });
+
     
     const resourceDoctorId = resourceDoctors.addResource('{id}');
-    resourceDoctorId.addCorsPreflight({
-      // TODO: specific allow origins
-      allowOrigins: apigateway.Cors.ALL_ORIGINS,
-      allowMethods: ['GET', 'PUT', 'DELETE']
-    });
     resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet));
     resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate));
     resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete));
-
 
     /*
      * Monitoring
