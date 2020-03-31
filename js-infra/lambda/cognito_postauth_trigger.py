@@ -10,6 +10,11 @@ LOG.setLevel(logging.INFO)
 def main(event, context):
     if event["request"]["userAttributes"]["sub"]:
         write_to_ddb(event)
+    else:
+        raise Exception("some random weird error occurred")
+    
+    return event
+    
 
 def write_to_ddb(event):
     doctor_table_name = os.environ.get('DOCTOR_TABLE')
@@ -49,7 +54,6 @@ def write_to_ddb(event):
         }) 
         LOG.info(f"{attr['custom:type']} account with id {attr['sub']} created")
 
-    return event
 
 
     
