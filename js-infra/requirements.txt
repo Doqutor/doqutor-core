@@ -53,8 +53,6 @@ cdk-watchful==0.4.6
 certifi==2019.11.28
 constructs==2.0.0
 docutils==0.15.2
-# Editable install with no version control (infrastructure==0.0.1)
--e /Users/bhumikasinghal/Documents/GitHub/pierre-appreciation-society/infrastructure/infrastructure
 jmespath==0.9.5
 jsii==1.1.0
 numpy==1.17.0
