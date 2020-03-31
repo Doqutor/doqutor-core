@@ -26,7 +26,7 @@ export class InfraStack extends cdk.Stack {
     /*
      * Cognito and user authentication
      */
-    const lambdaCognitoHandler = createPythonLambda(this, 'cognito_trigger');
+    const lambdaCognitoHandler = createPythonLambda(this, 'cognito_postauth_trigger');
     dynamoDoctorsTable.grantReadWriteData(lambdaCognitoHandler);
     dynamoPatientsTable.grantReadWriteData(lambdaCognitoHandler);
     lambdaCognitoHandler.addEnvironment("DOCTOR_TABLE", dynamoDoctorsTable.tableName);
@@ -37,10 +37,11 @@ export class InfraStack extends cdk.Stack {
         type: new cognito.StringAttribute()
       },
       requiredAttributes: {
-        email: true
+        email: true,
+        phoneNumber: true
       },
       lambdaTriggers: {
-        postConfirmation: lambdaCognitoHandler
+        postAuthentication: lambdaCognitoHandler
       }
     });
     const cfnAuthPool = authPool.node.defaultChild as cognito.CfnUserPool;
@@ -63,7 +64,7 @@ export class InfraStack extends cdk.Stack {
       generateSecret: true
     });
     const cfnAuthClient = authClient.node.defaultChild as cognito.CfnUserPoolClient;
-    cfnAuthClient.readAttributes = ['email', 'email_verified', 'phone_number', 'phone_number_verified','custom:type'];
+    cfnAuthClient.readAttributes = ['email', 'email_verified', 'phone_number', 'phone_number_verified', 'custom:type'];
     cfnAuthClient.preventUserExistenceErrors = "ENABLED";
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
     cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
