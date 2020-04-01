@@ -15,14 +15,12 @@ def main(event, context):
     if params is None:
         return {
         'statusCode': 400,
-        'headers': CORSheaders,
         'body': '{"error": "aws wtf"}'
         }
     id_ = params['id']
     
     invalidBodyResponse = {
             'statusCode': 400,
-            'headers': CORSheaders,
             'body': json.dumps({"error": "Missing body field(s). Need name, age and spec."})
     }
 
@@ -71,7 +69,6 @@ def doctor_update(id_, name, age, spec):
         })
     return {
         'statusCode': statusCode,
-        'headers': CORSheaders,
         'body': body
     }
 
@@ -96,7 +93,7 @@ def validate_input(id_, name, age, spec):
     if body is not None:
         return {
             'statusCode': 400,
-            'headers': CORSheaders,
+
             'body': body
         }
     return None

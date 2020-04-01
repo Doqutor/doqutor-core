@@ -17,7 +17,6 @@ def main(event, context):
     if params is None:
         return {
         'statusCode': 400,
-        'headers': CORSheaders,
         'body': '{"error": "aws wtf"}'
         }
 
@@ -26,14 +25,12 @@ def main(event, context):
     except KeyError:
         return {
             'statusCode': 400,
-            'headers': CORSheaders,
             'body': '{"error": "aws no. Missing field: id."}'
         }
     else:
         if id_ == '':
             return {
             'statusCode': 400,
-            'headers': CORSheaders,
             'body': '{"error": "aws bad. id cannot be empty."}'
         }
     # end remove
@@ -62,7 +59,6 @@ def doctor_delete(id_):
         
     return {
         'statusCode': statusCode,
-        'headers': CORSheaders,
         'body': body
     }
 
