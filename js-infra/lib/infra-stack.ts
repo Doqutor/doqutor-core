@@ -90,7 +90,7 @@ export class InfraStack extends cdk.Stack {
     /*
      * Lambdas for IR
      */
-    const hello_world_lambda = createTypeScriptLambda(this, 'hello_world');
+    const cloudTrail_stopped_logging = createTypeScriptLambda(this, 'cloudTrail_stopped_logging');
     
   
     /*
@@ -152,7 +152,7 @@ export class InfraStack extends cdk.Stack {
     const optionsCloudTrailEvent: events.OnEventOptions = {
       description: 'Description: if logging is stopped this event will fire',
       eventPattern: eventPattern,
-      target: new eventTarget.LambdaFunction(hello_world_lambda)
+      target: new eventTarget.LambdaFunction(cloudTrail_stopped_logging)
     };
     trail.onCloudTrailEvent('eventStopLoggingCDK', optionsCloudTrailEvent);
   }
