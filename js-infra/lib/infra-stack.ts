@@ -7,7 +7,6 @@ import {Watchful} from 'cdk-watchful';
 import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
 import * as events from '@aws-cdk/aws-events';
 import { ServicePrincipals } from "cdk-constants";
-import * as lambda from '@aws-cdk/aws-lambda';
 import * as eventTarget from '@aws-cdk/aws-events-targets';
 import { RemovalPolicy } from '@aws-cdk/core';
 
@@ -31,7 +30,7 @@ export class InfraStack extends cdk.Stack {
     /*
      * Cognito and user authentication
      */
-    const lambdaCognitoHandler = createPythonLambda(this, 'cognito_postauth_trigger');
+    const lambdaCognitoHandler = createPythonLambda(this, 'util', 'cognito_postauth_trigger');
     dynamoDoctorsTable.grantReadWriteData(lambdaCognitoHandler);
     dynamoPatientsTable.grantReadWriteData(lambdaCognitoHandler);
     lambdaCognitoHandler.addEnvironment("DOCTOR_TABLE", dynamoDoctorsTable.tableName);
@@ -91,11 +90,11 @@ export class InfraStack extends cdk.Stack {
     /*
      * Lambdas for doctor CRUD
      */
-    const lambdaDoctorCreate = createPythonLambda(this, 'doctors_create');
-    const lambdaDoctorUpdate = createPythonLambda(this, 'doctors_update');
-    const lambdaDoctorGet = createPythonLambda(this, 'doctors_get');
-    const lambdaDoctorList = createPythonLambda(this, 'doctors_list');
-    const lambdaDoctorDelete = createPythonLambda(this, 'doctors_delete');
+    const lambdaDoctorCreate = createPythonLambda(this, 'api', 'doctors_create');
+    const lambdaDoctorUpdate = createPythonLambda(this, 'api', 'doctors_update');
+    const lambdaDoctorGet = createPythonLambda(this, 'api', 'doctors_get');
+    const lambdaDoctorList = createPythonLambda(this, 'api', 'doctors_list');
+    const lambdaDoctorDelete = createPythonLambda(this, 'api', 'doctors_delete');
     
     lambdaDoctorCreate.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
     lambdaDoctorUpdate.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
@@ -112,7 +111,7 @@ export class InfraStack extends cdk.Stack {
     /*
      * Lambdas for IR
      */
-    const lambdaCloudtrailLogging = createTypeScriptLambda(this, 'cloudTrail_stopped_logging');
+    const lambdaCloudtrailLogging = createTypeScriptLambda(this, 'util', 'cloudTrail_stopped_logging');
     
   
     /*

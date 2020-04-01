@@ -12,7 +12,6 @@ def main(event, context):
 
     invalidBodyResponse = {
         'statusCode': 400,
-        'headers': CORSheaders,
         'body': json.dumps({"error": "Missing body field(s). Need name, age and spec."})
     }
     
@@ -53,14 +52,14 @@ def doctor_create(id_, name, age, spec):
     except dynamodbexceptions.ConditionalCheckFailedException:
         return {
             'statusCode': 400,
-            'headers': CORSheaders,
+
             'body': json.dumps({"error": f"Doctor with id {id_} already exists. Please try adding again. And watch yourself because you are very unlucky."})
         }
         
     else:
         return {
             'statusCode': 200,
-            'headers': CORSheaders,
+
             'body': json.dumps({"message": f"Doctor created with name: {name}, age: {age}, spec: {spec} and id: {id_}"})
         }
         
@@ -82,7 +81,7 @@ def validate_input(name, age, spec):
     if body is not None:
         return {
             'statusCode': 400,
-            'headers': CORSheaders,
+
             'body': body
         }
     return None
