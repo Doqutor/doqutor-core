@@ -22,13 +22,5 @@ def doctor_list():
 
     return {
         'statusCode': 200,
-        'body': json.dumps(response["Items"], default=decimal_default)
+        'body': json.dumps(response["Items"])
     }
-    #'body': str(response["Items"])
-    # AWS is requiring body be a string, str(response["Items"]) gives Decimal('60') for numbers. hence the json.dumps
-    
-def decimal_default(obj):
-    if isinstance(obj, Decimal):
-        return int(obj)
-    return obj
-    

@@ -68,6 +68,17 @@ export class InfraStack extends cdk.Stack {
       enabledAuthFlows: [cognito.AuthFlow.USER_PASSWORD],
       generateSecret: true
     });
+    new cognito.CfnUserPoolResourceServer(this, 'doqutore-application', {
+      identifier: 'doqutore',
+      userPoolId: authPool.userPoolId,
+      name: 'doqutore',
+      scopes: [
+        {
+          scopeName: 'application',
+          scopeDescription: 'our app'
+        }
+      ]
+    });
     const cfnAuthClient = authClient.node.defaultChild as cognito.CfnUserPoolClient;
     cfnAuthClient.readAttributes = ['email', 'email_verified', 'phone_number', 'phone_number_verified', 'custom:type'];
     cfnAuthClient.preventUserExistenceErrors = "ENABLED";
@@ -114,6 +125,7 @@ export class InfraStack extends cdk.Stack {
         allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
       }
     });
+
     const apiAuth = new apigateway.CfnAuthorizer(this, 'cognito-auth', {
       name: 'cognito-auth',
       identitySource: 'method.request.header.Authorization',
@@ -121,25 +133,22 @@ export class InfraStack extends cdk.Stack {
       type: apigateway.AuthorizationType.COGNITO,
       providerArns: [authPool.userPoolArn]
     });
+    const resourceAuth = {
+      authorizer: {
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+        authorizerId: apiAuth.ref
+      },
+      authorizationScopes: ['doqutore/application']
+    };
     const resourceDoctors = api.root.addResource('doctors');
-    resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList), {
-      authorizer: {
-        authorizationType: apigateway.AuthorizationType.COGNITO,
-        authorizerId: apiAuth.ref
-      }
-    });
-    resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate), {
-      authorizer: {
-        authorizationType: apigateway.AuthorizationType.COGNITO,
-        authorizerId: apiAuth.ref
-      }
-    });
+    resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList), resourceAuth);
+    resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate), resourceAuth);
 
     
     const resourceDoctorId = resourceDoctors.addResource('{id}');
-    resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet));
-    resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate));
-    resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete));
+    resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet), resourceAuth);
+    resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate), resourceAuth);
+    resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete), resourceAuth);
 
     /*
      * Monitoring

@@ -7,7 +7,6 @@ import uuid
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
-CORSheaders = { 'Access-Control-Allow-Origin': '*' }
 
 def main(event, context):
     LOG.info("EVENT: " + json.dumps(event))
