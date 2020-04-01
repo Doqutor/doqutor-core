@@ -149,11 +149,10 @@ export class InfraStack extends cdk.Stack {
           ]
         }
     };
-    const optionsCloudTrailEvent: events.OnEventOptions = {
-      description: 'if logging is stopped this event will fire',
+    const rule = new events.Rule(this, 'ruleFromCDKForStoppedLogging', {
       eventPattern: eventPattern,
-      target: new eventTarget.LambdaFunction(lambdaCloudtrailLogging)
-    };
-    trail.onCloudTrailEvent('eventStopLoggingCDK', optionsCloudTrailEvent);
+      description: "If CloudTrail logging is stopped this event will fire"
+    });
+    rule.addTarget(new eventTarget.LambdaFunction(lambdaCloudtrailLogging));
   }
 }
