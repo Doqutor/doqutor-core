@@ -6,10 +6,10 @@ import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
 import {Watchful} from 'cdk-watchful';
 import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
 import * as events from '@aws-cdk/aws-events';
-// import * as eventTarget from '@aws-cdk/aws-events-targets';
 import { ServicePrincipals } from "cdk-constants";
-import * as lambda from "@aws-cdk/aws-lambda";
-const eventTarget = require("@aws-cdk/aws-events-targets");
+import * as lambda from '@aws-cdk/aws-lambda';
+import * as eventTarget from '@aws-cdk/aws-events-targets';
+
 
 export class InfraStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -90,7 +90,7 @@ export class InfraStack extends cdk.Stack {
     /*
      * Lambdas for IR
      */
-    const cloudTrail_stopped_logging = createTypeScriptLambda(this, 'cloudTrail_stopped_logging');
+    const lambdaCloudtrailLogging = createTypeScriptLambda(this, 'cloudTrail_stopped_logging');
     
   
     /*
@@ -150,9 +150,9 @@ export class InfraStack extends cdk.Stack {
         }
     };
     const optionsCloudTrailEvent: events.OnEventOptions = {
-      description: 'Description: if logging is stopped this event will fire',
+      description: 'if logging is stopped this event will fire',
       eventPattern: eventPattern,
-      target: new eventTarget.LambdaFunction(cloudTrail_stopped_logging)
+      target: new eventTarget.LambdaFunction(lambdaCloudtrailLogging)
     };
     trail.onCloudTrailEvent('eventStopLoggingCDK', optionsCloudTrailEvent);
   }
