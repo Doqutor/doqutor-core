@@ -12,3 +12,8 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
  * `cdk deploy`      deploy this stack to your default AWS account/region
  * `cdk diff`        compare deployed stack with current state
  * `cdk synth`       emits the synthesized CloudFormation template
+
+## Notes
+After the CDK finishes creating, go into the Cloudformation stack to find the UserPool. Go to the
+userpool and navigate to `App Client Settings`. Uncheck and recheck `openid` as Cognito is currently
+a bit funky.
