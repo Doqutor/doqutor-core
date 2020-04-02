@@ -9,6 +9,7 @@ import * as events from '@aws-cdk/aws-events';
 import { ServicePrincipals } from "cdk-constants";
 import * as eventTarget from '@aws-cdk/aws-events-targets';
 import { RemovalPolicy } from '@aws-cdk/core';
+import iam = require("@aws-cdk/aws-iam");
 
 
 export class InfraStack extends cdk.Stack {
@@ -185,5 +186,11 @@ export class InfraStack extends cdk.Stack {
       description: "If CloudTrail logging is stopped this event will fire"
     });
     rule.addTarget(new eventTarget.LambdaFunction(lambdaCloudtrailLogging));
+    const statement = new iam.PolicyStatement();
+    statement.addActions("cloudtrail:StartLogging");
+    statement.addResources("*");
+
+
+    lambdaCloudtrailLogging.addToRolePolicy(statement);
   }
 }
