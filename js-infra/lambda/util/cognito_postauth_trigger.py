@@ -43,6 +43,10 @@ def write_to_ddb(event):
             'phone_number': {
                 'Value': attr.get('phone_number', ''),
                 'Action': 'PUT'
+            },
+            'is_active': {
+                'Value': True,
+                'Action': 'PUT'
             }
         })       
         LOG.info(f"{attr['custom:type']} account with id {attr['sub']} updated")
@@ -50,7 +54,8 @@ def write_to_ddb(event):
         table.put_item(Item={
             'id': attr['sub'],
             'email': attr.get('email', ''),
-            'phone_number': attr.get('phone_number', '')
+            'phone_number': attr.get('phone_number', ''),
+            'is_active': True
         }) 
         LOG.info(f"{attr['custom:type']} account with id {attr['sub']} created")
 

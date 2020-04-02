@@ -13,6 +13,9 @@ def get_table(table_name):
     dynamodb = boto3.resource('dynamodb')
     return dynamodb.Table(table_name)
 
+def get_body(event):
+    return event['body']
+
 def send_response(statusCode=200, data={}, headers=None):
     if headers != None:
         return {
