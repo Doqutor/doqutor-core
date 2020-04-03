@@ -10,6 +10,7 @@ import { ServicePrincipals } from "cdk-constants";
 import * as eventTarget from '@aws-cdk/aws-events-targets';
 import { RemovalPolicy } from '@aws-cdk/core';
 import iam = require("@aws-cdk/aws-iam");
+import getModels, { Models } from './api-schema';
 
 
 export class InfraStack extends cdk.Stack {
@@ -84,7 +85,7 @@ export class InfraStack extends cdk.Stack {
     cfnAuthClient.preventUserExistenceErrors = "ENABLED";
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
     cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
-    cfnAuthClient.allowedOAuthScopes = ['openid', 'phone'];
+    cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', 'doqutore/application'];
     cfnAuthClient.callbackUrLs = ['http://localhost'];
     
     
@@ -125,7 +126,7 @@ export class InfraStack extends cdk.Stack {
         allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
       }
     });
-
+    const apiSchemas = getModels(this, api);
     const apiAuth = new apigateway.CfnAuthorizer(this, 'cognito-auth', {
       name: 'cognito-auth',
       identitySource: 'method.request.header.Authorization',
@@ -133,21 +134,26 @@ export class InfraStack extends cdk.Stack {
       type: apigateway.AuthorizationType.COGNITO,
       providerArns: [authPool.userPoolArn]
     });
-    const resourceAuth = {
+    const requestValidator = api.addRequestValidator('DefaultValidator', {
+      validateRequestBody: true
+    });
+
+    const resourceAuth: apigateway.MethodOptions = {
       authorizer: {
         authorizationType: apigateway.AuthorizationType.COGNITO,
         authorizerId: apiAuth.ref
       },
+      requestValidator: requestValidator,
       authorizationScopes: ['doqutore/application']
     };
     const resourceDoctors = api.root.addResource('doctors');
     resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList), resourceAuth);
-    resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate), resourceAuth);
+    resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate), {...resourceAuth, requestModels: {'application/json': apiSchemas[Models.doctor]}});
 
     
     const resourceDoctorId = resourceDoctors.addResource('{id}');
     resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet), resourceAuth);
-    resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate), resourceAuth);
+    resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate), {...resourceAuth, requestModels: {'application/json': apiSchemas[Models.doctor]}});
     resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete), resourceAuth);
 
     /*
