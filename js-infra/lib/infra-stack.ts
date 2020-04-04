@@ -9,7 +9,7 @@ import * as events from '@aws-cdk/aws-events';
 import { ServicePrincipals } from "cdk-constants";
 import * as eventTarget from '@aws-cdk/aws-events-targets';
 import { RemovalPolicy } from '@aws-cdk/core';
-import iam = require("@aws-cdk/aws-iam");
+import * as iam from "@aws-cdk/aws-iam";
 import getModels, { Models } from './api-schema';
 import * as sns from '@aws-cdk/aws-sns';
 import * as subs from '@aws-cdk/aws-sns-subscriptions';
@@ -116,7 +116,7 @@ export class InfraStack extends cdk.Stack {
      * Lambdas for IR
      */
     const lambdaCloudtrailLogging = createTypeScriptLambda(this, 'util', 'cloudTrail_stopped_logging');
-    
+
 
     /*
      * API Gateway
@@ -171,13 +171,34 @@ export class InfraStack extends cdk.Stack {
     /*
      * CloudTrail
      */
-    const trail = new cloudtrail.Trail(this, 'cloudwatch', {
+    const trail = new cloudtrail.Trail(this, 'CloudTrail', {
       sendToCloudWatchLogs: true
     });
+
 
     /*
     * Infrastructure for cloudTrail IR
      */
+    const cloudTrailPolicyStatementLambda = new iam.PolicyStatement();
+    cloudTrailPolicyStatementLambda.addResources(trail.trailArn);
+    cloudTrailPolicyStatementLambda.addActions("cloudtrail:DescribeTrails");
+    cloudTrailPolicyStatementLambda.addActions("cloudtrail:GetTrailStatus");
+    cloudTrailPolicyStatementLambda.addActions("cloudtrail:StartLogging");
+    cloudTrailPolicyStatementLambda.effect = iam.Effect.ALLOW;
+
+    // Attaching two policies to lambda
+    lambdaCloudtrailLogging.addToRolePolicy(cloudTrailPolicyStatementLambda);
+
+
+    /*
+    * SNS
+    */
+    const topic = new sns.Topic(this, 'CloudTrail_Disabled_SnsNotification_Topic', {
+      displayName: 'CloudTrail Disabled'
+    });
+    topic.addSubscription(new subs.EmailSubscription('bhumika28it@gmail.com'));
+    topic.grantPublish(lambdaCloudtrailLogging);
+
     const eventPattern: events.EventPattern = {
         source: ["aws.cloudtrail"],
         detail: {
@@ -189,27 +210,14 @@ export class InfraStack extends cdk.Stack {
           ]
         }
     };
-    const rule = new events.Rule(this, 'ruleFromCDKForStoppedLogging', {
-      eventPattern: eventPattern,
-      description: "If CloudTrail logging is stopped this event will fire"
-    });
-    rule.addTarget(new eventTarget.LambdaFunction(lambdaCloudtrailLogging));
-    const statement = new iam.PolicyStatement();
-    statement.addActions("cloudtrail:StartLogging");
-    statement.addResources("*");
 
-
-    lambdaCloudtrailLogging.addToRolePolicy(statement);
-
-    /*
-    * SNS
-    */
-    const topic = new sns.Topic(this, 'CloudTrail_Disabled_SnsNotification_Topic', {
-      displayName: 'CloudTrail Disabled'
+    // setting env var in lambda for subscribing to SNS
+    lambdaCloudtrailLogging.addEnvironment('SNS_ARN', topic.topicArn);
+    trail.onCloudTrailEvent('eventFromCDKForStoppedLogging', {
+      description: 'If CloudTrail logging is stopped this event will fire',
+      target : new eventTarget.LambdaFunction(lambdaCloudtrailLogging),
+      eventPattern: eventPattern
     });
 
-    rule.addTarget(new eventTarget.SnsTopic(topic));
-
-    topic.addSubscription(new subs.EmailSubscription('bhumika28it@gmail.com'));
   }
 }
