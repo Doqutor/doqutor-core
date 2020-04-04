@@ -8,6 +8,7 @@ logger.setLevel(logging.INFO)
 
 client = boto3.client('cloudtrail')
 
+
 def main(event, context):
     logger.info('Event details: %s', event['detail'])
     trail_arn = event['detail']['requestParameters']['name']

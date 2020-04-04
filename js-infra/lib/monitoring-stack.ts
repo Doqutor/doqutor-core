@@ -23,7 +23,6 @@ export class MonitoringStack extends cdk.Stack {
     });
     snsTopic.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
 
-    
     /*
     * Events for detecting that cloudtrail was turned off
     */
@@ -47,6 +46,7 @@ export class MonitoringStack extends cdk.Stack {
     });
     const lambdaCloudtrailLogging = createPythonLambda(this, 'util', 'cloudtrail_restartlog');
     lambdaCloudtrailLogging.addEnvironment('TRAIL_ARN', trail.trailArn);
+    lambdaCloudtrailLogging.addEnvironment('SNS_ARN', snsTopic.topicArn);
 
     // allow lambda to access cloudtrail
     lambdaCloudtrailLogging.addToRolePolicy(new iam.PolicyStatement({
