@@ -47,6 +47,7 @@ export class MonitoringStack extends cdk.Stack {
     const lambdaCloudtrailLogging = createPythonLambda(this, 'util', 'cloudtrail_restartlog');
     lambdaCloudtrailLogging.addEnvironment('TRAIL_ARN', trail.trailArn);
     lambdaCloudtrailLogging.addEnvironment('SNS_ARN', snsTopic.topicArn);
+    snsTopic.grantPublish(lambdaCloudtrailLogging);
 
     // allow lambda to access cloudtrail
     lambdaCloudtrailLogging.addToRolePolicy(new iam.PolicyStatement({
