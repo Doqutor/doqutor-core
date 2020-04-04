@@ -2,6 +2,7 @@ import boto3
 import os
 import json
 import logging
+from decimal import Decimal
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -18,19 +19,20 @@ def get_table(table_name):
     return dynamodb.Table(table_name)
 
 def get_body(event):
-    return event['body']
+    #return event['body']
+    return json.loads(event['body'])
 
 def send_response(statusCode=200, data={}, headers=None):
     if headers != None:
         return {
             'statusCode': statusCode,
-            'body': json.dumps({'data': data}),
+            'body': json.dumps({'data': data}, default=decimal_default),
             'headers': {**headers, **INCL_HEADERS}
         }
     else:
         return {
             'statusCode': statusCode,
-            'body': json.dumps({'data': data}),
+            'body': json.dumps({'data': data}, default=decimal_default),
             'headers': {**INCL_HEADERS}
         }
 
@@ -47,3 +49,12 @@ def send_error(statusCode=500, error='internal server error', headers=None):
             'body': json.dumps({"error": error}),
             'headers': {**INCL_HEADERS}
         }
+
+
+
+
+def decimal_default(obj):
+    if isinstance(obj, Decimal):
+        return int(obj)
+    return obj
+
