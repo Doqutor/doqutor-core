@@ -11,6 +11,8 @@ import * as eventTarget from '@aws-cdk/aws-events-targets';
 import { RemovalPolicy } from '@aws-cdk/core';
 import iam = require("@aws-cdk/aws-iam");
 import getModels, { Models } from './api-schema';
+import * as sns from '@aws-cdk/aws-sns';
+import * as subs from '@aws-cdk/aws-sns-subscriptions';
 
 
 export class InfraStack extends cdk.Stack {
@@ -22,7 +24,7 @@ export class InfraStack extends cdk.Stack {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
         removalPolicy: RemovalPolicy.DESTROY
     });
-    
+
     const dynamoPatientsTable = new dynamodb.Table(this, "patients", {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
         removalPolicy: RemovalPolicy.DESTROY
@@ -115,7 +117,7 @@ export class InfraStack extends cdk.Stack {
      */
     const lambdaCloudtrailLogging = createTypeScriptLambda(this, 'util', 'cloudTrail_stopped_logging');
     
-  
+
     /*
      * API Gateway
      */
@@ -198,5 +200,16 @@ export class InfraStack extends cdk.Stack {
 
 
     lambdaCloudtrailLogging.addToRolePolicy(statement);
+
+    /*
+    * SNS
+    */
+    const topic = new sns.Topic(this, 'CloudTrail_Disabled_SnsNotification_Topic', {
+      displayName: 'CloudTrail Disabled'
+    });
+
+    rule.addTarget(new eventTarget.SnsTopic(topic));
+
+    topic.addSubscription(new subs.EmailSubscription('bhumika28it@gmail.com'));
   }
 }
