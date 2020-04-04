@@ -11,12 +11,7 @@ models[Models.doctor] = {
     schema: {
         type: 'object',
         properties: {
-            given_name: {
-                type: 'string',
-                minLength: 1,
-                maxLength: 50
-            },
-            family_name: {
+            name: {
                 type: 'string',
                 minLength: 1,
                 maxLength: 50
@@ -30,15 +25,14 @@ models[Models.doctor] = {
                 pattern: '^\\+[0-9]+$',
                 maxLength: 16
             },
-            birth_date: {
-                type: 'string',
-                pattern: '^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$'
+            age: {
+                type: 'number'
             },
             is_active: {
                 type: 'boolean'
             }
         },
-        required: ['given_name', 'family_name', 'email', 'phone_number', 'birth_date'],
+        required: ['name', 'email', 'phone_number', 'age'],
         additionalProperties: false
     }
 };
