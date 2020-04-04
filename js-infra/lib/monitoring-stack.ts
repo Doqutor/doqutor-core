@@ -4,7 +4,7 @@ import * as cdk from '@aws-cdk/core';
 import * as sns from '@aws-cdk/aws-sns';
 import * as subscriptions from '@aws-cdk/aws-sns-subscriptions';
 import {ServicePrincipals} from 'cdk-constants';
-import * as eventTarget from '@aws-cdk/aws-events-targets';
+import * as targets from '@aws-cdk/aws-events-targets';
 import {createPythonLambda} from './common/lambda';
 import * as iam from '@aws-cdk/aws-iam';
 
@@ -56,7 +56,7 @@ export class MonitoringStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       resources: [trail.trailArn]
     }));
-    rule.addTarget(new eventTarget.LambdaFunction(lambdaCloudtrailLogging));
-    rule.addTarget(new eventTarget.SnsTopic(snsTopic));
+    rule.addTarget(new targets.LambdaFunction(lambdaCloudtrailLogging));
+    rule.addTarget(new targets.SnsTopic(snsTopic));
   }
 }
