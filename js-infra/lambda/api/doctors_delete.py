@@ -13,7 +13,7 @@ def main(event, context):
 
     try:
         table.delete_item(Key={ 
-            'id': id_
+            'id': _id
         }, ConditionExpression='attribute_exists(id)')
     except dynamodbexceptions.ConditionalCheckFailedException:
         return send_error(400, f"doctor with id {_id} does not exist")
