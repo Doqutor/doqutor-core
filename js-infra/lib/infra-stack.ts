@@ -3,11 +3,6 @@ import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
-import {Watchful} from 'cdk-watchful';
-import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
-import * as events from '@aws-cdk/aws-events';
-import { ServicePrincipals } from "cdk-constants";
-import * as eventTarget from '@aws-cdk/aws-events-targets';
 import { RemovalPolicy } from '@aws-cdk/core';
 import * as iam from "@aws-cdk/aws-iam";
 import getModels, { Models } from './api-schema';
@@ -88,12 +83,13 @@ export class InfraStack extends cdk.Stack {
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
     cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
     cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', 'doqutore/application'];
-    cfnAuthClient.callbackUrLs = ['http://localhost'];
+    cfnAuthClient.callbackUrLs = ['http://localhost', 'https://dev.aws9447.me/login'];
     
     
     /*
      * Lambdas for doctor CRUD
      */
+    const lambdaCurrentUser = createPythonLambda(this, 'api', 'current_user');
     const lambdaDoctorCreate = createPythonLambda(this, 'api', 'doctors_create');
     const lambdaDoctorUpdate = createPythonLambda(this, 'api', 'doctors_update');
     const lambdaDoctorGet = createPythonLambda(this, 'api', 'doctors_get');
@@ -112,12 +108,9 @@ export class InfraStack extends cdk.Stack {
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorDelete);
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorUpdate);
 
-    /*
-     * Lambdas for IR
-     */
-    const lambdaCloudtrailLogging = createTypeScriptLambda(this, 'util', 'cloudTrail_stopped_logging');
 
-
+    
+  
     /*
      * API Gateway
      */
@@ -140,7 +133,7 @@ export class InfraStack extends cdk.Stack {
       validateRequestBody: true
     });
 
-    const resourceAuth: apigateway.MethodOptions = {
+    const authOptions: apigateway.MethodOptions = {
       authorizer: {
         authorizationType: apigateway.AuthorizationType.COGNITO,
         authorizerId: apiAuth.ref
@@ -148,76 +141,17 @@ export class InfraStack extends cdk.Stack {
       requestValidator: requestValidator,
       authorizationScopes: ['doqutore/application']
     };
+    const resourceUser = api.root.addResource('user');
+    resourceUser.addMethod('GET', new apigateway.LambdaIntegration(lambdaCurrentUser), authOptions);
+
+
     const resourceDoctors = api.root.addResource('doctors');
-    resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList), resourceAuth);
-    resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate), {...resourceAuth, requestModels: {'application/json': apiSchemas[Models.doctor]}});
+    resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList), authOptions);
+    resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.doctor]}});
 
-    
     const resourceDoctorId = resourceDoctors.addResource('{id}');
-    resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet), resourceAuth);
-    resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate), {...resourceAuth, requestModels: {'application/json': apiSchemas[Models.doctor]}});
-    resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete), resourceAuth);
-
-    /*
-     * Monitoring
-     */
-    const wf = new Watchful(this, 'watchful', {
-      alarmEmail: '747b13b7.groups.unsw.edu.au@apac.teams.ms'
-    });
-    wf.watchApiGateway('Watcher API Gateway', api);
-    wf.watchDynamoTable('Watcher Db Doctors', dynamoDoctorsTable);
-    wf.watchDynamoTable('Watcher Db Patients', dynamoPatientsTable);
-
-    /*
-     * CloudTrail
-     */
-    const trail = new cloudtrail.Trail(this, 'CloudTrail', {
-      sendToCloudWatchLogs: true
-    });
-
-
-    /*
-    * Infrastructure for cloudTrail IR
-     */
-    const cloudTrailPolicyStatementLambda = new iam.PolicyStatement();
-    cloudTrailPolicyStatementLambda.addResources(trail.trailArn);
-    cloudTrailPolicyStatementLambda.addActions("cloudtrail:DescribeTrails");
-    cloudTrailPolicyStatementLambda.addActions("cloudtrail:GetTrailStatus");
-    cloudTrailPolicyStatementLambda.addActions("cloudtrail:StartLogging");
-    cloudTrailPolicyStatementLambda.effect = iam.Effect.ALLOW;
-
-    // Attaching two policies to lambda
-    lambdaCloudtrailLogging.addToRolePolicy(cloudTrailPolicyStatementLambda);
-
-
-    /*
-    * SNS
-    */
-    const topic = new sns.Topic(this, 'CloudTrail_Disabled_SnsNotification_Topic', {
-      displayName: 'CloudTrail Disabled'
-    });
-    topic.addSubscription(new subs.EmailSubscription('bhumika28it@gmail.com'));
-    topic.grantPublish(lambdaCloudtrailLogging);
-
-    const eventPattern: events.EventPattern = {
-        source: ["aws.cloudtrail"],
-        detail: {
-          eventSource: [
-            ServicePrincipals.CLOUD_TRAIL
-          ],
-          eventName: [
-            "StopLogging"
-          ]
-        }
-    };
-
-    // setting env var in lambda for subscribing to SNS
-    lambdaCloudtrailLogging.addEnvironment('SNS_ARN', topic.topicArn);
-    trail.onCloudTrailEvent('eventFromCDKForStoppedLogging', {
-      description: 'If CloudTrail logging is stopped this event will fire',
-      target : new eventTarget.LambdaFunction(lambdaCloudtrailLogging),
-      eventPattern: eventPattern
-    });
-
+    resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet), authOptions);
+    resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.doctor]}});
+    resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete), authOptions);
   }
 }
