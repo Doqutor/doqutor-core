@@ -13,11 +13,10 @@ def main(event, context):
 
     item = {
         'id': str(uuid.uuid4()),
-        'given_name': body['given_name'],
-        'family_name': body['family_name'],
+        'name': body['name'],
         'email': body['email'],
         'phone_number': body['phone_number'],
-        'birth_date': body['birth_date'],
+        'age': body['age'],
         'is_active': body.get('is_active', True)
     }
 
