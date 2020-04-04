@@ -6,6 +6,10 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+INCL_HEADERS = {
+    'access-control-allow-origin': '*'
+}
+
 def log_event(event):
     logger.info(json.dumps(event))
 
@@ -21,12 +25,13 @@ def send_response(statusCode=200, data={}, headers=None):
         return {
             'statusCode': statusCode,
             'body': json.dumps({'data': data}),
-            'headers': headers
+            'headers': {**headers, **INCL_HEADERS}
         }
     else:
         return {
             'statusCode': statusCode,
-            'body': json.dumps({'data': data})
+            'body': json.dumps({'data': data}),
+            'headers': {**INCL_HEADERS}
         }
 
 def send_error(statusCode=500, error='internal server error', headers=None):
@@ -34,10 +39,11 @@ def send_error(statusCode=500, error='internal server error', headers=None):
         return {
             'statusCode': statusCode,
             'body': json.dumps({"error": error}),
-            'headers': headers
+            'headers': {**headers, **INCL_HEADERS}
         }
     else:
         return {
             'statusCode': statusCode,
-            'body': json.dumps({"error": error})
+            'body': json.dumps({"error": error}),
+            'headers': {**INCL_HEADERS}
         }

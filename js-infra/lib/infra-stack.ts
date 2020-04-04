@@ -85,12 +85,13 @@ export class InfraStack extends cdk.Stack {
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
     cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
     cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', 'doqutore/application'];
-    cfnAuthClient.callbackUrLs = ['http://localhost'];
+    cfnAuthClient.callbackUrLs = ['http://localhost', 'https://dev.aws9447.me/login'];
     
     
     /*
      * Lambdas for doctor CRUD
      */
+    const lambdaCurrentUser = createPythonLambda(this, 'api', 'current_user');
     const lambdaDoctorCreate = createPythonLambda(this, 'api', 'doctors_create');
     const lambdaDoctorUpdate = createPythonLambda(this, 'api', 'doctors_update');
     const lambdaDoctorGet = createPythonLambda(this, 'api', 'doctors_get');
@@ -137,7 +138,7 @@ export class InfraStack extends cdk.Stack {
       validateRequestBody: true
     });
 
-    const resourceAuth: apigateway.MethodOptions = {
+    const authOptions: apigateway.MethodOptions = {
       authorizer: {
         authorizationType: apigateway.AuthorizationType.COGNITO,
         authorizerId: apiAuth.ref
@@ -145,15 +146,18 @@ export class InfraStack extends cdk.Stack {
       requestValidator: requestValidator,
       authorizationScopes: ['doqutore/application']
     };
-    const resourceDoctors = api.root.addResource('doctors');
-    resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList), resourceAuth);
-    resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate), {...resourceAuth, requestModels: {'application/json': apiSchemas[Models.doctor]}});
+    const resourceUser = api.root.addResource('user');
+    resourceUser.addMethod('GET', new apigateway.LambdaIntegration(lambdaCurrentUser), authOptions);
 
-    
+
+    const resourceDoctors = api.root.addResource('doctors');
+    resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList), authOptions);
+    resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.doctor]}});
+
     const resourceDoctorId = resourceDoctors.addResource('{id}');
-    resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet), resourceAuth);
-    resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate), {...resourceAuth, requestModels: {'application/json': apiSchemas[Models.doctor]}});
-    resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete), resourceAuth);
+    resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet), authOptions);
+    resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.doctor]}});
+    resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete), authOptions);
 
     /*
      * Monitoring
