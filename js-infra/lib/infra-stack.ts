@@ -3,11 +3,6 @@ import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
-import {Watchful} from 'cdk-watchful';
-import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
-import * as events from '@aws-cdk/aws-events';
-import { ServicePrincipals } from "cdk-constants";
-import * as eventTarget from '@aws-cdk/aws-events-targets';
 import { RemovalPolicy } from '@aws-cdk/core';
 import getModels, { Models } from './api-schema';
 
@@ -110,10 +105,7 @@ export class InfraStack extends cdk.Stack {
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorDelete);
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorUpdate);
 
-    /*
-     * Lambdas for IR
-     */
-    const lambdaCloudtrailLogging = createTypeScriptLambda(this, 'util', 'cloudTrail_stopped_logging');
+
     
   
     /*
@@ -158,42 +150,5 @@ export class InfraStack extends cdk.Stack {
     resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet), authOptions);
     resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.doctor]}});
     resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete), authOptions);
-
-    /*
-     * Monitoring
-     */
-    const wf = new Watchful(this, 'watchful', {
-      alarmEmail: '747b13b7.groups.unsw.edu.au@apac.teams.ms'
-    });
-    wf.watchApiGateway('Watcher API Gateway', api);
-    wf.watchDynamoTable('Watcher Db Doctors', dynamoDoctorsTable);
-    wf.watchDynamoTable('Watcher Db Patients', dynamoPatientsTable);
-
-    /*
-     * CloudTrail
-     */
-    const trail = new cloudtrail.Trail(this, 'cloudwatch', {
-      sendToCloudWatchLogs: true
-    });
-
-    /*
-    * Infrastructure for cloudTrail IR
-     */
-    const eventPattern: events.EventPattern = {
-        source: ["aws.cloudtrail"],
-        detail: {
-          eventSource: [
-            ServicePrincipals.CLOUD_TRAIL
-          ],
-          eventName: [
-            "StopLogging"
-          ]
-        }
-    };
-    const rule = new events.Rule(this, 'ruleFromCDKForStoppedLogging', {
-      eventPattern: eventPattern,
-      description: "If CloudTrail logging is stopped this event will fire"
-    });
-    rule.addTarget(new eventTarget.LambdaFunction(lambdaCloudtrailLogging));
   }
 }
