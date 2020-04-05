@@ -221,7 +221,7 @@ export class InfraStack extends cdk.Stack {
  * Infra for cloudWatch IR: Subscriptions and destinations
  */
 
-// const fn = new lambda.Function(this, 'Lambda', {});
+// const fn = new lambda.Function(this, 'Lambda');
 // //const logGroup = new LogGroup.LogGroup(this, 'LogGroup', { ... });
 
 // new SubscriptionFilter(this, 'Subscription', {
@@ -229,4 +229,8 @@ export class InfraStack extends cdk.Stack {
 //     destination: new LogsDestinations.LambdaDestination(fn),
 //     filterPattern: FilterPattern.allTerms("ERROR", "MainThread")
 // });
+
+
+// const pattern1 = FilterPattern.allTerms('doctors_get', '5555'); // reaplce with id of the honey token
+// const pattern2 = FilterPattern.allTerms('doctors_delete', '5555'); // reaplce with id of the honey token
 
