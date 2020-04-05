@@ -5,7 +5,11 @@ import * as cognito from '@aws-cdk/aws-cognito';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
 import {Watchful} from 'cdk-watchful';
 import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
+import * as LogGroup from '@aws-cdk/aws-logs';
+import * as sns from '@aws-cdk/aws-sns';
+import * as subscriptions from '@aws-cdk/aws-sns-subscriptions';
 import * as events from '@aws-cdk/aws-events';
+import * as iam from '@aws-cdk/aws-iam';
 import { ServicePrincipals } from "cdk-constants";
 import * as eventTarget from '@aws-cdk/aws-events-targets';
 import { RemovalPolicy } from '@aws-cdk/core';
@@ -173,6 +177,22 @@ export class InfraStack extends cdk.Stack {
     });
 
     /*
+     * CloudWatch logs and sns topic
+     */
+    const logGroup = new LogGroup.LogGroup(this, 'LogGroup', {
+      retention: Infinity
+    });
+
+    const snsTopic = new sns.Topic(this, 'CloudwatchAlert', {
+      displayName: 'Cloudwatch Alert'
+    });
+
+    const user = new iam.User(this, 'testUser');
+    user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
+
+    snsTopic.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
+
+    /*
     * Infrastructure for cloudTrail IR
      */
     const eventPattern: events.EventPattern = {
@@ -193,3 +213,26 @@ export class InfraStack extends cdk.Stack {
     rule.addTarget(new eventTarget.LambdaFunction(lambdaCloudtrailLogging));
   }
 }
+
+
+/*
+ * Infra for cloudWatch IR
+ */
+
+ /*
+     * Events for detecting that cloudtrail was turned off
+     */
+    const eventPattern: events.EventPattern = {
+      source: ['aws.cloudwatch'],
+      detail: {
+        eventSource: [
+          ServicePrincipals.LOGS
+        ],
+        eventName: [
+          "StopLogging",
+          "StartLogging",
+          "DeleteTrail",
+          "CreateTrail"
+        ]
+      }
+    };
