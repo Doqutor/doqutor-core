@@ -11,13 +11,11 @@ cloudtrail_client = boto3.client('cloudtrail')
 sns_client = boto3.client('sns')
 
 
-def publish_logging(client, sns_arn, event):
-    event_name = event['detail']['eventName']
-    user_name = event['detail']['userIdentity']['userName']
-    print(event)
+def publish_logging(client, sns_arn, event, subject, user):
     client.publish(
         TargetArn=sns_arn,
-        Message=f'CloudTrail event  invoked by user {user_name}. Stating cloudtrail with ARN : {sns_arn} again',
+        Subject=subject,
+        Message=f'CloudTrail event {event} invoked by user {user} for ARN {sns_arn}',
     )
 
 
@@ -29,9 +27,13 @@ def main(event, context):
     sns_arn = os.environ['SNS_ARN']
 
     if action == 'StopLogging' and trail_arn == TRAIL:
-        publish_logging(client=sns_client, sns_arn=sns_arn, event=event)
+        publish_logging(client=sns_client, sns_arn=sns_arn, event=action, subject='WARNING: CloudTrail stopped by user',
+                        user=event['detail']['userIdentity']['userName'])
         cloudtrail_client.start_logging(Name=trail_arn)
         logger.info('restarted cloudtrail with arn %s', trail_arn)
+    if action == 'StartLogging' and trail_arn == TRAIL:
+        publish_logging(client=sns_client, sns_arn=sns_arn, event=action, subject='CloudTrail started successfully',
+                        user='lambda/cloudtrail_restartlog')
 
     else:
         logger.info('some other arn or event, not our problem')
