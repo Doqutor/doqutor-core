@@ -1,4 +1,5 @@
 import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
+import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
 import * as events from '@aws-cdk/aws-events';
 import * as cdk from '@aws-cdk/core';
 import * as sns from '@aws-cdk/aws-sns';
@@ -7,6 +8,8 @@ import {ServicePrincipals} from 'cdk-constants';
 import * as targets from '@aws-cdk/aws-events-targets';
 import {createPythonLambda} from './common/lambda';
 import * as iam from '@aws-cdk/aws-iam';
+import * as dynamodb from '@aws-cdk/aws-dynamodb';
+import { Duration } from '@aws-cdk/core';
 
 export class MonitoringStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -58,5 +61,24 @@ export class MonitoringStack extends cdk.Stack {
     }));
     rule.addTarget(new targets.LambdaFunction(lambdaCloudtrailLogging));
     rule.addTarget(new targets.SnsTopic(snsTopic));
+
+    
+    /*
+    * CloudWatch rulesets here
+    */
+    // feels like i'm reinventing the wheel here
+    const ddbMetric = new cloudwatch.Metric({
+      metricName: "ConsumedReadCapacityUnits",
+      namespace: "AWS/DynamoDB",
+      statistic: "Sum"
+    }) 
+    const ddbExcessReadAlarm = new cloudwatch.Alarm(this, 'ddbExcessReadAlarm', {
+      metric: ddbMetric,
+      threshold: 240,
+      period: Duration.seconds(60),
+      evaluationPeriods: 1,
+      datapointsToAlarm: 2,
+    });
+    // TODO: test the alarm, assign sns
   }
 }
