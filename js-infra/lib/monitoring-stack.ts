@@ -21,6 +21,9 @@ export class MonitoringStack extends cdk.Stack {
     const snsTopic = new sns.Topic(this, 'CloudtrailAlert', {
       displayName: 'Cloudtrail Alert'
     });
+    const user = new iam.User(this, 'testUser');
+    user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
+
     snsTopic.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
 
     /*
@@ -57,6 +60,17 @@ export class MonitoringStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       resources: [trail.trailArn]
     }));
+
+    // allow lambda to attach policies to user
+    lambdaCloudtrailLogging.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'iam:AttachUserPolicy'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: ['*'],
+      conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
+    }));
+
     rule.addTarget(new targets.LambdaFunction(lambdaCloudtrailLogging));
     rule.addTarget(new targets.SnsTopic(snsTopic));
   }
