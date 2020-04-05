@@ -9,6 +9,9 @@ logger.setLevel(logging.INFO)
 
 cloudtrail_client = boto3.client('cloudtrail')
 sns_client = boto3.client('sns')
+iam = boto3.client('iam')
+
+
 
 
 def publish_logging(client, sns_arn, event, subject, user):
@@ -30,6 +33,10 @@ def main(event, context):
         publish_logging(client=sns_client, sns_arn=sns_arn, event=action, subject='WARNING: CloudTrail stopped by user',
                         user=event['detail']['userIdentity']['userName'])
         cloudtrail_client.start_logging(Name=trail_arn)
+
+        #Below command is used to Block a user. Do not uncomment this for testing.
+        #iam.attach_user_policy(UserName= event['detail']['userIdentity']['userName'], PolicyArn='arn:aws:iam::aws:policy/AWSDenyAll')
+
         logger.info('restarted cloudtrail with arn %s', trail_arn)
     if action == 'StartLogging' and trail_arn == TRAIL:
         publish_logging(client=sns_client, sns_arn=sns_arn, event=action, subject='CloudTrail started successfully',
