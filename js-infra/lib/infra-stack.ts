@@ -219,20 +219,4 @@ export class InfraStack extends cdk.Stack {
  * Infra for cloudWatch IR
  */
 
- /*
-     * Events for detecting that cloudtrail was turned off
-     */
-    const eventPattern: events.EventPattern = {
-      source: ['aws.cloudwatch'],
-      detail: {
-        eventSource: [
-          ServicePrincipals.LOGS
-        ],
-        eventName: [
-          "StopLogging",
-          "StartLogging",
-          "DeleteTrail",
-          "CreateTrail"
-        ]
-      }
-    };
+
