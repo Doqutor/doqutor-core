@@ -8,6 +8,7 @@ import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
 import * as LogGroup from '@aws-cdk/aws-logs';
 import * as sns from '@aws-cdk/aws-sns';
 import * as subscriptions from '@aws-cdk/aws-sns-subscriptions';
+import * as lambda from '@aws-cdk/aws-lambda';
 import * as events from '@aws-cdk/aws-events';
 import * as iam from '@aws-cdk/aws-iam';
 import { ServicePrincipals } from "cdk-constants";
@@ -192,6 +193,7 @@ export class InfraStack extends cdk.Stack {
 
     snsTopic.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
 
+
     /*
     * Infrastructure for cloudTrail IR
      */
@@ -216,7 +218,15 @@ export class InfraStack extends cdk.Stack {
 
 
 /*
- * Infra for cloudWatch IR
+ * Infra for cloudWatch IR: Subscriptions and destinations
  */
 
+// const fn = new lambda.Function(this, 'Lambda', {});
+// //const logGroup = new LogGroup.LogGroup(this, 'LogGroup', { ... });
+
+// new SubscriptionFilter(this, 'Subscription', {
+//     logGroup,
+//     destination: new LogsDestinations.LambdaDestination(fn),
+//     filterPattern: FilterPattern.allTerms("ERROR", "MainThread")
+// });
 
