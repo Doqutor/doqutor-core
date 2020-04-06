@@ -3,9 +3,8 @@ import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
-import { RemovalPolicy, Duration } from '@aws-cdk/core';
+import { RemovalPolicy } from '@aws-cdk/core';
 import getModels, { Models } from './api-schema';
-import { StreamViewType } from '@aws-cdk/aws-dynamodb';
 
 
 export class InfraStack extends cdk.Stack {
@@ -15,13 +14,11 @@ export class InfraStack extends cdk.Stack {
 
     const dynamoDoctorsTable = new dynamodb.Table(this, "doctors", {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
-        stream: StreamViewType.KEYS_ONLY,
         removalPolicy: RemovalPolicy.DESTROY
     });
     
     const dynamoPatientsTable = new dynamodb.Table(this, "patients", {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
-        stream: StreamViewType.KEYS_ONLY,
         removalPolicy: RemovalPolicy.DESTROY
     });
     
