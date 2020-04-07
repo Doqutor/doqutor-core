@@ -8,7 +8,6 @@ import {ServicePrincipals} from 'cdk-constants';
 import * as targets from '@aws-cdk/aws-events-targets';
 import {createPythonLambda} from './common/lambda';
 import * as iam from '@aws-cdk/aws-iam';
-import { Duration } from '@aws-cdk/core';
 
 export class MonitoringStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -61,24 +60,6 @@ export class MonitoringStack extends cdk.Stack {
     rule.addTarget(new targets.LambdaFunction(lambdaCloudtrailLogging));
     rule.addTarget(new targets.SnsTopic(snsTopic));
 
-    /*
-    * CloudWatch rulesets here
-    */
-    // feels like i'm reinventing the wheel here
-    // this current rulesrt applies to all dynamodb
-    const ddbMetric = new cloudwatch.Metric({
-      metricName: "ConsumedReadCapacityUnits",
-      namespace: "AWS/DynamoDB",
-      statistic: "Sum",
-    });
-    const ddbExcessReadAlarm = new cloudwatch.Alarm(this, "ddbExcessReadAlarm", {
-      metric: ddbMetric,
-      threshold: 3000,
-      period: Duration.minutes(5),
-      evaluationPeriods: 1,
-      datapointsToAlarm: 1,
-    });
-    
     
   }
 }

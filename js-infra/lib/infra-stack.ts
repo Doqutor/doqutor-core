@@ -2,8 +2,9 @@ import * as cdk from '@aws-cdk/core';
 import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
+import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
-import { RemovalPolicy } from '@aws-cdk/core';
+import { RemovalPolicy, Duration } from '@aws-cdk/core';
 import getModels, { Models } from './api-schema';
 
 
@@ -20,6 +21,37 @@ export class InfraStack extends cdk.Stack {
     const dynamoPatientsTable = new dynamodb.Table(this, "patients", {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
         removalPolicy: RemovalPolicy.DESTROY
+    });
+    
+    /*
+    * CloudWatch rulesets here
+    */
+    const ddbMetric = new cloudwatch.Metric({
+      metricName: "ConsumedReadCapacityUnits",
+      namespace: "AWS/DynamoDB",
+      statistic: "Sum",
+      dimensions: {TableName: dynamoDoctorsTable.tableName},
+    });
+    const ddbExcessReadAlarmDoc = new cloudwatch.Alarm(this, 'ddbExcessReadAlarmDoc', {
+      metric: ddbMetric,
+      threshold: 3000,
+      period: Duration.seconds(60),
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
+    });
+    // TODO: clean up here
+    const ddbMetricPat = new cloudwatch.Metric({
+      metricName: "ConsumedReadCapacityUnits",
+      namespace: "AWS/DynamoDB",
+      statistic: "Sum",
+      dimensions: {TableName: dynamoPatientsTable.tableName},
+    });
+    const ddbExcessReadAlarmPat = new cloudwatch.Alarm(this, 'ddbExcessReadAlarmPat', {
+      metric: ddbMetricPat,
+      threshold: 3000,
+      period: Duration.seconds(60),
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
     });
     
     
