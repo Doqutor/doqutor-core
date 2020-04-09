@@ -8,7 +8,8 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 INCL_HEADERS = {
-    'access-control-allow-origin': '*'
+    'access-control-allow-origin': '*',
+    'cache-control': 'no-cache'
 }
 
 def log_event(event):
