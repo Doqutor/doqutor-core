@@ -163,7 +163,7 @@ export class InfraStack extends cdk.Stack {
     const resourceUser = api.root.addResource('user');
     resourceUser.addMethod('GET', new apigateway.LambdaIntegration(lambdaCurrentUser), authOptions);
 
-
+    // Doctor
     const resourceDoctors = api.root.addResource('doctors');
     resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList), authOptions);
     resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.doctor]}});
@@ -173,6 +173,7 @@ export class InfraStack extends cdk.Stack {
     resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.doctor]}});
     resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete), authOptions);
 
+    // Patient
     const resourcePatients = api.root.addResource('patients');
     resourcePatients.addMethod('GET', new apigateway.LambdaIntegration(lambdaPatientList), authOptions);
     resourcePatients.addMethod('POST', new apigateway.LambdaIntegration(lambdaPatientCreate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.patient]}});
