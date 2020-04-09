@@ -15,6 +15,9 @@ import { ServicePrincipals } from "cdk-constants";
 import * as eventTarget from '@aws-cdk/aws-events-targets';
 import { RemovalPolicy } from '@aws-cdk/core';
 import getModels, { Models } from './api-schema';
+import * as targets from '@aws-cdk/aws-events-targets';
+//import * as SubscriptionFilter from '@aws-cdk/aws-logs.SubscriptionFilter';
+
 
 
 export class InfraStack extends cdk.Stack {
@@ -178,22 +181,64 @@ export class InfraStack extends cdk.Stack {
     });
 
     /*
-     * CloudWatch logs and sns topic
+     * CloudWatch logs
      */
     const logGroup = new LogGroup.LogGroup(this, 'LogGroup', {
       retention: Infinity
     });
 
+    /*
+     * sns topic
+     */
     const snsTopic = new sns.Topic(this, 'CloudwatchAlert', {
       displayName: 'Cloudwatch Alert'
     });
 
+    /*
+    * test user
+    */
     const user = new iam.User(this, 'testUser');
     user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
 
     snsTopic.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
 
 
+    // const logGroup = new LogGroup.LogGroup(this, 'LogGroup', {
+    //   retention: Infinity
+    // });
+
+    new SubscriptionFilter(this, 'Subscription', {
+        logGroup,
+        destination: new LogsDestinations.LambdaDestination(lambdaDoctorGet),
+        filterPattern: FilterPattern.allTerms('doctors_get', '5555') // replace with pattern below
+    });
+
+    // const pattern1 = FilterPattern.allTerms('doctors_get', '5555'); // reaplce with the actual id of the honey token
+    // const pattern2 = FilterPattern.allTerms('doctors_delete', '5555'); // reaplce with the actual id of the honey token
+
+    // Search for lines that either contain both "doctors_get" and honey token id, or
+    // both "doctors_delete" and honey token id.  
+    const pattern = FilterPattern.anyGroup(
+      ['doctors_get', '5555'],
+      ['doctors_delete', '5555'],
+      );
+
+
+    // allow lambda to attach policies to user
+    lambdaCloudtrailLogging.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'iam:AttachUserPolicy'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: ['*'],
+      conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
+    }));
+
+    //rule.addTarget(new targets.LambdaFunction(lambdaDoctorGet));
+    //rule.addTarget(new targets.SnsTopic(snsTopic));
+    }
+
+    
     /*
     * Infrastructure for cloudTrail IR
      */
@@ -209,28 +254,11 @@ export class InfraStack extends cdk.Stack {
         }
     };
     const rule = new events.Rule(this, 'ruleFromCDKForStoppedLogging', {
-      eventPattern: eventPattern,
+      eventPattern: this.eventPattern,
       description: "If CloudTrail logging is stopped this event will fire"
     });
     rule.addTarget(new eventTarget.LambdaFunction(lambdaCloudtrailLogging));
   }
 }
 
-
-/*
- * Infra for cloudWatch IR: Subscriptions and destinations
- */
-
-// const fn = new lambda.Function(this, 'Lambda');
-// //const logGroup = new LogGroup.LogGroup(this, 'LogGroup', { ... });
-
-// new SubscriptionFilter(this, 'Subscription', {
-//     logGroup,
-//     destination: new LogsDestinations.LambdaDestination(fn),
-//     filterPattern: FilterPattern.allTerms("ERROR", "MainThread")
-// });
-
-
-// const pattern1 = FilterPattern.allTerms('doctors_get', '5555'); // reaplce with id of the honey token
-// const pattern2 = FilterPattern.allTerms('doctors_delete', '5555'); // reaplce with id of the honey token
 
