@@ -105,6 +105,28 @@ export class InfraStack extends cdk.Stack {
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorDelete);
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorUpdate);
 
+    /*
+     * Lambdas for patients CRUD
+     */
+    const lambdaPatientCreate = createPythonLambda(this, 'api', 'patients_create');
+    const lambdaPatientUpdate = createPythonLambda(this, 'api', 'patients_update');
+    const lambdaPatientGet = createPythonLambda(this, 'api', 'patients_get');
+    const lambdaPatientList = createPythonLambda(this, 'api', 'patients_list');
+    const lambdaPatientDelete = createPythonLambda(this, 'api', 'patients_delete');
+    
+    lambdaPatientCreate.addEnvironment('TABLE_NAME', dynamoPatientsTable.tableName);
+    lambdaPatientUpdate.addEnvironment('TABLE_NAME', dynamoPatientsTable.tableName);
+    lambdaPatientGet.addEnvironment('TABLE_NAME', dynamoPatientsTable.tableName);
+    lambdaPatientList.addEnvironment('TABLE_NAME', dynamoPatientsTable.tableName);
+    lambdaPatientDelete.addEnvironment('TABLE_NAME', dynamoPatientsTable.tableName);
+    
+    dynamoPatientsTable.grantReadWriteData(lambdaPatientCreate);
+    dynamoPatientsTable.grantReadData(lambdaPatientGet);
+    dynamoPatientsTable.grantReadData(lambdaPatientList);
+    dynamoPatientsTable.grantReadWriteData(lambdaPatientDelete);
+    dynamoPatientsTable.grantReadWriteData(lambdaPatientUpdate);
+
+
 
     
   
@@ -150,5 +172,14 @@ export class InfraStack extends cdk.Stack {
     resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet), authOptions);
     resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.doctor]}});
     resourceDoctorId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaDoctorDelete), authOptions);
+
+    const resourcePatients = api.root.addResource('patients');
+    resourcePatients.addMethod('GET', new apigateway.LambdaIntegration(lambdaPatientList), authOptions);
+    resourcePatients.addMethod('POST', new apigateway.LambdaIntegration(lambdaPatientCreate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.patient]}});
+
+    const resourcePatientId = resourcePatients.addResource('{id}');
+    resourcePatientId.addMethod('GET', new apigateway.LambdaIntegration(lambdaPatientGet), authOptions);
+    resourcePatientId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaPatientUpdate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.patient]}});
+    resourcePatientId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaPatientDelete), authOptions);
   }
 }
