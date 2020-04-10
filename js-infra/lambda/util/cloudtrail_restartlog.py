@@ -12,8 +12,6 @@ sns_client = boto3.client('sns')
 iam = boto3.client('iam')
 
 
-
-
 def publish_logging(client, sns_arn, event, subject, user):
     client.publish(
         TargetArn=sns_arn,
@@ -29,7 +27,7 @@ def main(event, context):
 
     sns_arn = os.environ['SNS_ARN']
 
-    if action == 'StopLogging' and trail_arn == TRAIL:
+    if action == 'StopLogging':
         publish_logging(client=sns_client, sns_arn=sns_arn, event=action, subject='WARNING: CloudTrail stopped by user',
                         user=event['detail']['userIdentity']['userName'])
         cloudtrail_client.start_logging(Name=trail_arn)
@@ -38,7 +36,7 @@ def main(event, context):
         #iam.attach_user_policy(UserName= event['detail']['userIdentity']['userName'], PolicyArn='arn:aws:iam::aws:policy/AWSDenyAll')
 
         logger.info('restarted cloudtrail with arn %s', trail_arn)
-    if action == 'StartLogging' and trail_arn == TRAIL:
+    if action == 'StartLogging':
         publish_logging(client=sns_client, sns_arn=sns_arn, event=action, subject='CloudTrail started successfully',
                         user='lambda/cloudtrail_restartlog')
 
