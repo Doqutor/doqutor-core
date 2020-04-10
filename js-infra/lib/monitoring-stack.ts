@@ -58,7 +58,7 @@ export class MonitoringStack extends cdk.Stack {
         'cloudtrail:StartLogging'
       ],
       effect: iam.Effect.ALLOW,
-      resources: [trail.trailArn]
+      resources: ['*']
     }));
 
     // allow lambda to attach policies to user

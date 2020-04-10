@@ -21,4 +21,4 @@ cdk.out
 .idea/*
 tmp/
 .vscode/
-Incident Response/trails.json
+incident-response/trails.json
