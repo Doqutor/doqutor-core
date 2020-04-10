@@ -6,9 +6,21 @@ table = get_table(table_name)
 
 def main(event, context):
     log_event(event)
+    #log_event(context)
 
     params = event['pathParameters']
     _id = params['id']
+
+    # adding logging so that subscription filter on log group can see this
+    useridentity = event['requestContext']['identity']
+    userArn = useridentity['userArn']
+    sourceip = useridentity['sourceIp']
+    cognitopool = useridentity['cognitoIdentityPoolId']
+    cognitoid = useridentity['cognitoIdentityId']
+    accessKey = useridentity['accessKey']
+    logger.info(json.dumps({"reqid": _id, 
+    "userArn": userArn, "sourceip": sourceip, "cognitopool": cognitopool, "cognitoid": cognitoid, "accessKey": accessKey}))
+
 
     data = table.get_item(Key={
         'id': _id

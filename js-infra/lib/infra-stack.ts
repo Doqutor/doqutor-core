@@ -53,9 +53,10 @@ export class InfraStack extends cdk.Stack {
         email: true,
         phoneNumber: true
       },
-      lambdaTriggers: {
+      /*lambdaTriggers: {
         postAuthentication: lambdaCognitoHandler
-      }
+      }*/
+      // this is commented out because of problems when I deploy lambdas in util folder
     });
     const cfnAuthPool = authPool.node.defaultChild as cognito.CfnUserPool;
     cfnAuthPool.userPoolAddOns = {
@@ -216,11 +217,44 @@ export class InfraStack extends cdk.Stack {
     const user = new iam.User(this, 'testUser');
     user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
 
+    //const lambdaBlockAWSUser = createPythonLambda(this, 'util', 'block_user');
+    const lambdaBlockAWSUser = createPythonLambda(this, 'api', 'block_user2');
+
+    // "\"path\": \"/doctors/5555\""
+    // [type=INFO, timestamp, somecode, label=*id*, id=5555, ...]
+    // [type=INFO, timestamp=*Z, request_id="*-*", event=*reqid*5555*]
+    // the block_user2.py function is based on the above filter pattern, added using AWS console
+    // filter pattern was added using aws console because stack deployment freezes when I try to deploy it
+    /*
+    lambdaDoctorGet.logGroup.addSubscriptionFilter('getsubscription', {
+      destination: new LogsDestinations.LambdaDestination(lambdaBlockAWSUser),
+      filterPattern: LogGroup.FilterPattern.allTerms('doctors_get', '5555')
+    })
+    */
+
+    /*
+    new LogGroup.SubscriptionFilter(this, 'Subscription', {
+      logGroup: lambdaDoctorGet.logGroup,
+      destination: new LogsDestinations.LambdaDestination(lambdaBlockAWSUser),
+      filterPattern: LogGroup.FilterPattern.allTerms('doctors_get', '5555')
+    });
+    */
+
+    /*
     new LogGroup.SubscriptionFilter(this, 'Subscription', {
       logGroup,
       destination: new LogsDestinations.LambdaDestination(lambdaDoctorGet),
       filterPattern: LogGroup.FilterPattern.allTerms('doctors_get', '5555') // replace with pattern below
     });
+    */
+
+    /*
+    new LogGroup.SubscriptionFilter(this, 'Subscription', {
+      logGroup,
+      destination: new LogsDestinations.LambdaDestination(lambdaDoctorGet),
+      filterPattern: LogGroup.FilterPattern.allTerms('doctors_get', '5555') // replace with pattern below
+    });
+    */
     
     /*
     const pattern = LogGroup.FilterPattern.anyGroup(
@@ -235,6 +269,16 @@ export class InfraStack extends cdk.Stack {
     // both "doctors_delete" and honey token id.  
     
     // allow lambda to attach policies to user
+    lambdaBlockAWSUser.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'iam:AttachUserPolicy'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: ['*'],
+      conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
+    }));
+    // what about mistakes. prob want to make sure it doesn't block the root account or smth
+    /*
     lambdaCloudtrailLogging.addToRolePolicy(new iam.PolicyStatement({
       actions: [
         'iam:AttachUserPolicy'
@@ -243,6 +287,7 @@ export class InfraStack extends cdk.Stack {
       resources: ['*'],
       conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
     }));
+    */
     
     //rule.addTarget(new targets.LambdaFunction(lambdaDoctorGet));
     //rule.addTarget(new targets.SnsTopic(snsTopic));
