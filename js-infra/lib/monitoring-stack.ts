@@ -7,6 +7,8 @@ import {ServicePrincipals} from 'cdk-constants';
 import * as targets from '@aws-cdk/aws-events-targets';
 import {createPythonLambda} from './common/lambda';
 import * as iam from '@aws-cdk/aws-iam';
+import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
+import { Duration } from '@aws-cdk/core';
 
 export class MonitoringStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -58,5 +60,36 @@ export class MonitoringStack extends cdk.Stack {
     }));
     rule.addTarget(new targets.LambdaFunction(lambdaCloudtrailLogging));
     rule.addTarget(new targets.SnsTopic(snsTopic));
+
+    /*
+    * CloudWatch rulesets here
+    */
+   const ddbMetric = new cloudwatch.Metric({
+    metricName: "ConsumedReadCapacityUnits",
+    namespace: "AWS/DynamoDB",
+    statistic: "Sum",
+    dimensions: {TableName: cdk.Fn.importValue("DoctorTable")},
+  });
+  const ddbExcessReadAlarmDoc = new cloudwatch.Alarm(this, 'ddbExcessReadAlarmDoc', {
+    metric: ddbMetric,
+    threshold: 1200,
+    period: Duration.seconds(60),
+    evaluationPeriods: 1,
+    datapointsToAlarm: 1,
+  });
+  // TODO: clean up here
+  const ddbMetricPat = new cloudwatch.Metric({
+    metricName: "ConsumedReadCapacityUnits",
+    namespace: "AWS/DynamoDB",
+    statistic: "Sum",
+    dimensions: {TableName: cdk.Fn.importValue("PatientTable")},
+  });
+  const ddbExcessReadAlarmPat = new cloudwatch.Alarm(this, 'ddbExcessReadAlarmPat', {
+    metric: ddbMetricPat,
+    threshold: 1200,
+    period: Duration.seconds(60),
+    evaluationPeriods: 1,
+    datapointsToAlarm: 1,
+  });
   }
 }
