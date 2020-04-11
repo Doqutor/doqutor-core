@@ -92,7 +92,8 @@ export class InfraStack extends cdk.Stack {
     cfnAuthClient.readAttributes = ['email', 'email_verified', 'phone_number', 'phone_number_verified', 'custom:type'];
     cfnAuthClient.preventUserExistenceErrors = "ENABLED";
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
-    cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
+    //cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
+    cfnAuthClient.allowedOAuthFlows = ['implicit']; // for me to use API
     cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', 'doqutore/application'];
     cfnAuthClient.callbackUrLs = ['http://localhost', 'https://dev.aws9447.me/login'];
     
@@ -152,6 +153,11 @@ export class InfraStack extends cdk.Stack {
 
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
+      },
+      deployOptions: {
+        loggingLevel: apigateway.MethodLoggingLevel.INFO,
+        dataTraceEnabled: true
+        // add custom access logs maybe
       }
     });
     const apiSchemas = getModels(this, api);
@@ -218,7 +224,24 @@ export class InfraStack extends cdk.Stack {
     user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
 
     //const lambdaBlockAWSUser = createPythonLambda(this, 'util', 'block_user');
-    const lambdaBlockAWSUser = createPythonLambda(this, 'api', 'block_user2');
+    const lambdaBlockUser = createPythonLambda(this, 'api', 'block_user2');
+    const denyAllPolicy = new iam.PolicyStatement({
+      actions: [
+        'iam:AttachUserPolicy'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: ['*'],
+      conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
+    });
+    lambdaBlockUser.addToRolePolicy(denyAllPolicy);
+    // what about mistakes. prob want to make sure it doesn't block the root account or smth
+
+    const dirtytokensTable = new dynamodb.Table(this, "dirtyTokens", {
+      partitionKey: { name: 'token', type: dynamodb.AttributeType.STRING },
+      removalPolicy: RemovalPolicy.DESTROY
+    });
+    dirtytokensTable.grantWriteData(lambdaBlockUser);
+    lambdaBlockUser.addEnvironment('TABLE_NAME', dirtytokensTable.tableName);
 
     // "\"path\": \"/doctors/5555\""
     // [type=INFO, timestamp, somecode, label=*id*, id=5555, ...]
@@ -269,15 +292,6 @@ export class InfraStack extends cdk.Stack {
     // both "doctors_delete" and honey token id.  
     
     // allow lambda to attach policies to user
-    lambdaBlockAWSUser.addToRolePolicy(new iam.PolicyStatement({
-      actions: [
-        'iam:AttachUserPolicy'
-      ],
-      effect: iam.Effect.ALLOW,
-      resources: ['*'],
-      conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
-    }));
-    // what about mistakes. prob want to make sure it doesn't block the root account or smth
     /*
     lambdaCloudtrailLogging.addToRolePolicy(new iam.PolicyStatement({
       actions: [

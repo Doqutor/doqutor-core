@@ -15,11 +15,21 @@ def main(event, context):
     useridentity = event['requestContext']['identity']
     userArn = useridentity['userArn']
     sourceip = useridentity['sourceIp']
-    cognitopool = useridentity['cognitoIdentityPoolId']
-    cognitoid = useridentity['cognitoIdentityId']
-    accessKey = useridentity['accessKey']
+    # cognitopool = useridentity['cognitoIdentityPoolId']
+    # cognitoid = useridentity['cognitoIdentityId']
+    # accessKey = useridentity['accessKey']
+    token = None
+    if event['headers'] is not None and 'Authorization' in event['headers']:
+        token = event['headers']['Authorization']
     logger.info(json.dumps({"reqid": _id, 
-    "userArn": userArn, "sourceip": sourceip, "cognitopool": cognitopool, "cognitoid": cognitoid, "accessKey": accessKey}))
+    "userArn": userArn, "sourceip": sourceip, "token": token}))
+    # "userArn": userArn, "sourceip": sourceip, cognitopool": cognitopool, "cognitoid": cognitoid, "accessKey": accessKey}))
+
+    # cognitopool, cognitoid, accessKey above are always null
+    # when called through API gateway authorizer, userArn is null but sourceip is set
+    # authorization header is in 
+    # event['headers']['Authorization']
+    # in form 'Bearer {token}'
 
 
     data = table.get_item(Key={
@@ -30,3 +40,10 @@ def main(event, context):
         return send_response(200, data["Item"])
     
     return send_error(400, f"doctor with id {_id} does not exist")
+
+
+def checkToken(token):
+    # get dirtytokens table name from env
+    # if token in table, deny
+    pass
+
