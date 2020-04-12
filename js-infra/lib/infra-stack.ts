@@ -48,6 +48,7 @@ export class InfraStack extends cdk.Stack {
     const authPool = new cognito.UserPool(this, 'crm-users', {
       customAttributes: {
         type: new cognito.StringAttribute()
+        //isActive: new cognito.StringAttribute()
       },
       requiredAttributes: {
         email: true,
@@ -142,8 +143,6 @@ export class InfraStack extends cdk.Stack {
     dynamoPatientsTable.grantReadWriteData(lambdaPatientUpdate);
 
 
-
-    
   
     /*
      * API Gateway
@@ -225,6 +224,7 @@ export class InfraStack extends cdk.Stack {
 
     //const lambdaBlockAWSUser = createPythonLambda(this, 'util', 'block_user');
     const lambdaBlockUser = createPythonLambda(this, 'api', 'block_user2');
+    // const lambdaBlockUser = createPythonLambda(this, 'api/blockuser2.zip', 'block_user2') 
     const denyAllPolicy = new iam.PolicyStatement({
       actions: [
         'iam:AttachUserPolicy'
@@ -233,7 +233,17 @@ export class InfraStack extends cdk.Stack {
       resources: ['*'],
       conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
     });
+    // 'cognito-idp:AdminDisableUser'
+    const cognitoPolicy = new iam.PolicyStatement({
+      actions: [
+        'cognito-idp:AdminDisableUser',
+        'cognito-idp:AdminUserGlobalSignOut'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: ['*'] // change this
+    });
     lambdaBlockUser.addToRolePolicy(denyAllPolicy);
+    lambdaBlockUser.addToRolePolicy(cognitoPolicy);
     // what about mistakes. prob want to make sure it doesn't block the root account or smth
 
     const dirtytokensTable = new dynamodb.Table(this, "dirtyTokens", {
@@ -242,6 +252,7 @@ export class InfraStack extends cdk.Stack {
     });
     dirtytokensTable.grantWriteData(lambdaBlockUser);
     lambdaBlockUser.addEnvironment('TABLE_NAME', dirtytokensTable.tableName);
+    lambdaDoctorGet.addEnvironment('TOKENS_TABLE_NAME', dynamoDoctorsTable.tableName);
 
     // "\"path\": \"/doctors/5555\""
     // [type=INFO, timestamp, somecode, label=*id*, id=5555, ...]

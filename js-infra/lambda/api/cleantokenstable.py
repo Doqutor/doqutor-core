@@ -12,6 +12,9 @@ table = get_table(table_name)
 # triggered every 30 mins or something
 
 def main(event, context):
+    # get those elements for which time.time() > item['exp]
+    # and delete them from table
+
     # go through entire table
     # for each element, 
         expiry = item['exp']
