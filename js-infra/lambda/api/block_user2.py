@@ -7,6 +7,8 @@ import os
 iam = boto3.client('iam')
 cognito = boto3.client('cognito-idp')
 
+import time
+
 # this is in api folder because I get permission issues with lambdas in util folder
 
 # [type=INFO, timestamp=*Z, request_id="*-*", event=*reqid*5555*]
@@ -28,6 +30,9 @@ def main(event, context):
     # authHeader = e['token']
     e = json.loads(payload['logEvents'][0]['extractedFields']['event'])
     userArn = e['requestContext']['identity']['userArn']
+
+    # can trigger sns from lambda?
+
     if userArn is not None:
         # lambda was triggered by user -> block user
         username = userArn.split("/", 1)[1] # is this really a reliable way of getting the username?
@@ -46,8 +51,17 @@ def main(event, context):
         expiry = claims['exp']
         username = claims['username']
 
+        # the expiry in the lambda logs is in a text time format
+        # the expiry in the jwt is epoch
+        # could use a library to read jwt directly to get epoch,
+        # or avoid having to provide dependecy and convert text back to epoch
+        # or just use approximate expiry time and use current epoch or requestTimeEpoch from logs
+        # date format is based on old logs, wasn't able to verify that seconds is zero padded
+        # "Wed Apr 08 13:25:30 UTC 2020"
+        expiryepoch = int(time.mktime(time.strptime(expiry, '%a %b %d %H:%M:%S %Z %Y')))
+
         # add token to invalidated tokens database
-        item = {'token': token, 'expiry': expiry}
+        item = {'token': token, 'expiry': expiryepoch}
         # item = {'token': token, 'expiry': 100}
         data = table.put_item(Item=item)
         # need another lambda function triggered every hour or something that cleans the tokens that have expired

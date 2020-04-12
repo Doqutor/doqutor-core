@@ -48,7 +48,6 @@ export class InfraStack extends cdk.Stack {
     const authPool = new cognito.UserPool(this, 'crm-users', {
       customAttributes: {
         type: new cognito.StringAttribute()
-        //isActive: new cognito.StringAttribute()
       },
       requiredAttributes: {
         email: true,
@@ -233,7 +232,6 @@ export class InfraStack extends cdk.Stack {
       resources: ['*'],
       conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
     });
-    // 'cognito-idp:AdminDisableUser'
     const cognitoPolicy = new iam.PolicyStatement({
       actions: [
         'cognito-idp:AdminDisableUser',
@@ -248,7 +246,8 @@ export class InfraStack extends cdk.Stack {
 
     const dirtytokensTable = new dynamodb.Table(this, "dirtyTokens", {
       partitionKey: { name: 'token', type: dynamodb.AttributeType.STRING },
-      removalPolicy: RemovalPolicy.DESTROY
+      removalPolicy: RemovalPolicy.DESTROY,
+      timeToLiveAttribute: 'expiry'
     });
     dirtytokensTable.grantWriteData(lambdaBlockUser);
     dirtytokensTable.grantReadData(lambdaDoctorGet);
@@ -261,6 +260,7 @@ export class InfraStack extends cdk.Stack {
     // [type=INFO, timestamp=*Z, request_id="*-*", event=*reqid*5555*]
     // the block_user2.py function is based on the above filter pattern, added using AWS console
     // filter pattern was added using aws console because stack deployment freezes when I try to deploy it
+    
     /*
     lambdaDoctorGet.logGroup.addSubscriptionFilter('getsubscription', {
       destination: new LogsDestinations.LambdaDestination(lambdaBlockAWSUser),
@@ -273,14 +273,6 @@ export class InfraStack extends cdk.Stack {
       logGroup: lambdaDoctorGet.logGroup,
       destination: new LogsDestinations.LambdaDestination(lambdaBlockAWSUser),
       filterPattern: LogGroup.FilterPattern.allTerms('doctors_get', '5555')
-    });
-    */
-
-    /*
-    new LogGroup.SubscriptionFilter(this, 'Subscription', {
-      logGroup,
-      destination: new LogsDestinations.LambdaDestination(lambdaDoctorGet),
-      filterPattern: LogGroup.FilterPattern.allTerms('doctors_get', '5555') // replace with pattern below
     });
     */
 
