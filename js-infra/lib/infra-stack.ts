@@ -251,8 +251,10 @@ export class InfraStack extends cdk.Stack {
       removalPolicy: RemovalPolicy.DESTROY
     });
     dirtytokensTable.grantWriteData(lambdaBlockUser);
+    dirtytokensTable.grantReadData(lambdaDoctorGet);
     lambdaBlockUser.addEnvironment('TABLE_NAME', dirtytokensTable.tableName);
-    lambdaDoctorGet.addEnvironment('TOKENS_TABLE_NAME', dynamoDoctorsTable.tableName);
+    lambdaDoctorGet.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
+
 
     // "\"path\": \"/doctors/5555\""
     // [type=INFO, timestamp, somecode, label=*id*, id=5555, ...]

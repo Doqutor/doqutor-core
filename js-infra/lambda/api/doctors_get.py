@@ -34,9 +34,7 @@ def checkToken(authHeader):
     #print(type(token))
     print(token)
     #print(str(token))
-    data = tokens_table.get_item(Key={
-        'token': token
-    })
+    data = tokens_table.get_item(Key={'token': token})
     if "Item" in data:
         return False
     return True
