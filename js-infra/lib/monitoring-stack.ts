@@ -8,6 +8,7 @@ import * as targets from '@aws-cdk/aws-events-targets';
 import {createPythonLambda} from './common/lambda';
 import * as iam from '@aws-cdk/aws-iam';
 import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
+import * as cw_actions from '@aws-cdk/aws-cloudwatch-actions';
 import { Duration } from '@aws-cdk/core';
 
 export class MonitoringStack extends cdk.Stack {
@@ -46,7 +47,7 @@ export class MonitoringStack extends cdk.Stack {
     const rule = new events.Rule(this, 'ruleFromCDKForStoppedLogging', {
       eventPattern: eventPattern,
       description: "If CloudTrail logging is stopped this event will fire"
-    });
+    });  // TODO: clean up here
     const lambdaCloudtrailLogging = createPythonLambda(this, 'util', 'cloudtrail_restartlog');
     lambdaCloudtrailLogging.addEnvironment('TRAIL_ARN', trail.trailArn);
 
@@ -64,32 +65,43 @@ export class MonitoringStack extends cdk.Stack {
     /*
     * CloudWatch rulesets here
     */
-   const ddbMetric = new cloudwatch.Metric({
-    metricName: "ConsumedReadCapacityUnits",
-    namespace: "AWS/DynamoDB",
-    statistic: "Sum",
-    dimensions: {TableName: cdk.Fn.importValue("DoctorTable")},
-  });
-  const ddbExcessReadAlarmDoc = new cloudwatch.Alarm(this, 'ddbExcessReadAlarmDoc', {
-    metric: ddbMetric,
-    threshold: 1200,
-    period: Duration.seconds(60),
-    evaluationPeriods: 1,
-    datapointsToAlarm: 1,
-  });
-  // TODO: clean up here
-  const ddbMetricPat = new cloudwatch.Metric({
-    metricName: "ConsumedReadCapacityUnits",
-    namespace: "AWS/DynamoDB",
-    statistic: "Sum",
-    dimensions: {TableName: cdk.Fn.importValue("PatientTable")},
-  });
-  const ddbExcessReadAlarmPat = new cloudwatch.Alarm(this, 'ddbExcessReadAlarmPat', {
-    metric: ddbMetricPat,
-    threshold: 1200,
-    period: Duration.seconds(60),
-    evaluationPeriods: 1,
-    datapointsToAlarm: 1,
-  });
+
+    const stackName = this.stackName.replace("monitoring", "infrastructure"); // to correctly refrence other stack
+    const snsTopicCw = new sns.Topic(this, 'CloudwatchAlert', {
+      displayName: 'Cloudwatch Alert'
+    });
+    snsTopicCw.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
+
+    const ddbMetric = new cloudwatch.Metric({
+      metricName: "ConsumedReadCapacityUnits",
+      namespace: "AWS/DynamoDB",
+      statistic: "Sum",
+      dimensions: {TableName: cdk.Fn.importValue(stackName+"-DoctorTable")},
+    });
+    const ddbExcessReadAlarmDoc = new cloudwatch.Alarm(this, 'ddbExcessReadAlarmDoc', {
+      metric: ddbMetric,
+      threshold: 1200,
+      period: Duration.seconds(60),
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
+    });
+
+    const ddbMetricPat = new cloudwatch.Metric({
+      metricName: "ConsumedReadCapacityUnits",
+      namespace: "AWS/DynamoDB",
+      statistic: "Sum",
+      dimensions: {TableName: cdk.Fn.importValue(stackName+"-PatientTable")},
+    });
+    const ddbExcessReadAlarmPat = new cloudwatch.Alarm(this, 'ddbExcessReadAlarmPat', {
+      metric: ddbMetricPat,
+      threshold: 1200,
+      period: Duration.seconds(60),
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
+    });
+
+    // binding sns topic to cloudwatch alarm
+    ddbExcessReadAlarmDoc.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
+    ddbExcessReadAlarmPat.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
   }
 }

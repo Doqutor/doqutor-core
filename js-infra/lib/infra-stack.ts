@@ -16,13 +16,13 @@ export class InfraStack extends cdk.Stack {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
         removalPolicy: RemovalPolicy.DESTROY
     });
+
     /* export physical id value for table for use in monitoring stack
     * exportName is what's visible to other stacks
     */
-    // TODO: attach unique stack
     new cdk.CfnOutput(this, 'DoctorTable', {
       value: dynamoDoctorsTable.tableName,
-      exportName: "DoctorTable"
+      exportName: this.stackName + "-DoctorTable"
     });
     
     const dynamoPatientsTable = new dynamodb.Table(this, "patients", {
@@ -31,7 +31,7 @@ export class InfraStack extends cdk.Stack {
     });
     new cdk.CfnOutput(this, 'PatientTable', {
       value: dynamoPatientsTable.tableName,
-      exportName: "PatientTable"
+      exportName: this.stackName + "-PatientTable"
     });
     
     
