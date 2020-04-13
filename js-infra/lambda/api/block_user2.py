@@ -6,6 +6,7 @@ import boto3
 import os
 iam = boto3.client('iam')
 cognito = boto3.client('cognito-idp')
+sns = boto3.client('sns')
 
 import time
 
@@ -13,11 +14,14 @@ import time
 
 # [type=INFO, timestamp=*Z, request_id="*-*", event=*reqid*5555*]
 # logger.info(json.dumps({"reqid": _id, "userArn": userArn, "sourceip": sourceip, "cognitopool": cognitopool, "cognitoid": cognitoid, "accessKey": accessKey}))
-# [type=INFO, timestamp=*Z, requestid=*-*, event=*5555*]
+# [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb*]
+# [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb* || event=*5555*]
+
 
 table_name = os.environ.get('TABLE_NAME')
 table = get_table(table_name)
-userpoolid = 'ap-southeast-2_CzNUhN04s' 
+userpoolid = 'ap-southeast-2_CzNUhN04s'
+snsarn = os.environ.get('SNS_TOPIC_ARN')
 
 def main(event, context):
     encodeddata = event['awslogs']['data']
@@ -31,7 +35,7 @@ def main(event, context):
     e = json.loads(payload['logEvents'][0]['extractedFields']['event'])
     userArn = e['requestContext']['identity']['userArn']
 
-    # can trigger sns from lambda?
+    # todo: can trigger sns from lambda?
 
     if userArn is not None:
         # lambda was triggered by user -> block user
@@ -39,6 +43,7 @@ def main(event, context):
         print(username)
         #Below command is used to Block a user. Do not uncomment this for testing.
         #iam.attach_user_policy(UserName = username, PolicyArn='arn:aws:iam::aws:policy/AWSDenyAll')
+        sns.publish(TopicArn=snsarn, Message=f'Honeytoken triggered by AWS user {username}. User has been blocked.')
     elif e['headers'] is not None and 'Authorization' in e['headers']:
         # lambda triggered through api call -> block cognito user and invalidate token
 
@@ -46,7 +51,7 @@ def main(event, context):
         authHeader = e['headers']['Authorization']
         token = authHeader.split("Bearer ", 1)[1]
         # check split failure
-        print(token)
+        # print(token)
         claims = e['requestContext']['authorizer']['claims']
         expiry = claims['exp']
         username = claims['username']
@@ -62,9 +67,8 @@ def main(event, context):
 
         # add token to invalidated tokens database
         item = {'token': token, 'expiry': expiryepoch}
-        # item = {'token': token, 'expiry': 100}
         data = table.put_item(Item=item)
-        # need another lambda function triggered every hour or something that cleans the tokens that have expired
+        # old tokens cleared with dynamodb ttl
 
         # sign out and disable user
         # force password change with mfa or something?
@@ -79,6 +83,8 @@ def main(event, context):
         UserPoolId = userpoolid,
         Username = username
         )
+
+        sns.publish(TopicArn=snsarn, Message=f'Honeytoken triggered by cognito user {username}. User has been blocked.')
 
         # access vs id tokens - how to invalidate both?
     else:
@@ -99,3 +105,6 @@ def getTokenExpiry(token):
     return claims['exp']
 '''
 # https://github.com/awslabs/aws-support-tools/blob/master/Cognito/decode-verify-jwt/decode-verify-jwt.py
+
+# https://www.programiz.com/python-programming/datetime/strptime
+# https://stackoverflow.com/questions/7241170/how-to-convert-current-date-to-epoch-timestamp

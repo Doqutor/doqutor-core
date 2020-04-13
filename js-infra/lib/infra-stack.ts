@@ -212,10 +212,17 @@ export class InfraStack extends cdk.Stack {
     });
 
    // sns topic
+   /*
     const snsTopicCW = new sns.Topic(this, 'CloudwatchAlert', {
       displayName: 'Cloudwatch Alert'
     });
     snsTopicCW.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
+    */
+
+    const snsTopicHT = new sns.Topic(this, 'HoneytokenSNS', {
+      displayName: 'Honeytoken SNS'
+    });
+    snsTopicHT.addSubscription(new subscriptions.EmailSubscription('059aa1ad.groups.unsw.edu.au@apac.teams.ms'));
 
     // test user
     const user = new iam.User(this, 'testUser');
@@ -240,8 +247,17 @@ export class InfraStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       resources: ['*'] // change this
     });
+    const snsPolicy = new iam.PolicyStatement({
+      actions: [
+        'SNS:Publish'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: [snsTopicHT.topicArn]
+    });
     lambdaBlockUser.addToRolePolicy(denyAllPolicy);
     lambdaBlockUser.addToRolePolicy(cognitoPolicy);
+    lambdaBlockUser.addToRolePolicy(snsPolicy)
+    lambdaBlockUser.addEnvironment('SNS_TOPIC_ARN', snsTopicHT.topicArn)
     // what about mistakes. prob want to make sure it doesn't block the root account or smth
 
     const dirtytokensTable = new dynamodb.Table(this, "dirtyTokens", {

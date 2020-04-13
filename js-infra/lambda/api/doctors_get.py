@@ -15,7 +15,7 @@ def main(event, context):
 
     if event['headers'] is not None and 'Authorization' in event['headers']:
         if not checkToken(event['headers']['Authorization']):
-            return send_error(413, 'The incoming token has been revoked')
+            return send_error(401, 'The incoming token has been revoked')
 
     data = table.get_item(Key={
         'id': _id
@@ -31,9 +31,7 @@ def main(event, context):
 def checkToken(authHeader):
     # if token in table, deny
     token = authHeader.split("Bearer ", 1)[1]
-    #print(type(token))
     print(token)
-    #print(str(token))
     data = tokens_table.get_item(Key={'token': token})
     if "Item" in data:
         return False
