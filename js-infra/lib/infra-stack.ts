@@ -212,13 +212,6 @@ export class InfraStack extends cdk.Stack {
     });
 
    // sns topic
-   /*
-    const snsTopicCW = new sns.Topic(this, 'CloudwatchAlert', {
-      displayName: 'Cloudwatch Alert'
-    });
-    snsTopicCW.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
-    */
-
     const snsTopicHT = new sns.Topic(this, 'HoneytokenSNS', {
       displayName: 'Honeytoken SNS'
     });
@@ -228,6 +221,7 @@ export class InfraStack extends cdk.Stack {
     const user = new iam.User(this, 'testUser');
     user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
 
+    // lambda
     //const lambdaBlockAWSUser = createPythonLambda(this, 'util', 'block_user');
     const lambdaBlockUser = createPythonLambda(this, 'api', 'block_user2');
     // const lambdaBlockUser = createPythonLambda(this, 'api/blockuser2.zip', 'block_user2') 
@@ -245,7 +239,7 @@ export class InfraStack extends cdk.Stack {
         'cognito-idp:AdminUserGlobalSignOut'
       ],
       effect: iam.Effect.ALLOW,
-      resources: ['*'] // change this
+      resources: [authPool.userPoolArn]
     });
     const snsPolicy = new iam.PolicyStatement({
       actions: [
@@ -256,8 +250,9 @@ export class InfraStack extends cdk.Stack {
     });
     lambdaBlockUser.addToRolePolicy(denyAllPolicy);
     lambdaBlockUser.addToRolePolicy(cognitoPolicy);
-    lambdaBlockUser.addToRolePolicy(snsPolicy)
-    lambdaBlockUser.addEnvironment('SNS_TOPIC_ARN', snsTopicHT.topicArn)
+    lambdaBlockUser.addToRolePolicy(snsPolicy);
+    lambdaBlockUser.addEnvironment('SNS_TOPIC_ARN', snsTopicHT.topicArn);
+    lambdaBlockUser.addEnvironment('USERPOOL_ID', authPool.userPoolId);
     // what about mistakes. prob want to make sure it doesn't block the root account or smth
 
     const dirtytokensTable = new dynamodb.Table(this, "dirtyTokens", {
@@ -267,13 +262,13 @@ export class InfraStack extends cdk.Stack {
     });
     dirtytokensTable.grantWriteData(lambdaBlockUser);
     dirtytokensTable.grantReadData(lambdaDoctorGet);
+    dirtytokensTable.grantReadData(lambdaPatientGet);
     lambdaBlockUser.addEnvironment('TABLE_NAME', dirtytokensTable.tableName);
     lambdaDoctorGet.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
+    lambdaPatientGet.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
 
 
-    // "\"path\": \"/doctors/5555\""
-    // [type=INFO, timestamp, somecode, label=*id*, id=5555, ...]
-    // [type=INFO, timestamp=*Z, request_id="*-*", event=*reqid*5555*]
+    // [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb* || event=*5555*]
     // the block_user2.py function is based on the above filter pattern, added using AWS console
     // filter pattern was added using aws console because stack deployment freezes when I try to deploy it
     
@@ -323,7 +318,6 @@ export class InfraStack extends cdk.Stack {
       conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
     }));
     */
-    
     //rule.addTarget(new targets.LambdaFunction(lambdaDoctorGet));
     //rule.addTarget(new targets.SnsTopic(snsTopic));
   }

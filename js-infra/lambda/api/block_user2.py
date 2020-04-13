@@ -12,6 +12,8 @@ import time
 
 # this is in api folder because I get permission issues with lambdas in util folder
 
+# "\"path\": \"/doctors/5555\""
+# [type=INFO, timestamp, somecode, label=*id*, id=5555, ...]
 # [type=INFO, timestamp=*Z, request_id="*-*", event=*reqid*5555*]
 # logger.info(json.dumps({"reqid": _id, "userArn": userArn, "sourceip": sourceip, "cognitopool": cognitopool, "cognitoid": cognitoid, "accessKey": accessKey}))
 # [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb*]
@@ -20,7 +22,7 @@ import time
 
 table_name = os.environ.get('TABLE_NAME')
 table = get_table(table_name)
-userpoolid = 'ap-southeast-2_CzNUhN04s'
+userpoolid = os.environ.get('USERPOOL_ID')
 snsarn = os.environ.get('SNS_TOPIC_ARN')
 
 def main(event, context):
@@ -34,6 +36,8 @@ def main(event, context):
     # authHeader = e['token']
     e = json.loads(payload['logEvents'][0]['extractedFields']['event'])
     userArn = e['requestContext']['identity']['userArn']
+    sourceip = e['requestContext']['identity']['sourceIp']
+    requesttime = e['requestContext']['requestTime'] # should this be sent to sns as local or GMT?
 
     # todo: can trigger sns from lambda?
 
@@ -43,7 +47,7 @@ def main(event, context):
         print(username)
         #Below command is used to Block a user. Do not uncomment this for testing.
         #iam.attach_user_policy(UserName = username, PolicyArn='arn:aws:iam::aws:policy/AWSDenyAll')
-        sns.publish(TopicArn=snsarn, Message=f'Honeytoken triggered by AWS user {username}. User has been blocked.')
+        sns.publish(TopicArn=snsarn, Message=f'Honeytoken triggered by AWS user {username}\nfrom IP {sourceip}\nat {requesttime}.\n User has been blocked.')
     elif e['headers'] is not None and 'Authorization' in e['headers']:
         # lambda triggered through api call -> block cognito user and invalidate token
 
@@ -74,7 +78,6 @@ def main(event, context):
         # force password change with mfa or something?
         # can get userpool id from iss field like: "https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_CzNUhN04s"
         # but I'm not sure that that will always be accurate
-        # or maybe pass in as env variable
         response = cognito.admin_disable_user(
             UserPoolId = userpoolid,
             Username = username
@@ -84,7 +87,7 @@ def main(event, context):
         Username = username
         )
 
-        sns.publish(TopicArn=snsarn, Message=f'Honeytoken triggered by cognito user {username}. User has been blocked.')
+        sns.publish(TopicArn=snsarn, Message=f'Honeytoken triggered by cognito user {username}\nfrom IP {sourceip}\nat {requesttime}.\n User has been blocked.')
 
         # access vs id tokens - how to invalidate both?
     else:
