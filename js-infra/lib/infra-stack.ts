@@ -205,6 +205,7 @@ export class InfraStack extends cdk.Stack {
     /*
     * Honeytoken IR
     * left this in infra-stack for the moment because it needs access to the lambdas
+    * It might not need that access later
     */
     // Cloudwatch logs
     const logGroup = new LogGroup.LogGroup(this, 'LogGroup', {
@@ -272,6 +273,16 @@ export class InfraStack extends cdk.Stack {
     // the block_user2.py function is based on the above filter pattern, added using AWS console
     // filter pattern was added using aws console because stack deployment freezes when I try to deploy it
     
+    const pattern = LogGroup.FilterPattern.spaceDelimited('type', 'timestamp', 'requestid', 'event')
+    .whereString('type', '=', 'INFO')
+    .whereString('timestamp', '=', '*Z')
+    .whereString('requestid', '=', '*-*')
+    .whereString('event', '=', '*5555*');
+    lambdaPatientGet.logGroup.addSubscriptionFilter('subscription', {
+      destination: new LogsDestinations.LambdaDestination(lambdaBlockUser),
+      filterPattern: pattern
+    })
+
     /*
     lambdaDoctorGet.logGroup.addSubscriptionFilter('getsubscription', {
       destination: new LogsDestinations.LambdaDestination(lambdaBlockAWSUser),
