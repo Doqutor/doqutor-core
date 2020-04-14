@@ -47,7 +47,7 @@ export class MonitoringStack extends cdk.Stack {
     const rule = new events.Rule(this, 'ruleFromCDKForStoppedLogging', {
       eventPattern: eventPattern,
       description: "If CloudTrail logging is stopped this event will fire"
-    });  // TODO: clean up here
+    });
     const lambdaCloudtrailLogging = createPythonLambda(this, 'util', 'cloudtrail_restartlog');
     lambdaCloudtrailLogging.addEnvironment('TRAIL_ARN', trail.trailArn);
 
@@ -103,5 +103,9 @@ export class MonitoringStack extends cdk.Stack {
     // binding sns topic to cloudwatch alarm
     ddbExcessReadAlarmDoc.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
     ddbExcessReadAlarmPat.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
+
+    // creating a lambda triggered by sns topic notification
+    const debugLambda = createPythonLambda(this, 'util', 'dummy_lambda');
+    snsTopicCw.addSubscription(new subscriptions.LambdaSubscription(debugLambda));
   }
 }
