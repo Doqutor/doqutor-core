@@ -4,6 +4,7 @@ import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
 import { RemovalPolicy } from '@aws-cdk/core';
+//import * as iam from "@aws-cdk/aws-iam";
 import getModels, { Models } from './api-schema';
 //import {Watchful} from 'cdk-watchful';
 //import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
@@ -18,6 +19,7 @@ import * as iam from '@aws-cdk/aws-iam';
 import * as LogGroup from '@aws-cdk/aws-logs';
 import * as sns from '@aws-cdk/aws-sns';
 import * as LogsDestinations from '@aws-cdk/aws-logs-destinations';
+//import * as subs from '@aws-cdk/aws-sns-subscriptions';
 
 
 export class InfraStack extends cdk.Stack {
@@ -29,7 +31,7 @@ export class InfraStack extends cdk.Stack {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
         removalPolicy: RemovalPolicy.DESTROY
     });
-    
+
     const dynamoPatientsTable = new dynamodb.Table(this, "patients", {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
         removalPolicy: RemovalPolicy.DESTROY
@@ -257,33 +259,33 @@ export class InfraStack extends cdk.Stack {
     lambdaBlockUser.addEnvironment('USERPOOL_ID', authPool.userPoolId);
     // what about mistakes. prob want to make sure it doesn't block the root account or smth
 
-    const dirtytokensTable = new dynamodb.Table(this, "dirtyTokens", {
+    const revokedTokensTable = new dynamodb.Table(this, "dirtyTokens", {
       partitionKey: { name: 'token', type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
       timeToLiveAttribute: 'expiry'
     });
-    dirtytokensTable.grantWriteData(lambdaBlockUser);
-    dirtytokensTable.grantReadData(lambdaDoctorGet);
-    dirtytokensTable.grantReadData(lambdaDoctorCreate);
-    dirtytokensTable.grantReadData(lambdaDoctorDelete);
-    dirtytokensTable.grantReadData(lambdaDoctorList);
-    dirtytokensTable.grantReadData(lambdaDoctorUpdate);
-    dirtytokensTable.grantReadData(lambdaPatientGet);
-    dirtytokensTable.grantReadData(lambdaPatientCreate);
-    dirtytokensTable.grantReadData(lambdaPatientDelete);
-    dirtytokensTable.grantReadData(lambdaPatientList);
-    dirtytokensTable.grantReadData(lambdaPatientUpdate);
-    lambdaBlockUser.addEnvironment('TABLE_NAME', dirtytokensTable.tableName);
-    lambdaDoctorGet.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
-    lambdaDoctorCreate.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
-    lambdaDoctorDelete.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
-    lambdaDoctorList.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
-    lambdaDoctorUpdate.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
-    lambdaPatientGet.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
-    lambdaPatientCreate.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
-    lambdaPatientDelete.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
-    lambdaPatientList.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
-    lambdaPatientUpdate.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
+    revokedTokensTable.grantWriteData(lambdaBlockUser);
+    revokedTokensTable.grantReadData(lambdaDoctorGet);
+    revokedTokensTable.grantReadData(lambdaDoctorCreate);
+    revokedTokensTable.grantReadData(lambdaDoctorDelete);
+    revokedTokensTable.grantReadData(lambdaDoctorList);
+    revokedTokensTable.grantReadData(lambdaDoctorUpdate);
+    revokedTokensTable.grantReadData(lambdaPatientGet);
+    revokedTokensTable.grantReadData(lambdaPatientCreate);
+    revokedTokensTable.grantReadData(lambdaPatientDelete);
+    revokedTokensTable.grantReadData(lambdaPatientList);
+    revokedTokensTable.grantReadData(lambdaPatientUpdate);
+    lambdaBlockUser.addEnvironment('TABLE_NAME', revokedTokensTable.tableName);
+    lambdaDoctorGet.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaDoctorCreate.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaDoctorDelete.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaDoctorList.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaDoctorUpdate.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaPatientGet.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaPatientCreate.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaPatientDelete.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaPatientList.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaPatientUpdate.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
 
 
     // [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb* || event=*5555*]
