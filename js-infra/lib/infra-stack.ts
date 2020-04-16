@@ -12,6 +12,7 @@ import getModels, { Models } from './api-schema';
 //import { ServicePrincipals } from "cdk-constants";
 //import * as targets from '@aws-cdk/aws-events-targets';
 //import * as SubscriptionFilter from '@aws-cdk/aws-logs.SubscriptionFilter';
+//import * as lambda from '@aws-cdk/aws-lambda';
 
 // for honeytoken only, presumably to be removed when moved to monitoring-stack
 import * as subscriptions from '@aws-cdk/aws-sns-subscriptions';
@@ -19,6 +20,7 @@ import * as iam from '@aws-cdk/aws-iam';
 import * as LogGroup from '@aws-cdk/aws-logs';
 import * as sns from '@aws-cdk/aws-sns';
 import * as LogsDestinations from '@aws-cdk/aws-logs-destinations';
+import { ServicePrincipals } from 'cdk-constants';
 //import * as subs from '@aws-cdk/aws-sns-subscriptions';
 
 
@@ -257,6 +259,7 @@ export class InfraStack extends cdk.Stack {
     lambdaBlockUser.addToRolePolicy(snsPolicy);
     lambdaBlockUser.addEnvironment('SNS_TOPIC_ARN', snsTopicHT.topicArn);
     lambdaBlockUser.addEnvironment('USERPOOL_ID', authPool.userPoolId);
+    lambdaBlockUser.addPermission('cloudwatchinvokeblockuser', {principal: new iam.ServicePrincipal(ServicePrincipals.LOGS)})
     // what about mistakes. prob want to make sure it doesn't block the root account or smth
 
     const revokedTokensTable = new dynamodb.Table(this, "dirtyTokens", {
