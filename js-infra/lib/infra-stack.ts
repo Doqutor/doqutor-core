@@ -208,9 +208,10 @@ export class InfraStack extends cdk.Stack {
     * It might not need that access later
     */
     // Cloudwatch logs
+    /*
     const logGroup = new LogGroup.LogGroup(this, 'LogGroup', {
       retention: Infinity
-    });
+    });*/
 
    // sns topic
     const snsTopicHT = new sns.Topic(this, 'HoneytokenSNS', {
@@ -263,16 +264,33 @@ export class InfraStack extends cdk.Stack {
     });
     dirtytokensTable.grantWriteData(lambdaBlockUser);
     dirtytokensTable.grantReadData(lambdaDoctorGet);
+    dirtytokensTable.grantReadData(lambdaDoctorCreate);
+    dirtytokensTable.grantReadData(lambdaDoctorDelete);
+    dirtytokensTable.grantReadData(lambdaDoctorList);
+    dirtytokensTable.grantReadData(lambdaDoctorUpdate);
     dirtytokensTable.grantReadData(lambdaPatientGet);
+    dirtytokensTable.grantReadData(lambdaPatientCreate);
+    dirtytokensTable.grantReadData(lambdaPatientDelete);
+    dirtytokensTable.grantReadData(lambdaPatientList);
+    dirtytokensTable.grantReadData(lambdaPatientUpdate);
     lambdaBlockUser.addEnvironment('TABLE_NAME', dirtytokensTable.tableName);
     lambdaDoctorGet.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
+    lambdaDoctorCreate.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
+    lambdaDoctorDelete.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
+    lambdaDoctorList.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
+    lambdaDoctorUpdate.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
     lambdaPatientGet.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
+    lambdaPatientCreate.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
+    lambdaPatientDelete.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
+    lambdaPatientList.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
+    lambdaPatientUpdate.addEnvironment('TOKENS_TABLE_NAME', dirtytokensTable.tableName);
 
 
     // [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb* || event=*5555*]
     // the block_user2.py function is based on the above filter pattern, added using AWS console
     // filter pattern was added using aws console because stack deployment freezes when I try to deploy it
     
+    /*
     const pattern = LogGroup.FilterPattern.spaceDelimited('type', 'timestamp', 'requestid', 'event')
     .whereString('type', '=', 'INFO')
     .whereString('timestamp', '=', '*Z')
@@ -282,6 +300,7 @@ export class InfraStack extends cdk.Stack {
       destination: new LogsDestinations.LambdaDestination(lambdaBlockUser),
       filterPattern: pattern
     })
+    */
 
     /*
     lambdaDoctorGet.logGroup.addSubscriptionFilter('getsubscription', {

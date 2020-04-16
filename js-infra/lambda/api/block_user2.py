@@ -9,6 +9,7 @@ cognito = boto3.client('cognito-idp')
 sns = boto3.client('sns')
 
 import time
+# import sys
 
 # this is in api folder because I get permission issues with lambdas in util folder
 
@@ -39,27 +40,33 @@ def main(event, context):
     sourceip = e['requestContext']['identity']['sourceIp']
     requesttime = e['requestContext']['requestTime'] # should this be sent to sns as local or GMT?
 
-    # todo: can trigger sns from lambda?
-
     if userArn is not None:
         # lambda was triggered by user -> block user
         username = userArn.split("/", 1)[1] # is this really a reliable way of getting the username?
         print(username)
-        #Below command is used to Block a user. Do not uncomment this for testing.
-        #iam.attach_user_policy(UserName = username, PolicyArn='arn:aws:iam::aws:policy/AWSDenyAll')
-        sns.publish(TopicArn=snsarn, Message=f'Honeytoken triggered by AWS user {username}\nfrom IP {sourceip}\nat {requesttime}.\n User has been blocked.')
+        # publish(f'INCIDENT: Honeytoken triggered by AWS user {username}', f'Honeytoken triggered by AWS user {username}\nfrom IP {sourceip}\nat {requesttime}.\n User is being blocked...')
+        try:
+            pass
+            #Below command is used to Block a user. Do not uncomment this for testing.
+            iam.attach_user_policy(UserName = username, PolicyArn='arn:aws:iam::aws:policy/AWSDenyAll') # returns none
+            publish(f'INCIDENT RESPONDED: Honeytoken triggered by AWS user {username} -> user blocked successfully', f'Honeytoken triggered by AWS user {username}\nfrom IP {sourceip}\nat {requesttime}.\nAWS user blocked.')
+        except:
+            publish(f'INCIDENT RESPONSE FAILED: Honeytoken triggered by AWS user {username}', f'Honeytoken triggered by AWS user {username}\nfrom IP {sourceip}\nat {requesttime}.\nFailed to apply deny policy to IAM account. Please investigate.')
     elif e['headers'] is not None and 'Authorization' in e['headers']:
         # lambda triggered through api call -> block cognito user and invalidate token
 
+        error = False
+        message = ''
         # retrieve token and claims
+        claims = e['requestContext']['authorizer']['claims']
+        expiry = claims['exp']
+        username = claims['username']
+        # publish(f'INCIDENT: Honeytoken triggered by Cognito user {username}', f'Honeytoken triggered by cognito user {username}\nfrom IP {sourceip}\nat {requesttime}.\n User being blocked...')
         authHeader = e['headers']['Authorization']
         token = authHeader.split("Bearer ", 1)[1]
         # check split failure
         # print(token)
-        claims = e['requestContext']['authorizer']['claims']
-        expiry = claims['exp']
-        username = claims['username']
-
+        
         # the expiry in the lambda logs is in a text time format
         # the expiry in the jwt is epoch
         # could use a library to read jwt directly to get epoch,
@@ -71,24 +78,40 @@ def main(event, context):
 
         # add token to invalidated tokens database
         item = {'token': token, 'expiry': expiryepoch}
-        data = table.put_item(Item=item)
+        try:
+            data = table.put_item(Item=item)
+            # what does put_item return on failure? I can't seem to find it...
+            message += "User's token invalidated\n"
+        except Exception as err:
+            print(err)
+            error = True
+            message += "Could not invalidate user's token\n"
         # old tokens cleared with dynamodb ttl
 
         # sign out and disable user
         # force password change with mfa or something?
         # can get userpool id from iss field like: "https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_CzNUhN04s"
         # but I'm not sure that that will always be accurate
-        response = cognito.admin_disable_user(
-            UserPoolId = userpoolid,
-            Username = username
-        )
-        response = cognito.admin_user_global_sign_out(
-        UserPoolId = userpoolid,
-        Username = username
-        )
+        try:
+            response = cognito.admin_user_global_sign_out(UserPoolId = userpoolid, Username = username)
+            # docs on return value: 'Represents the response received from the server to disable the user as an administrator.'. gee thanks
+            print(response)
+            response = cognito.admin_disable_user(UserPoolId = userpoolid, Username = username)
+            print(response)
+            message += "User signed out and disabled\n"
+        except Exception as err:
+            #print(sys.exc_info()[0])
+            #print(type(err))
+            #print(err.args)
+            print(err)
+            error = True
+            message += 'User could not be signed out and disabled\n'
 
-        sns.publish(TopicArn=snsarn, Message=f'Honeytoken triggered by cognito user {username}\nfrom IP {sourceip}\nat {requesttime}.\n User has been blocked.')
-
+        if not error:
+            publish(f'INCIDENT RESPONDED: Honeytoken triggered by Cognito user {username} -> user blocked successfully', f'Honeytoken triggered by cognito user {username}\nfrom IP {sourceip}\nat {requesttime}.\n' + message)
+        else:
+            publish(f'INCIDENT RESPONSE FAILED: Honeytoken triggered by Cognito user {username}', f'Honeytoken triggered by cognito user {username}\nfrom IP {sourceip}\nat {requesttime}.\n' + message)
+        
         # access vs id tokens - how to invalidate both?
     else:
         pass
@@ -111,3 +134,7 @@ def getTokenExpiry(token):
 
 # https://www.programiz.com/python-programming/datetime/strptime
 # https://stackoverflow.com/questions/7241170/how-to-convert-current-date-to-epoch-timestamp
+
+
+def publish(subject, message):
+    sns.publish(TopicArn = snsarn, Subject=subject, Message=message)

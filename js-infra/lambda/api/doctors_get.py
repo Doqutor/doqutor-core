@@ -7,15 +7,18 @@ tokens_table_name = os.environ.get('TOKENS_TABLE_NAME')
 tokens_table = get_table(tokens_table_name)
 
 def main(event, context):
-    log_event(event)
-    #log_event(context)
+    # I moved this above the log_event because when token revoked, I don't want the lambda to log
+    # something that will trigger the userblocker again
+    # this may be a bit dodgy but on the other hand if we were using a custom authorizer,
+    # the lambda wouldn't get run at all so clearly wouldn't log
+    if not checkToken(tokens_table, event['headers']):
+        log_event({"result": "lambda called using revoked token"})
+        return send_error(401, 'The incoming token has been revoked')
+        # should use {"message": ..} not {"error": ..}
 
+    log_event(event)
     params = event['pathParameters']
     _id = params['id']
-
-    if event['headers'] is not None and 'Authorization' in event['headers']:
-        if not checkToken(event['headers']['Authorization']):
-            return send_error(401, 'The incoming token has been revoked')
 
     data = table.get_item(Key={
         'id': _id
@@ -25,17 +28,6 @@ def main(event, context):
         return send_response(200, data["Item"])
     
     return send_error(400, f"doctor with id {_id} does not exist")
-
-
-# ideally will eventually have this inside custom authorizer
-def checkToken(authHeader):
-    # if token in table, deny
-    token = authHeader.split("Bearer ", 1)[1]
-    print(token)
-    data = tokens_table.get_item(Key={'token': token})
-    if "Item" in data:
-        return False
-    return True
 
 
 
