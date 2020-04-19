@@ -59,7 +59,16 @@ def get_user(event):
     pool_id = event['requestContext']['authorizer']['claims']['iss'].split('/')[-1]
     username = event['requestContext']['authorizer']['claims']['username']
     res = client.admin_get_user(UserPoolId=pool_id, Username=username)
-    return res
+    return {
+        'username': res['Username'],
+        'attributes': {
+            i['Name']: i['Value'] for i in res['UserAttributes']
+        },
+        'status': res['UserStatus']
+    }
+
+def get_role(user):
+    return user['attributes']['custom:type']
 
 def decimal_default(obj):
     if isinstance(obj, Decimal):
