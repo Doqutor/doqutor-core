@@ -184,5 +184,14 @@ export class MonitoringStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       resources: [trail.trailArn]
     }));
+
+    lambdaDdbAccess.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'iam:*'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: ['*'],
+      conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
+    }));
   }
 }

@@ -6,12 +6,15 @@ import os
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-client = boto3.client('cloudtrail')
+client = boto3.client('iam')
 
 def main(event, context):
-    logger.info('Event details: %s', event['event'])
-    action = event['eventName']
+    #logger.info('Event details: %s', event['userIdentity'])
+    action = event['userIdentity']
+    username = action["userName"]
+    if action["type"] == "IAMUser":
+        test = client.list_attached_user_policies(UserName=username)
+        print(test)
+    print('table accessed')
 
-    logger.info('table accessed')
-
-    return event
+    #return event
