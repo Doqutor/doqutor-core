@@ -3,7 +3,7 @@ import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
-import { RemovalPolicy } from '@aws-cdk/core';
+import { RemovalPolicy, CfnOutput } from '@aws-cdk/core';
 import * as iam from "@aws-cdk/aws-iam";
 import getModels, { Models } from './api-schema';
 
@@ -203,5 +203,11 @@ export class InfraStack extends cdk.Stack {
     resourcePatientId.addMethod('GET', new apigateway.LambdaIntegration(lambdaPatientGet), authOptions);
     resourcePatientId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaPatientUpdate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.patient]}});
     resourcePatientId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaPatientDelete), authOptions);
+
+
+    // export
+    new CfnOutput(this, 'DoqutoreAPIGateway', {
+      value: api.restApiId
+    });
   }
 }
