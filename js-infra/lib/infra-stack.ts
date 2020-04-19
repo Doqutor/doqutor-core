@@ -6,8 +6,6 @@ import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
 import { RemovalPolicy } from '@aws-cdk/core';
 import * as iam from "@aws-cdk/aws-iam";
 import getModels, { Models } from './api-schema';
-import * as sns from '@aws-cdk/aws-sns';
-import * as subs from '@aws-cdk/aws-sns-subscriptions';
 
 
 export class InfraStack extends cdk.Stack {
@@ -86,6 +84,13 @@ export class InfraStack extends cdk.Stack {
     cfnAuthClient.callbackUrLs = ['http://localhost', 'https://dev.aws9447.me/login'];
     
     
+    const lambdaCognitoPolicy = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      sid: 'cognitoadminlambda'
+    });
+    lambdaCognitoPolicy.addResources(authPool.userPoolArn);
+    lambdaCognitoPolicy.addActions("cognito-idp:*");
+
     /*
      * Lambdas for doctor CRUD
      */
@@ -101,7 +106,14 @@ export class InfraStack extends cdk.Stack {
     lambdaDoctorGet.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
     lambdaDoctorList.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
     lambdaDoctorDelete.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
-    
+
+    lambdaCurrentUser.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaDoctorCreate.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaDoctorUpdate.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaDoctorGet.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaDoctorList.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaDoctorDelete.addToRolePolicy(lambdaCognitoPolicy);
+
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorCreate);
     dynamoDoctorsTable.grantReadData(lambdaDoctorGet);
     dynamoDoctorsTable.grantReadData(lambdaDoctorList);
@@ -123,6 +135,12 @@ export class InfraStack extends cdk.Stack {
     lambdaPatientList.addEnvironment('TABLE_NAME', dynamoPatientsTable.tableName);
     lambdaPatientDelete.addEnvironment('TABLE_NAME', dynamoPatientsTable.tableName);
     
+    lambdaPatientCreate.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaPatientUpdate.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaPatientGet.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaPatientList.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaPatientDelete.addToRolePolicy(lambdaCognitoPolicy);
+
     dynamoPatientsTable.grantReadWriteData(lambdaPatientCreate);
     dynamoPatientsTable.grantReadData(lambdaPatientGet);
     dynamoPatientsTable.grantReadData(lambdaPatientList);
