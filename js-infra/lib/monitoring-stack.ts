@@ -122,5 +122,67 @@ export class MonitoringStack extends cdk.Stack {
     // creating a lambda triggered by sns topic notification
     const debugLambda = createPythonLambda(this, 'util', 'dummy_lambda');
     snsTopicCw.addSubscription(new subscriptions.LambdaSubscription(debugLambda));
+
+    /* Deny administrator access to sensitive medical info */
+    const ddbEventPattern: events.EventPattern = {
+      source: ['aws.dynamodb'],
+      detail: {
+        eventSource: [
+          ServicePrincipals.CLOUD_TRAIL
+        ],
+        eventName: [
+          "CreateBackup",
+          "CreateGlobalTable",
+          "CreateTable",
+          "DeleteBackup",
+          "DeleteTable",
+          "DescribeBackup",
+          "DescribeContinuousBackups",
+          "DescribeGlobalTable",
+          "DescribeLimits",
+          "DescribeTable",
+          "DescribeTimeToLive",
+          "ListBackups",
+          "ListTables",
+          "ListTagsOfResource",
+          "ListGlobalTables",
+          "RestoreTableFromBackup",
+          "RestoreTableToPointInTime",
+          "TagResource",
+          "UntagResource",
+          "UpdateGlobalTable",
+          "UpdateTable",
+          "UpdateTimeToLive",
+          "DescribeReservedCapacity",
+          "DescribeReservedCapacityOfferings",
+          "DescribeScalableTargets",
+          "RegisterScalableTarget",
+          "PurchaseReservedCapacityOfferings"
+        ]
+      }
+    };
+    const ddbRule = new events.Rule(this, 'illegalAccessDatabase', {
+      eventPattern: eventPattern,
+      description: "If non-lambda roles access database, they will be blocked"
+    });
+    // CHECK EVENT, THEN CHECK USER'S ROLE, THEN BLOCK 
+    const lambdaDdbAccess = createPythonLambda(this, 'util', 'cloudtrail_ddb_access');
+    const snsTopicDdb = new sns.Topic(this, 'DynamoDBAlert', {
+      displayName: 'DynamoDB illegal access alert'
+    });
+    snsTopicDdb.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
+    lambdaDdbAccess.addEnvironment('TRAIL_ARN', trail.trailArn);
+    lambdaDdbAccess.addEnvironment('SNS_ARN', snsTopicDdb.topicArn);
+    snsTopicDdb.grantPublish(lambdaDdbAccess);
+    ddbRule.addTarget(new targets.LambdaFunction(lambdaDdbAccess));
+    ddbRule.addTarget(new targets.SnsTopic(snsTopicDdb));
+
+    lambdaDdbAccess.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'cloudtrail:*'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: [trail.trailArn]
+    }));
   }
 }
