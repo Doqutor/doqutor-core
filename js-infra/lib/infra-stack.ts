@@ -3,8 +3,11 @@ import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
-import { RemovalPolicy, Duration } from '@aws-cdk/core';
+import { RemovalPolicy } from '@aws-cdk/core';
+import * as iam from "@aws-cdk/aws-iam";
 import getModels, { Models } from './api-schema';
+import * as sns from '@aws-cdk/aws-sns';
+import * as subs from '@aws-cdk/aws-sns-subscriptions';
 
 
 export class InfraStack extends cdk.Stack {
