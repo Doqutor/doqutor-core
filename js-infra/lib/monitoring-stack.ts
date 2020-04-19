@@ -191,7 +191,6 @@ export class MonitoringStack extends cdk.Stack {
       ],
       effect: iam.Effect.ALLOW,
       resources: ['*'],
-      conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
     }));
   }
 }
