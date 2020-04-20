@@ -207,7 +207,8 @@ export class InfraStack extends cdk.Stack {
 
     // export
     new CfnOutput(this, 'DoqutoreAPIGateway', {
-      value: api.restApiId
+      value: api.restApiId,
+      exportName: 'DoqutoreAPIGateway'
     });
   }
 }
