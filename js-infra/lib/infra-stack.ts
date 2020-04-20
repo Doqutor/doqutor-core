@@ -2,6 +2,7 @@ import * as cdk from '@aws-cdk/core';
 import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
+import * as wafv2 from '@aws-cdk/aws-wafv2';
 import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
 import { RemovalPolicy, CfnOutput } from '@aws-cdk/core';
 import * as iam from "@aws-cdk/aws-iam";
@@ -173,6 +174,13 @@ export class InfraStack extends cdk.Stack {
         allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
       }
     });
+
+    // export
+    new CfnOutput(this, 'DoqutoreAPIGateway', {
+      value: api.restApiId,
+      exportName: this.stackName + '-APIGateway'
+    });
+    
     const apiSchemas = getModels(this, api);
     const apiAuth = new apigateway.CfnAuthorizer(this, 'cognito-auth', {
       name: 'cognito-auth',
@@ -216,11 +224,46 @@ export class InfraStack extends cdk.Stack {
     resourcePatientId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaPatientUpdate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.patient]}});
     resourcePatientId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaPatientDelete), authOptions);
 
-
-    // export
-    new CfnOutput(this, 'DoqutoreAPIGateway', {
-      value: api.restApiId,
-      exportName: 'DoqutoreAPIGateway'
+    // WAF
+    // only allow 128 requests per 5 minutes, a pretty generous limit for a small practice
+    // assuming that a clinic is located at the same ip address
+    const wafAPI = new wafv2.CfnWebACL(this, 'waf-api', {
+      defaultAction: {
+        allow: {}
+      },
+      visibilityConfig: {
+        cloudWatchMetricsEnabled: true,
+        metricName: 'waf-apigateway',
+        sampledRequestsEnabled: true
+      },
+      scope: 'REGIONAL',
+      rules: [
+        {
+          name: 'ratelimit',
+          priority: 1,
+          statement: {
+            rateBasedStatement: {
+              limit: 128,
+              aggregateKeyType: 'IP'
+            }
+          },
+          visibilityConfig: {
+            cloudWatchMetricsEnabled: true,
+            metricName: 'waf-apigateway-ratelimit',
+            sampledRequestsEnabled: true
+          },
+          action: {
+            block: {}
+          }
+        }
+      ]
     });
+    new wafv2.CfnWebACLAssociation(this, 'waf-assoc-apigateway', {
+      resourceArn: `arn:aws:apigateway:${this.region}::/restapis/${api.restApiId}/stages/prod`,
+      webAclArn: wafAPI.attrArn
+    });
+
+
+
   }
 }
