@@ -12,32 +12,32 @@ iam = boto3.resource('iam')
 
 def make_ddb_policy():
     ddb_iam_policy = {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Sid": "VisualEditor0",
-                        "Effect": "Deny",
-                        "Action": [
-                            "dynamodb:ListContributorInsights",
-                            "dynamodb:DescribeReservedCapacityOfferings",
-                            "dynamodb:ListGlobalTables",
-                            "dynamodb:ListTables",
-                            "dynamodb:DescribeReservedCapacity",
-                            "dynamodb:ListBackups",
-                            "dynamodb:PurchaseReservedCapacityOfferings",
-                            "dynamodb:DescribeLimits",
-                            "dynamodb:ListStreams"
-                        ],
-                        "Resource": "*"
-                    },
-                    {
-                        "Sid": "VisualEditor1",
-                        "Effect": "Deny",
-                        "Action": "dynamodb:*",
-                        "Resource": "*"
-                    }
-                ]
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "VisualEditor0",
+                "Effect": "Deny",
+                "Action": [
+                    "dynamodb:ListContributorInsights",
+                    "dynamodb:DescribeReservedCapacityOfferings",
+                    "dynamodb:ListGlobalTables",
+                    "dynamodb:ListTables",
+                    "dynamodb:DescribeReservedCapacity",
+                    "dynamodb:ListBackups",
+                    "dynamodb:PurchaseReservedCapacityOfferings",
+                    "dynamodb:DescribeLimits",
+                    "dynamodb:ListStreams"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Sid": "VisualEditor1",
+                "Effect": "Deny",
+                "Action": "dynamodb:*",
+                "Resource": "*"
             }
+        ]
+    }
 
     ddb_block = client.create_policy(
         PolicyName='blockDynamoDBAccess',
@@ -81,7 +81,7 @@ def main(event, context):
             policy_list = policies['Policies']
             print(policies['Policies'][2]['PolicyName'])
             hasDbPolicy = False
-            hsaIAMPolicy = False
+            hasIAMPolicy = False
             ddb_arn = ""
             iam_arn = ""
             for policy in policy_list:
@@ -99,14 +99,10 @@ def main(event, context):
                 ddb_policy = make_ddb_policy()
                 user.attach_policy(PolicyArn=ddb_policy['Policy']['Arn'])
 
-
             if hasIAMPolicy:
                 user.attach_policy(PolicyArn=iam_arn)
             else:
                 iam_policy = make_iam_policy()
                 user.attach_policy(PolicyArn=iam_policy['Policy']['Arn'])
-
-            
-            #print(response)
-        #return event
+    return event
      

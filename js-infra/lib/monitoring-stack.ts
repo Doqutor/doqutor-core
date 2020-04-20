@@ -120,8 +120,8 @@ export class MonitoringStack extends cdk.Stack {
     ddbExcessReadAlarmPat.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
 
     // creating a lambda triggered by sns topic notification
-    const debugLambda = createPythonLambda(this, 'util', 'dummy_lambda');
-    snsTopicCw.addSubscription(new subscriptions.LambdaSubscription(debugLambda));
+    //const debugLambda = createPythonLambda(this, 'util', 'dummy_lambda');
+    //snsTopicCw.addSubscription(new subscriptions.LambdaSubscription(debugLambda));
 
     /* Deny administrator access to sensitive medical info */
     const ddbEventPattern: events.EventPattern = {
