@@ -7,6 +7,9 @@ import {ServicePrincipals} from 'cdk-constants';
 import * as targets from '@aws-cdk/aws-events-targets';
 import {createPythonLambda} from './common/lambda';
 import * as iam from '@aws-cdk/aws-iam';
+import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
+import * as cw_actions from '@aws-cdk/aws-cloudwatch-actions';
+import { Duration } from '@aws-cdk/core';
 
 export class MonitoringStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -73,5 +76,121 @@ export class MonitoringStack extends cdk.Stack {
 
     rule.addTarget(new targets.LambdaFunction(lambdaCloudtrailLogging));
     rule.addTarget(new targets.SnsTopic(snsTopic));
+
+    /*
+    * CloudWatch rulesets here
+    */
+
+    const stackName = this.stackName.replace("monitoring", "infrastructure"); // to correctly refrence other stack
+    const snsTopicCw = new sns.Topic(this, 'CloudwatchAlert', {
+      displayName: 'Cloudwatch Alert'
+    });
+    snsTopicCw.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
+
+    const ddbMetric = new cloudwatch.Metric({
+      metricName: "ConsumedReadCapacityUnits",
+      namespace: "AWS/DynamoDB",
+      statistic: "Sum",
+      dimensions: {TableName: cdk.Fn.importValue(stackName+"-DoctorTable")},
+    });
+    const ddbExcessReadAlarmDoc = new cloudwatch.Alarm(this, 'ddbExcessReadAlarmDoc', {
+      metric: ddbMetric,
+      threshold: 1200,
+      period: Duration.seconds(60),
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
+    });
+
+    const ddbMetricPat = new cloudwatch.Metric({
+      metricName: "ConsumedReadCapacityUnits",
+      namespace: "AWS/DynamoDB",
+      statistic: "Sum",
+      dimensions: {TableName: cdk.Fn.importValue(stackName+"-PatientTable")},
+    });
+    const ddbExcessReadAlarmPat = new cloudwatch.Alarm(this, 'ddbExcessReadAlarmPat', {
+      metric: ddbMetricPat,
+      threshold: 1200,
+      period: Duration.seconds(60),
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
+    });
+
+    // binding sns topic to cloudwatch alarm
+    ddbExcessReadAlarmDoc.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
+    ddbExcessReadAlarmPat.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
+
+    // creating a lambda triggered by sns topic notification
+    //const debugLambda = createPythonLambda(this, 'util', 'dummy_lambda');
+    //snsTopicCw.addSubscription(new subscriptions.LambdaSubscription(debugLambda));
+
+    /* Deny administrator access to sensitive medical info */
+    const ddbEventPattern: events.EventPattern = {
+      source: ['aws.dynamodb'],
+      detail: {
+        eventSource: [
+          ServicePrincipals.CLOUD_TRAIL
+        ],
+        eventName: [
+          "CreateBackup",
+          "CreateGlobalTable",
+          "CreateTable",
+          "DeleteBackup",
+          "DeleteTable",
+          "DescribeBackup",
+          "DescribeContinuousBackups",
+          "DescribeGlobalTable",
+          "DescribeLimits",
+          "DescribeTable",
+          "DescribeTimeToLive",
+          "ListBackups",
+          "ListTables",
+          "ListTagsOfResource",
+          "ListGlobalTables",
+          "RestoreTableFromBackup",
+          "RestoreTableToPointInTime",
+          "TagResource",
+          "UntagResource",
+          "UpdateGlobalTable",
+          "UpdateTable",
+          "UpdateTimeToLive",
+          "DescribeReservedCapacity",
+          "DescribeReservedCapacityOfferings",
+          "DescribeScalableTargets",
+          "RegisterScalableTarget",
+          "PurchaseReservedCapacityOfferings"
+        ]
+      }
+    };
+    const ddbRule = new events.Rule(this, 'illegalAccessDatabase', {
+      eventPattern: eventPattern,
+      description: "If non-lambda roles access database, they will be blocked"
+    });
+    // CHECK EVENT, THEN CHECK USER'S ROLE, THEN BLOCK 
+    const lambdaDdbAccess = createPythonLambda(this, 'util', 'cloudtrail_ddb_access');
+    const snsTopicDdb = new sns.Topic(this, 'DynamoDBAlert', {
+      displayName: 'DynamoDB illegal access alert'
+    });
+    snsTopicDdb.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
+    lambdaDdbAccess.addEnvironment('TRAIL_ARN', trail.trailArn);
+    lambdaDdbAccess.addEnvironment('SNS_ARN', snsTopicDdb.topicArn);
+    snsTopicDdb.grantPublish(lambdaDdbAccess);
+    ddbRule.addTarget(new targets.LambdaFunction(lambdaDdbAccess));
+    ddbRule.addTarget(new targets.SnsTopic(snsTopicDdb));
+
+    lambdaDdbAccess.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'cloudtrail:*'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: [trail.trailArn]
+    }));
+
+    lambdaDdbAccess.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'iam:*'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: ['*'],
+    }));
   }
 }
