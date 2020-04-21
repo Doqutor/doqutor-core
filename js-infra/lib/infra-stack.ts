@@ -36,7 +36,10 @@ export class InfraStack extends cdk.Stack {
       value: dynamoPatientsTable.tableName,
       exportName: this.stackName + "-PatientTable"
     });
-    
+    new cdk.CfnOutput(this, 'PatientTableArn', {
+      value: dynamoPatientsTable.tableArn,
+      exportName: this.stackName + "-PatientTableArn"
+    });
     
     /*
      * Cognito and user authentication

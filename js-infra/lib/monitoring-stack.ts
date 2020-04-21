@@ -173,6 +173,7 @@ export class MonitoringStack extends cdk.Stack {
     snsTopicDdb.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
     lambdaDdbAccess.addEnvironment('TRAIL_ARN', trail.trailArn);
     lambdaDdbAccess.addEnvironment('SNS_ARN', snsTopicDdb.topicArn);
+    lambdaDdbAccess.addEnvironment('TABLE_ARN', cdk.Fn.importValue(stackName+"-PatientTableArn")); 
     snsTopicDdb.grantPublish(lambdaDdbAccess);
     ddbRule.addTarget(new targets.LambdaFunction(lambdaDdbAccess));
     ddbRule.addTarget(new targets.SnsTopic(snsTopicDdb));
@@ -185,12 +186,13 @@ export class MonitoringStack extends cdk.Stack {
       resources: [trail.trailArn]
     }));
 
+    // judy TODO: look at restricting resource list...
     lambdaDdbAccess.addToRolePolicy(new iam.PolicyStatement({
       actions: [
         'iam:*'
       ],
       effect: iam.Effect.ALLOW,
-      resources: ['*'],
+      resources: ["*"]
     }));
   }
 }

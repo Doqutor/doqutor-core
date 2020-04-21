@@ -3,13 +3,14 @@ import logging
 import os
 import json
 
-#TRAIL = os.getenv('TRAIL_ARN')
+TABLE_ARN = os.getenv('TABLE_ARN')
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 client = boto3.client('iam')
 iam = boto3.resource('iam')
 
+# a small note, this policy document should be altered if global table and/or backups are used
 def make_ddb_policy():
     ddb_iam_policy = {
         "Version": "2012-10-17",
@@ -18,27 +19,31 @@ def make_ddb_policy():
                 "Sid": "VisualEditor0",
                 "Effect": "Deny",
                 "Action": [
-                    "dynamodb:ListContributorInsights",
-                    "dynamodb:DescribeReservedCapacityOfferings",
-                    "dynamodb:ListGlobalTables",
-                    "dynamodb:ListTables",
-                    "dynamodb:DescribeReservedCapacity",
-                    "dynamodb:ListBackups",
-                    "dynamodb:PurchaseReservedCapacityOfferings",
-                    "dynamodb:DescribeLimits",
-                    "dynamodb:ListStreams"
+                    "dynamodb:BatchGetItem",
+                    "dynamodb:ConditionCheckItem",
+                    "dynamodb:DescribeTable",
+                    "dynamodb:GetItem",
+                    "dynamodb:Scan",
+                    "dynamodb:ListTagsOfResource",
+                    "dynamodb:Query",
+                    "dynamodb:DescribeTimeToLive",
+                    "dynamodb:DescribeTableReplicaAutoScaling"
                 ],
-                "Resource": "*"
+                "Resource": TABLE_ARN
             },
             {
                 "Sid": "VisualEditor1",
                 "Effect": "Deny",
-                "Action": "dynamodb:*",
-                "Resource": "*"
+                "Action": [
+                    "dynamodb:DescribeReservedCapacityOfferings",
+                    "dynamodb:DescribeReservedCapacity",
+                    "dynamodb:DescribeLimits",
+                    "dynamodb:ListStreams"
+                ],
+            "Resource": "*"
             }
         ]
     }
-
     ddb_block = client.create_policy(
         PolicyName='blockDynamoDBAccess',
         PolicyDocument=json.dumps(ddb_iam_policy)
@@ -79,7 +84,7 @@ def main(event, context):
             policies = client.list_policies(Scope='Local')
             #print(policies)
             policy_list = policies['Policies']
-            print(policies['Policies'][2]['PolicyName'])
+            #print(policies['Policies'][2]['PolicyName'])
             hasDbPolicy = False
             hasIAMPolicy = False
             ddb_arn = ""
@@ -99,10 +104,10 @@ def main(event, context):
                 ddb_policy = make_ddb_policy()
                 user.attach_policy(PolicyArn=ddb_policy['Policy']['Arn'])
 
-            if hasIAMPolicy:
-                user.attach_policy(PolicyArn=iam_arn)
-            else:
-                iam_policy = make_iam_policy()
-                user.attach_policy(PolicyArn=iam_policy['Policy']['Arn'])
+            #if hasIAMPolicy:
+            #    user.attach_policy(PolicyArn=iam_arn)
+            #else:
+            #    iam_policy = make_iam_policy()
+            #    user.attach_policy(PolicyArn=iam_policy['Policy']['Arn'])
     return event
      
