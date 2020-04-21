@@ -73,7 +73,8 @@ def make_iam_policy():
 
 def main(event, context):
     #logger.info('Event details: %s', event['userIdentity'])
-    action = event['userIdentity']
+    print(json.dumps(event))
+    action = event['detail']['userIdentity']
     username = action["userName"]
     if action["type"] == "IAMUser":
         user = iam.User(username)

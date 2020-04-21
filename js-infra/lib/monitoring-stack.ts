@@ -126,9 +126,10 @@ export class MonitoringStack extends cdk.Stack {
     /* Deny administrator access to sensitive medical info */
     const ddbEventPattern: events.EventPattern = {
       source: ['aws.dynamodb'],
+      detailType: ["AWS API Call via CloudTrail"],
       detail: {
         eventSource: [
-          ServicePrincipals.CLOUD_TRAIL
+          ServicePrincipals.DYNAMO_DB
         ],
         eventName: [
           "CreateBackup",
@@ -162,7 +163,7 @@ export class MonitoringStack extends cdk.Stack {
       }
     };
     const ddbRule = new events.Rule(this, 'illegalAccessDatabase', {
-      eventPattern: eventPattern,
+      eventPattern: ddbEventPattern,
       description: "If non-lambda roles access database, they will be blocked"
     });
     // CHECK EVENT, THEN CHECK USER'S ROLE, THEN BLOCK 
