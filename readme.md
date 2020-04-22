@@ -19,7 +19,7 @@ Type <br/>
 2. Activate virtual environment. <br/>
 Windows : ```venv\Scripts\activate.bat``` 
 <br/>
-Linux/Mac : ```venv/Scripts/activate```
+Linux/Mac : ```venv/Scripts/activate```<br/>
 3. Change directory to js-infra and install requirements. <br/>
 ```pip install -r requirements.txt```
 4. Install Node modules. <br/>
