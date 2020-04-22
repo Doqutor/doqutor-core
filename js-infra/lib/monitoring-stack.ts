@@ -220,7 +220,7 @@ export class MonitoringStack extends cdk.Stack {
           visibilityConfig: {
             cloudWatchMetricsEnabled: true,
             metricName: 'waf-apigateway-ipreputation',
-            sampledRequestsEnabled: false
+            sampledRequestsEnabled: true
           },
           overrideAction: {
             none: {}
@@ -238,7 +238,7 @@ export class MonitoringStack extends cdk.Stack {
           visibilityConfig: {
             cloudWatchMetricsEnabled: true,
             metricName: 'waf-apigateway-commonattacks',
-            sampledRequestsEnabled: false
+            sampledRequestsEnabled: true
           },
           overrideAction: {
             none: {}
