@@ -17,11 +17,11 @@ The stacks is divided into two parts:
 
 Steps:
 1. Make a new virtual environment for python.
-Type <br/> 
-```python -m venv ./venv``` 
+Type  
+```python -m venv ./venv``` <br/>
+
 2. Activate virtual environment. <br/>
-Windows : ```venv\Scripts\activate.bat``` 
-<br/>
+Windows :  ```venv\Scripts\activate.bat``` <br/>
 Linux/Mac : ```venv/Scripts/activate```<br/>
 3. Change directory to js-infra and install requirements. <br/>
 ```pip install -r requirements.txt```
