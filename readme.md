@@ -33,5 +33,3 @@ Linux/Mac : ```venv/Scripts/activate```<br/>
 ```cdk deploy stack-name```
 <br/>OR<br/>
 ```cdk deploy *```<br/>
-
-To simulate security incident read the documentation in incident-response folder.
