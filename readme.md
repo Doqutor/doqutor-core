@@ -11,6 +11,9 @@ To follow the installations steps, you require
 * Python 3.7+
 
 To get started with deploying the complete stack follow the steps below.
+The stacks is divided into two parts:
+* <b>Infrastructure Stack</b>: contains all infrastructure for CRM. 
+* <b>Monitoring Stack</b>: contains active monitoring for different components.
 
 Steps:
 1. Make a new virtual environment for python.
@@ -26,7 +29,7 @@ Linux/Mac : ```venv/Scripts/activate```<br/>
 ```npm install```
 5. Transpile TypeScript to js. <br/>
 ```npm run build```
-6. Now deploy the AWS stack. We customize the stack name with your OS username. We have two stacks, you can deploy them separately or else use regex style * <br/>
+6. Now deploy the AWS stack. We customize the stack name with your OS username. We have two stacks, you can deploy them separately or else use regex style *. But "infrastructure stack" must be created first as "monitoring stack" requires some inputs from "infrastructure stack".<br/>
 ```cdk deploy stack-name```
 <br/>OR<br/>
-```cdk deploy name*```<br/>
+```cdk deploy *```<br/>
