@@ -19,6 +19,11 @@ export class InfraStack extends cdk.Stack {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
         removalPolicy: RemovalPolicy.DESTROY
     });
+    const dynamoPatientsTable = new dynamodb.Table(this, "patients", {
+        partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+        stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
+        removalPolicy: RemovalPolicy.DESTROY
+    });
 
     /* export physical id value for table for use in monitoring stack
     * exportName is what's visible to other stacks
@@ -28,10 +33,6 @@ export class InfraStack extends cdk.Stack {
       exportName: this.stackName + "-DoctorTable"
     });
     
-    const dynamoPatientsTable = new dynamodb.Table(this, "patients", {
-        partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
-        removalPolicy: RemovalPolicy.DESTROY
-    });
     new cdk.CfnOutput(this, 'PatientTable', {
       value: dynamoPatientsTable.tableName,
       exportName: this.stackName + "-PatientTable"
@@ -41,37 +42,6 @@ export class InfraStack extends cdk.Stack {
       exportName: this.stackName + "-PatientTableArn"
     });
 
-    /*
-    * IAM Policy to block admins from reading patient table
-    */
-    // TODO: change ARN into something agnostic
-    const adminGroup = iam.Group.fromGroupArn(this, 'adminusers', "arn:aws:iam::018904123317:group/adminusers");
-    const policy = new iam.Policy(this, 'BlockPatientTable');
-
-    // TODO: move this to a json file
-    const ddbPatientBlock = {
-        "Sid": "VisualEditor0",
-        "Effect": "Deny",
-        "Action": [
-            "dynamodb:BatchGetItem",
-            "dynamodb:ConditionCheckItem",
-            "dynamodb:DescribeTable",
-            "dynamodb:GetItem",
-            "dynamodb:Scan",
-            "dynamodb:ListTagsOfResource",
-            "dynamodb:Query",
-            "dynamodb:DescribeTimeToLive",
-            "dynamodb:DescribeTableReplicaAutoScaling"
-        ],
-        "Resource": dynamoPatientsTable.tableArn
-      };
-      const ddbPatientBlockPolicy = iam.PolicyStatement.fromJson(ddbPatientBlock);
-      //const ddbPatientBlockPolicy = new iam.PolicyStatement()
-      //ddbPatientBlockPolicy.addActions("dynamodb:DescribeTable")
-      //ddbPatientBlockPolicy.addResources(dynamoPatientsTable.tableArn)
-      console.log(ddbPatientBlockPolicy.toJSON())
-      policy.addStatements(ddbPatientBlockPolicy);
-      policy.attachToGroup(adminGroup);
 
       
       /*

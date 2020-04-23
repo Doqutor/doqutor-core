@@ -132,33 +132,13 @@ export class MonitoringStack extends cdk.Stack {
           ServicePrincipals.DYNAMO_DB
         ],
         eventName: [
-          "CreateBackup",
-          "CreateGlobalTable",
-          "CreateTable",
           "DeleteBackup",
           "DeleteTable",
-          "DescribeBackup",
-          "DescribeContinuousBackups",
-          "DescribeGlobalTable",
-          "DescribeLimits",
-          "DescribeTable",
-          "DescribeTimeToLive",
-          "ListBackups",
-          "ListTables",
-          "ListTagsOfResource",
-          "ListGlobalTables",
-          "RestoreTableFromBackup",
-          "RestoreTableToPointInTime",
-          "TagResource",
-          "UntagResource",
           "UpdateGlobalTable",
           "UpdateTable",
+          "UpdateItem",
           "UpdateTimeToLive",
-          "DescribeReservedCapacity",
-          "DescribeReservedCapacityOfferings",
-          "DescribeScalableTargets",
-          "RegisterScalableTarget",
-          "PurchaseReservedCapacityOfferings"
+          "DescribeTable"
         ]
       }
     };
@@ -175,6 +155,7 @@ export class MonitoringStack extends cdk.Stack {
     lambdaDdbAccess.addEnvironment('TRAIL_ARN', trail.trailArn);
     lambdaDdbAccess.addEnvironment('SNS_ARN', snsTopicDdb.topicArn);
     lambdaDdbAccess.addEnvironment('TABLE_ARN', cdk.Fn.importValue(stackName+"-PatientTableArn")); 
+    lambdaDdbAccess.addEnvironment('TABLE_NAME', cdk.Fn.importValue(stackName+"-PatientTable")); 
     snsTopicDdb.grantPublish(lambdaDdbAccess);
     ddbRule.addTarget(new targets.LambdaFunction(lambdaDdbAccess));
     ddbRule.addTarget(new targets.SnsTopic(snsTopicDdb));
@@ -195,5 +176,34 @@ export class MonitoringStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       resources: ["*"]
     }));
+
+    
+    /*
+    * IAM Policy to block admins from reading patient table
+    */
+    // TODO: change ARN into something agnostic
+    const adminGroup = iam.Group.fromGroupArn(this, 'adminusers', "arn:aws:iam::018904123317:group/adminusers");
+    const policy = new iam.Policy(this, 'BlockPatientTable');
+
+    // TODO: move this to a json file
+    const ddbPatientBlock = {
+        "Sid": "VisualEditor0",
+        "Effect": "Deny",
+        "Action": [
+            "dynamodb:BatchGetItem",
+            "dynamodb:ConditionCheckItem",
+            "dynamodb:DescribeTable",
+            "dynamodb:GetItem",
+            "dynamodb:Scan",
+            "dynamodb:ListTagsOfResource",
+            "dynamodb:Query",
+            "dynamodb:DescribeTimeToLive",
+            "dynamodb:DescribeTableReplicaAutoScaling"
+        ],
+        "Resource": cdk.Fn.importValue(stackName+"-PatientTableArn")
+      };
+      const ddbPatientBlockPolicy = iam.PolicyStatement.fromJson(ddbPatientBlock);
+      policy.addStatements(ddbPatientBlockPolicy);
+      policy.attachToGroup(adminGroup);
   }
 }
