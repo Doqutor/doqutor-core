@@ -13,11 +13,6 @@ import time
 
 # this is in api folder because I get permission issues with lambdas in util folder
 
-# "\"path\": \"/doctors/5555\""
-# [type=INFO, timestamp, somecode, label=*id*, id=5555, ...]
-# [type=INFO, timestamp=*Z, request_id="*-*", event=*reqid*5555*]
-# logger.info(json.dumps({"reqid": _id, "userArn": userArn, "sourceip": sourceip, "cognitopool": cognitopool, "cognitoid": cognitoid, "accessKey": accessKey}))
-# [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb*]
 # [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb* || event=*5555*]
 
 
@@ -33,8 +28,6 @@ def main(event, context):
     payload = json.loads(uncompresseddata)
     print(payload)
     #log_event(payload)
-    # userArn = e['userArn']
-    # authHeader = e['token']
     e = json.loads(payload['logEvents'][0]['extractedFields']['event'])
     userArn = e['requestContext']['identity']['userArn']
     sourceip = e['requestContext']['identity']['sourceIp']
@@ -46,8 +39,8 @@ def main(event, context):
         print(username)
         # publish(f'INCIDENT: Honeytoken triggered by AWS user {username}', f'Honeytoken triggered by AWS user {username}\nfrom IP {sourceip}\nat {requesttime}.\n User is being blocked...')
         try:
-            pass
-            #Below command is used to Block a user. Do not uncomment this for testing.
+            # pass
+            # Below command is used to Block a user. Do not uncomment this for testing.
             iam.attach_user_policy(UserName = username, PolicyArn='arn:aws:iam::aws:policy/AWSDenyAll') # returns none
             publish(f'INCIDENT RESPONDED: Honeytoken triggered by AWS user {username} -> user blocked successfully', f'Honeytoken triggered by AWS user {username}\nfrom IP {sourceip}\nat {requesttime}.\nAWS user blocked.')
         except:
@@ -61,7 +54,6 @@ def main(event, context):
         claims = e['requestContext']['authorizer']['claims']
         expiry = claims['exp']
         username = claims['username']
-        # publish(f'INCIDENT: Honeytoken triggered by Cognito user {username}', f'Honeytoken triggered by cognito user {username}\nfrom IP {sourceip}\nat {requesttime}.\n User being blocked...')
         authHeader = e['headers']['Authorization']
         token = authHeader.split("Bearer ", 1)[1]
         # check split failure
@@ -80,7 +72,7 @@ def main(event, context):
         item = {'token': token, 'expiry': expiryepoch}
         try:
             data = table.put_item(Item=item)
-            # what does put_item return on failure? I can't seem to find it...
+            # what does put_item return on failure? I can't find it
             message += "User's token invalidated\n"
         except Exception as err:
             print(err)
@@ -94,15 +86,11 @@ def main(event, context):
         # but I'm not sure that that will always be accurate
         try:
             response = cognito.admin_user_global_sign_out(UserPoolId = userpoolid, Username = username)
-            # docs on return value: 'Represents the response received from the server to disable the user as an administrator.'. gee thanks
             print(response)
             response = cognito.admin_disable_user(UserPoolId = userpoolid, Username = username)
             print(response)
             message += "User signed out and disabled\n"
         except Exception as err:
-            #print(sys.exc_info()[0])
-            #print(type(err))
-            #print(err.args)
             print(err)
             error = True
             message += 'User could not be signed out and disabled\n'

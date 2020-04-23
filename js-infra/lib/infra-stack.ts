@@ -209,15 +209,8 @@ export class InfraStack extends cdk.Stack {
     /*
     * Honeytoken IR
     * left this in infra-stack for the moment because it needs access to the lambdas
-    * It might not need that access later
     */
-    // Cloudwatch logs
-    /*
-    const logGroup = new LogGroup.LogGroup(this, 'LogGroup', {
-      retention: Infinity
-    });*/
-
-   // sns topic
+    // sns topic
     const snsTopicHT = new sns.Topic(this, 'HoneytokenSNS', {
       displayName: 'Honeytoken SNS'
     });
@@ -262,7 +255,7 @@ export class InfraStack extends cdk.Stack {
     lambdaBlockUser.addPermission('cloudwatchinvokeblockuser', {principal: new iam.ServicePrincipal(ServicePrincipals.LOGS)})
     // what about mistakes. prob want to make sure it doesn't block the root account or smth
 
-    const revokedTokensTable = new dynamodb.Table(this, "dirtyTokens", {
+    const revokedTokensTable = new dynamodb.Table(this, "revokedTokens", {
       partitionKey: { name: 'token', type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
       timeToLiveAttribute: 'expiry'
@@ -289,71 +282,5 @@ export class InfraStack extends cdk.Stack {
     lambdaPatientDelete.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
     lambdaPatientList.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
     lambdaPatientUpdate.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
-
-
-    // [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb* || event=*5555*]
-    // the block_user2.py function is based on the above filter pattern, added using AWS console
-    // filter pattern was added using aws console because stack deployment freezes when I try to deploy it
-    
-    /*
-    const pattern = LogGroup.FilterPattern.spaceDelimited('type', 'timestamp', 'requestid', 'event')
-    .whereString('type', '=', 'INFO')
-    .whereString('timestamp', '=', '*Z')
-    .whereString('requestid', '=', '*-*')
-    .whereString('event', '=', '*5555*');
-    lambdaPatientGet.logGroup.addSubscriptionFilter('subscription', {
-      destination: new LogsDestinations.LambdaDestination(lambdaBlockUser),
-      filterPattern: pattern
-    })
-    */
-
-    /*
-    lambdaDoctorGet.logGroup.addSubscriptionFilter('getsubscription', {
-      destination: new LogsDestinations.LambdaDestination(lambdaBlockAWSUser),
-      filterPattern: LogGroup.FilterPattern.allTerms('doctors_get', '5555')
-    })
-    */
-
-    /*
-    new LogGroup.SubscriptionFilter(this, 'Subscription', {
-      logGroup: lambdaDoctorGet.logGroup,
-      destination: new LogsDestinations.LambdaDestination(lambdaBlockAWSUser),
-      filterPattern: LogGroup.FilterPattern.allTerms('doctors_get', '5555')
-    });
-    */
-
-    /*
-    new LogGroup.SubscriptionFilter(this, 'Subscription', {
-      logGroup,
-      destination: new LogsDestinations.LambdaDestination(lambdaDoctorGet),
-      filterPattern: LogGroup.FilterPattern.allTerms('doctors_get', '5555') // replace with pattern below
-    });
-    */
-    
-    /*
-    const pattern = LogGroup.FilterPattern.anyGroup(
-      ['doctors_get', '5555'],
-      ['doctors_delete', '5555'],
-      );
-    */
-    // const pattern1 = FilterPattern.allTerms('doctors_get', '5555'); // reaplce with the actual id of the honey token
-    // const pattern2 = FilterPattern.allTerms('doctors_delete', '5555'); // reaplce with the actual id of the honey token
-
-    // Search for lines that either contain both "doctors_get" and honey token id, or
-    // both "doctors_delete" and honey token id.  
-    
-    // allow lambda to attach policies to user
-    /*
-    lambdaCloudtrailLogging.addToRolePolicy(new iam.PolicyStatement({
-      actions: [
-        'iam:AttachUserPolicy'
-      ],
-      effect: iam.Effect.ALLOW,
-      resources: ['*'],
-      conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
-    }));
-    */
-    //rule.addTarget(new targets.LambdaFunction(lambdaDoctorGet));
-    //rule.addTarget(new targets.SnsTopic(snsTopic));
   }
 }

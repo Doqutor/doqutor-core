@@ -11,22 +11,22 @@ fake = Faker()
 # and a log group can only have one subscription filter
 # so maximum of 21 honey records in entire database
 
-def generateName():
+def generateName() -> str:
     return fake.name()
     # return "Barry Fake"
 
-def generateEmail(name: str):
+def generateEmail(name: str) -> str:
     suffixes = ["gmail.com", "outlook.com", "bigpond.com.au", "live.com", "protonmail.com"]
     separators = ["_", ".", "", "-"]
     return name.replace(" ", random.choice(separators)) + "@" + random.choice(suffixes)
 
-def generatePhoneNumber():
+def generatePhoneNumber() -> str:
     return "+" + str(random.randint(10**10, (10**11)-1))
 
-def generateAge():
+def generateAge() -> int:
     return random.randint(0, 100)
 
-def generatePerson():
+def generatePerson() -> dict:
     name = generateName()
     return {
         'id': str(uuid.uuid4()),
@@ -39,7 +39,7 @@ def generatePerson():
     }
 
 #  return value is pointless rn
-def clearExistingPattern(curfilter: dict, _loggroupName: str):
+def clearExistingPattern(curfilter: dict, _loggroupName: str) -> bool:
     print('You may quit running, or delete it and then rerun the program to create a new filter.')
     curpattern = curfilter['filterPattern']
     filterPatternStart = '[type=INFO,timestamp=*Z,requestid=*-*,event=*'
@@ -49,7 +49,6 @@ def clearExistingPattern(curfilter: dict, _loggroupName: str):
         if input().upper() != 'Y':
             return False
         next = curpattern.split('[type=INFO,timestamp=*Z,requestid=*-*,event=', 1)[1]
-        # check split
         # extract ids from filter pattern and delete from database
         foundids = []
         try:
@@ -62,10 +61,9 @@ def clearExistingPattern(curfilter: dict, _loggroupName: str):
                     next = next[1]
                 # else, if eventstr = ']', then loop will end
                 # if not, will continue to id, eventstr = line and raise exception
-                # This is really awful code
+                # This seems awful code
         except:
             print('Filter string diverged from pattern and the deletion process may not delete all existing honey records')
-        # print found ids
         print('The following ids were found in the current filter pattern.')
         for i in range(len(foundids)):
             print(str(i+1) + ': ' + foundids[i])
@@ -106,7 +104,6 @@ if n > 21:
 tablename = sys.argv[2]#.rstrip()
 destarn = sys.argv[3]#.rstrip()
 loggroupNames = sys.argv[4:]
-# loggroupName = sys.argv[4]#.rstrip()
 table = dynamodb.Table(tablename)
 #print(tablename)
 #print(destarn)
@@ -149,7 +146,6 @@ for i in range(n):
         i -= 1
 
 # [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb* || event=*5555*]
-
 filterPattern += 'event=*' + ids[0] + '*'
 for i in range(1, len(ids)):
     filterPattern += '||event=*' + ids[i] + '*'
@@ -164,80 +160,3 @@ for loggroupName in loggroupNames:
         destinationArn = destarn#,
         #roleArn = createRole()
     )
-
-
-# atm running this will overwrite existing subscription filter (can only have one per log group)
-# so previous honey records will still exist in the table but will not trigger the filter
-# should use describe_subscription_filters() to get current subscription filter
-# and add the new ids to the current
-
-'''
-ogfilter = filters[0]
-ogfilterpattern = ogfilter['filterPattern']
-if ogfilterpattern.startswith(filterPatternStart):
-# ofc it still might be incompatible
-    filterPattern = ogfilterpattern[:-1] + '||' #.rstrip("]")
-    filterName = ogfilter['filterName']
-else:
-    print("Filter pattern of existing subscription filter is incompatible with this one.\nYou must delete the previous subscription filter.")
-    exit()
-'''
-
-
-'''
-assumeRolePolicy = {
-  "Version": "2012-10-17",
-  "Statement": {
-    "Effect": "Allow",
-    "Principal": {"Service": "logs.ap-southeast-2.amazonaws.com"},
-    "Action": "sts:AssumeRole"
-  }
-}
-
-rolePolicy = {
-   "Version": "2012-10-17",
-   "Statement": [
-      {
-         "Effect": "Allow",
-         "Action": [
-            "logs:CreateLogGroup",
-            "logs:CreateLogStream",
-            "logs:PutLogEvents"
-         ],
-         "Resource": "arn:aws:logs:*:*:*"
-      },
-      {
-         "Effect": "Allow",
-         "Action": [
-            "lambda:InvokeFunction"
-         ],
-         "Resource": [
-            "*"
-         ]
-      }
-   ]
-}
-print(rolePolicy)
-
-def createRole():
-    rolename = 'cloudwatchlogs-subscriptionfilter-honeyrecord'
-    try:
-        response = iam.create_role(
-            RoleName = rolename,
-            AssumeRolePolicyDocument = json.dumps(assumeRolePolicy)
-            # PermissionsBoundary='string',
-        )
-        arn = response['Role']['Arn']
-    except iam.exceptions.EntityAlreadyExistsException:
-        arn = iam.get_role(RoleName = rolename)['Role']['Arn']
-    iam.put_role_policy(
-        RoleName = rolename,
-        PolicyName = 'cloudwatchlogs-subscriptionfilter-honeyrecord',
-        PolicyDocument = json.dumps(rolePolicy)
-    )
-    return arn
-'''
-
-
-
-
