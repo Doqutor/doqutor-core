@@ -38,7 +38,7 @@ $ pip install -r requirements.txt
 ```bash 
 $ npm install
 ```
-5. Change directory to "js-infra". Transpile TypeScript to js. 
+5. Transpile TypeScript to js. 
 ```bash
 $ npm run build
 ```
