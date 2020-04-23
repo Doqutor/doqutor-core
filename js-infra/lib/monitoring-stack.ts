@@ -11,7 +11,6 @@ import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
 import * as cw_actions from '@aws-cdk/aws-cloudwatch-actions';
 import * as wafv2 from '@aws-cdk/aws-wafv2';
 import { Duration } from '@aws-cdk/core';
-import * as wafv2 from '@aws-cdk/aws-wafv2';
 
 export class MonitoringStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {

@@ -33,6 +33,6 @@
     "cdk-constants": "^3.0.3",
     "cdk-watchful": "0.4.6",
     "source-map-support": "0.5.16",
-    "@aws-cdk/aws-logs-destinations": "1.30.0"
+    "@aws-cdk/assert": "1.30.0"
   }
 }

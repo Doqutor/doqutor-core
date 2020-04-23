@@ -78,11 +78,6 @@ def decimal_default(obj):
 
 # ideally will eventually have this inside custom authorizer
 # or maybe not, it might not be worth the complication and extra lambda latency
-# when we could just put this function in app_lib
-# but the problem is that if an invalidated jwt attempts a get on the honeytoken again,
-# it will be picked up by the subscription filter and blockuser function
-# would have to either change logging system in some way so blockuser only picks up successful gets,
-# or change blockuser to only send notification if jwt is not already in table
 def checkToken(tokenstable, eventHeaders):
     # if token in table, deny
     if eventHeaders is not None and 'Authorization' in eventHeaders:
