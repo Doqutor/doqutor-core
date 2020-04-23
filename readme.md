@@ -47,6 +47,12 @@ $ npm run build
 $ cdk deploy *
 ```
 
+To destroy the stack
+```bash
+$ cdk destroy *
+```
+
+
 -------
 More information on AWS CDK
 
