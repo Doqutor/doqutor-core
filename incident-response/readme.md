@@ -1,9 +1,10 @@
 # Incident Response
 
+:information_source:
 Requirements: [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html "Install AWS CLI")
-<br/>
-:information_source: Select JSON/None as the [default output format](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html "Configuring the AWS CLI")
-<br/>
+<br/> 
+###### Select JSON/None as the [default output format](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html "Configuring the AWS CLI")
+
 To simulate incident response we must install requirements and additional packages.
 <br/>
 ```bash
