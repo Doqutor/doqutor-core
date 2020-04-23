@@ -10,7 +10,7 @@ import getModels, { Models } from './api-schema';
 
 
 export class InfraStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps, env='dev') {
     super(scope, id, props);
 
 
@@ -68,7 +68,7 @@ export class InfraStack extends cdk.Stack {
     // };
 
     new cognito.CfnUserPoolDomain(this, 'crm-users-login', {
-      domain: `login-${this.stackName}`,
+      domain: `login-${this.stackName}-env`,
       userPoolId: authPool.userPoolId
     });
     
@@ -77,7 +77,7 @@ export class InfraStack extends cdk.Stack {
       enabledAuthFlows: [cognito.AuthFlow.USER_PASSWORD],
       generateSecret: true
     });
-    new cognito.CfnUserPoolResourceServer(this, 'doqutore-application', {
+    const cfnResourceServer = new cognito.CfnUserPoolResourceServer(this, 'doqutore-application', {
       identifier: 'doqutore',
       userPoolId: authPool.userPoolId,
       name: 'doqutore',
@@ -93,7 +93,7 @@ export class InfraStack extends cdk.Stack {
     cfnAuthClient.preventUserExistenceErrors = "ENABLED";
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
     cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
-    cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', 'doqutore/application'];
+    cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', `${cfnResourceServer.name}/application`];
     cfnAuthClient.callbackUrLs = ['http://localhost', 'https://dev.aws9447.me/login'];
     
     
