@@ -68,7 +68,7 @@ export class InfraStack extends cdk.Stack {
     // };
 
     new cognito.CfnUserPoolDomain(this, 'crm-users-login', {
-      domain: `login-${this.stackName}-env`,
+      domain: `login-${this.stackName}-${env}`,
       userPoolId: authPool.userPoolId
     });
     
