@@ -159,9 +159,6 @@ export class InfraStack extends cdk.Stack {
     dynamoPatientsTable.grantReadWriteData(lambdaPatientDelete);
     dynamoPatientsTable.grantReadWriteData(lambdaPatientUpdate);
 
-
-
-    
   
     /*
      * API Gateway
