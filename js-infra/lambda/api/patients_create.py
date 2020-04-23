@@ -15,6 +15,11 @@ def main(event, context):
         return send_error(401, 'The incoming token has been revoked')
 
     log_event(event)
+
+    user = get_user(event)
+    if get_role(user) != 'doctor':
+        return send_error(403, 'you are not authorized to view this resource')
+
     body = get_body(event)
 
     item = {

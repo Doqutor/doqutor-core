@@ -10,6 +10,9 @@ def main(event, context):
     if not checkToken(tokens_table, event['headers']):
         log_event({"result": "lambda called using revoked token"})
         return send_error(401, 'The incoming token has been revoked')
+    log_event(event)
+    
+    user = get_user(event)
 
     log_event(event)
     params = event['pathParameters']
@@ -19,7 +22,9 @@ def main(event, context):
         'id': _id
     })
 
-    if "Item" in data:
+    if "Item" in data:    
+        if get_role(user) != 'doctor' and user['attributes']['sub'] != data['Item']['id']:
+            return send_error(403, 'you are not authorized to view this resource')
         return send_response(200, data["Item"])
     
     return send_error(400, f"item with id {_id} does not exist")

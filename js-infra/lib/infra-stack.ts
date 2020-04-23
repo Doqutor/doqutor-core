@@ -2,30 +2,21 @@ import * as cdk from '@aws-cdk/core';
 import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cognito from '@aws-cdk/aws-cognito';
-import { createPythonLambda, createTypeScriptLambda } from './common/lambda';
-import { RemovalPolicy } from '@aws-cdk/core';
-//import * as iam from "@aws-cdk/aws-iam";
+import { createPythonLambda } from './common/lambda';
+import { RemovalPolicy, CfnOutput } from '@aws-cdk/core';
+import * as iam from "@aws-cdk/aws-iam";
 import getModels, { Models } from './api-schema';
-//import {Watchful} from 'cdk-watchful';
-//import * as cloudtrail from '@aws-cdk/aws-cloudtrail';
-//import * as events from '@aws-cdk/aws-events';
-//import { ServicePrincipals } from "cdk-constants";
-//import * as targets from '@aws-cdk/aws-events-targets';
-//import * as SubscriptionFilter from '@aws-cdk/aws-logs.SubscriptionFilter';
-//import * as lambda from '@aws-cdk/aws-lambda';
 
-// for honeytoken only, presumably to be removed when moved to monitoring-stack
+// for honeytoken only, maybe to be removed when moved to monitoring-stack
 import * as subscriptions from '@aws-cdk/aws-sns-subscriptions';
-import * as iam from '@aws-cdk/aws-iam';
-import * as LogGroup from '@aws-cdk/aws-logs';
+//import * as LogGroup from '@aws-cdk/aws-logs';
 import * as sns from '@aws-cdk/aws-sns';
-import * as LogsDestinations from '@aws-cdk/aws-logs-destinations';
+//import * as LogsDestinations from '@aws-cdk/aws-logs-destinations';
 import { ServicePrincipals } from 'cdk-constants';
-//import * as subs from '@aws-cdk/aws-sns-subscriptions';
 
 
 export class InfraStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps, env='dev') {
     super(scope, id, props);
 
 
@@ -34,9 +25,21 @@ export class InfraStack extends cdk.Stack {
         removalPolicy: RemovalPolicy.DESTROY
     });
 
+    /* export physical id value for table for use in monitoring stack
+    * exportName is what's visible to other stacks
+    */
+    new cdk.CfnOutput(this, 'DoctorTable', {
+      value: dynamoDoctorsTable.tableName,
+      exportName: this.stackName + "-DoctorTable"
+    });
+    
     const dynamoPatientsTable = new dynamodb.Table(this, "patients", {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
         removalPolicy: RemovalPolicy.DESTROY
+    });
+    new cdk.CfnOutput(this, 'PatientTable', {
+      value: dynamoPatientsTable.tableName,
+      exportName: this.stackName + "-PatientTable"
     });
     
     
@@ -72,7 +75,7 @@ export class InfraStack extends cdk.Stack {
     // };
 
     new cognito.CfnUserPoolDomain(this, 'crm-users-login', {
-      domain: `login-${this.stackName}`,
+      domain: `login-${this.stackName}-${env}`,
       userPoolId: authPool.userPoolId
     });
     
@@ -81,7 +84,7 @@ export class InfraStack extends cdk.Stack {
       enabledAuthFlows: [cognito.AuthFlow.USER_PASSWORD],
       generateSecret: true
     });
-    new cognito.CfnUserPoolResourceServer(this, 'doqutore-application', {
+    const cfnResourceServer = new cognito.CfnUserPoolResourceServer(this, 'doqutore-application', {
       identifier: 'doqutore',
       userPoolId: authPool.userPoolId,
       name: 'doqutore',
@@ -96,12 +99,19 @@ export class InfraStack extends cdk.Stack {
     cfnAuthClient.readAttributes = ['email', 'email_verified', 'phone_number', 'phone_number_verified', 'custom:type'];
     cfnAuthClient.preventUserExistenceErrors = "ENABLED";
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
-    //cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
-    cfnAuthClient.allowedOAuthFlows = ['implicit']; // for me to use API
-    cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', 'doqutore/application'];
+    cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
+    //cfnAuthClient.allowedOAuthFlows = ['implicit']; // for me to use API
+    cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', `${cfnResourceServer.name}/application`];
     cfnAuthClient.callbackUrLs = ['http://localhost', 'https://dev.aws9447.me/login'];
     
     
+    const lambdaCognitoPolicy = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      sid: 'cognitoadminlambda'
+    });
+    lambdaCognitoPolicy.addResources(authPool.userPoolArn);
+    lambdaCognitoPolicy.addActions("cognito-idp:*");
+
     /*
      * Lambdas for doctor CRUD
      */
@@ -117,7 +127,14 @@ export class InfraStack extends cdk.Stack {
     lambdaDoctorGet.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
     lambdaDoctorList.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
     lambdaDoctorDelete.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
-    
+
+    lambdaCurrentUser.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaDoctorCreate.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaDoctorUpdate.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaDoctorGet.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaDoctorList.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaDoctorDelete.addToRolePolicy(lambdaCognitoPolicy);
+
     dynamoDoctorsTable.grantReadWriteData(lambdaDoctorCreate);
     dynamoDoctorsTable.grantReadData(lambdaDoctorGet);
     dynamoDoctorsTable.grantReadData(lambdaDoctorList);
@@ -139,12 +156,17 @@ export class InfraStack extends cdk.Stack {
     lambdaPatientList.addEnvironment('TABLE_NAME', dynamoPatientsTable.tableName);
     lambdaPatientDelete.addEnvironment('TABLE_NAME', dynamoPatientsTable.tableName);
     
+    lambdaPatientCreate.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaPatientUpdate.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaPatientGet.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaPatientList.addToRolePolicy(lambdaCognitoPolicy);
+    lambdaPatientDelete.addToRolePolicy(lambdaCognitoPolicy);
+
     dynamoPatientsTable.grantReadWriteData(lambdaPatientCreate);
     dynamoPatientsTable.grantReadData(lambdaPatientGet);
     dynamoPatientsTable.grantReadData(lambdaPatientList);
     dynamoPatientsTable.grantReadWriteData(lambdaPatientDelete);
     dynamoPatientsTable.grantReadWriteData(lambdaPatientUpdate);
-
 
   
     /*
@@ -162,6 +184,13 @@ export class InfraStack extends cdk.Stack {
         // add custom access logs maybe
       }
     });
+
+    // export
+    new CfnOutput(this, 'DoqutoreAPIGateway', {
+      value: api.restApiId,
+      exportName: this.stackName + '-APIGateway'
+    });
+    
     const apiSchemas = getModels(this, api);
     const apiAuth = new apigateway.CfnAuthorizer(this, 'cognito-auth', {
       name: 'cognito-auth',
