@@ -4,14 +4,21 @@ import boto3
 import sys
 import uuid
 import random
+from faker import Faker
+fake = Faker()
 
+# problem: filter pattern can only fit 21 uuids 
+# and a log group can only have one subscription filter
+# so maximum of 21 honey records in entire database
 
 def generateName():
-    return "Barry Fake"
+    return fake.name()
+    # return "Barry Fake"
 
 def generateEmail(name: str):
-    suffixes = ["gmail.com", "outlook.com", "bigpond.com.au", "live.com"]
-    return name.replace(" ", "_") + "@" + random.choice(suffixes)
+    suffixes = ["gmail.com", "outlook.com", "bigpond.com.au", "live.com", "protonmail.com"]
+    separators = ["_", ".", "", "-"]
+    return name.replace(" ", random.choice(separators)) + "@" + random.choice(suffixes)
 
 def generatePhoneNumber():
     return "+" + str(random.randint(10**10, (10**11)-1))
@@ -28,7 +35,56 @@ def generatePerson():
         'phone_number': generatePhoneNumber(),
         'age': generateAge(),
         'is_active': True
+        # should is_active be false?
     }
+
+#  return value is pointless rn
+def clearExistingPattern(curfilter: dict):
+    print('A filter pattern already exists. You may quit running, or delete it and then rerun the program to create a new filter.')
+    curpattern = curfilter['filterPattern']
+    filterPatternStart = '[type=INFO,timestamp=*Z,requestid=*-*,event=*'
+    print(curpattern)
+    if curpattern.startswith(filterPatternStart):
+        print('The filter pattern seems to match the known pattern. Delete it and its honey records? Y/N')
+        if input().upper() != 'Y':
+            return False
+        next = curpattern.split('[type=INFO,timestamp=*Z,requestid=*-*,event=', 1)[1]
+        # check split
+        # extract ids from filter pattern and delete from database
+        foundids = []
+        try:
+            while next != [']']:
+                id, eventstr = next.split('*',1)[1].split('*', 1)
+                # will except if doesn't match?
+                foundids.append(id)
+                next = eventstr.split('event=', 1) # *id* ...
+                if len(next) == 2:
+                    next = next[1]
+                # else, if eventstr = ']', then loop will end
+                # if not, will continue to id, eventstr = line and raise exception
+                # This is really awful code
+        except:
+            print('Filter string diverged from pattern and the deletion process may not delete all existing honey records')
+        # print found ids
+        print('The following ids were found in the current filter pattern. Delete these database items and the current filter pattern? Y/N')
+        for i in range(len(foundids)):
+            print(str(i+1) + ': ' + foundids[i])
+        if input().upper() != 'Y':
+            return False
+        for id in foundids:
+            # delete id
+            response = table.delete_item(Key = {'id': id})
+            # print(response)
+    else:
+        print("The filter pattern is not compatible with this program's filter pattern structure and the program will not be able to perform any actions relating to its contents.\n Delete it? Delete it anyway? Y/N")
+        if input().upper() != 'Y':
+            return False
+    response = logs.delete_subscription_filter(
+        logGroupName = loggroupName,
+        filterName = curfilter['filterName']
+    )
+    return True
+    # don't have to delete filter pattern, will just get overridden
 
 
 dynamodb = boto3.resource('dynamodb')
@@ -36,20 +92,41 @@ dynamodbexceptions = boto3.client('dynamodb').exceptions
 logs = boto3.client('logs')
 iam = boto3.client('iam')
 
+# extract arguments
 if len(sys.argv) != 5:
     print(f"Usage: {sys.argv[0]} numberOfHoneyTokens tablename subscriptionFilterdestinationArn subscriptionFilterLogGroupName")
     exit()
 
 n = int(sys.argv[1])
 assert(n != 0)
+if n > 21:
+    print("Maximum n is 21 as filter patterns can only be up to 1024 bytes in length")
+    exit()
 tablename = sys.argv[2]#.rstrip()
 destarn = sys.argv[3]#.rstrip()
 loggroupName = sys.argv[4]#.rstrip()
 table = dynamodb.Table(tablename)
-
 #print(tablename)
 #print(destarn)
 #print(loggroupName)
+
+# check current filter
+response = logs.describe_subscription_filters(
+    logGroupName = loggroupName
+)
+#print(response)
+filters = response['subscriptionFilters']
+if filters == []:
+    print('No existing pattern. Continuing...')
+else:
+    res = clearExistingPattern(filters[0])
+    exit()
+# print(filters)
+# check current filter pattern and delete if necessary
+
+# add records to database and make new filter
+filterPattern = '[type=INFO,timestamp=*Z,requestid=*-*,'
+filterName = loggroupName + '-subscription'   
 
 ids = []
 
@@ -65,27 +142,38 @@ for i in range(n):
         i -= 1
 
 # [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb* || event=*5555*]
-filterPattern = '[type=INFO, timestamp=*Z, requestid=*-*,'
 
-filterPattern += ' event=*' + ids[0] + '*'
+filterPattern += 'event=*' + ids[0] + '*'
 for i in range(1, len(ids)):
-    filterPattern += ' || event=*' + ids[i] + '*'
+    filterPattern += '||event=*' + ids[i] + '*'
 filterPattern += ']'
 print(filterPattern)
 
-
-# atm running this will overwrite existing subscription filter
-# so previous honey records will still exist in the table but will not trigger the filter
-# should use describe_subscription_filters() to get current subscription filter
-# and add the new ids to the current
-
 response = logs.put_subscription_filter(
     logGroupName = loggroupName,
-    filterName = loggroupName + '-subscription',
+    filterName = filterName,
     filterPattern = filterPattern,
     destinationArn = destarn#,
     #roleArn = createRole()
 )
+
+
+# atm running this will overwrite existing subscription filter (can only have one per log group)
+# so previous honey records will still exist in the table but will not trigger the filter
+# should use describe_subscription_filters() to get current subscription filter
+# and add the new ids to the current
+
+'''
+ogfilter = filters[0]
+ogfilterpattern = ogfilter['filterPattern']
+if ogfilterpattern.startswith(filterPatternStart):
+# ofc it still might be incompatible
+    filterPattern = ogfilterpattern[:-1] + '||' #.rstrip("]")
+    filterName = ogfilter['filterName']
+else:
+    print("Filter pattern of existing subscription filter is incompatible with this one.\nYou must delete the previous subscription filter.")
+    exit()
+'''
 
 
 '''
