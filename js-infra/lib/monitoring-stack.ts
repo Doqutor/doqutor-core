@@ -9,6 +9,7 @@ import {createPythonLambda} from './common/lambda';
 import * as iam from '@aws-cdk/aws-iam';
 import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
 import * as cw_actions from '@aws-cdk/aws-cloudwatch-actions';
+import * as wafv2 from '@aws-cdk/aws-wafv2';
 import { Duration } from '@aws-cdk/core';
 import * as wafv2 from '@aws-cdk/aws-wafv2';
 
@@ -194,7 +195,7 @@ export class MonitoringStack extends cdk.Stack {
       resources: ['*'],
     }));
 
-    // WAF
+        // WAF
     // only allow 128 requests per 5 minutes, a pretty generous limit for a small practice
     // assuming that a clinic is located at the same ip address
     const wafAPI = new wafv2.CfnWebACL(this, 'waf-api', {
@@ -208,45 +209,9 @@ export class MonitoringStack extends cdk.Stack {
       },
       scope: 'REGIONAL',
       rules: [
-        { 
-          name: 'AWS-AWSManagedRulesAmazonIpReputationList',
-          priority: 0,
-          statement: {
-            managedRuleGroupStatement: {
-              vendorName: 'AWS',
-              name: 'AWSManagedRulesAmazonIpReputationList'
-            }
-          },
-          visibilityConfig: {
-            cloudWatchMetricsEnabled: true,
-            metricName: 'waf-apigateway-ipreputation',
-            sampledRequestsEnabled: true
-          },
-          overrideAction: {
-            none: {}
-          }
-        },
-        { 
-          name: 'AWS-AWSManagedRulesCommonRuleSet',
-          priority: 1,
-          statement: {
-            managedRuleGroupStatement: {
-              vendorName: 'AWS',
-              name: 'AWSManagedRulesCommonRuleSet'
-            }
-          },
-          visibilityConfig: {
-            cloudWatchMetricsEnabled: true,
-            metricName: 'waf-apigateway-commonattacks',
-            sampledRequestsEnabled: true
-          },
-          overrideAction: {
-            none: {}
-          }
-        },
         {
           name: 'ratelimit',
-          priority: 2,
+          priority: 1,
           statement: {
             rateBasedStatement: {
               limit: 128,
@@ -268,5 +233,7 @@ export class MonitoringStack extends cdk.Stack {
       resourceArn: `arn:aws:apigateway:${this.region}::/restapis/${cdk.Fn.importValue(stackName+"-APIGateway")}/stages/prod`,
       webAclArn: wafAPI.attrArn
     });
+
+
   }
 }

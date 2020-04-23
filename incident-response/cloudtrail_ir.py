@@ -45,7 +45,9 @@ if decision == 'y' or decision == 'Y':
     except:
         print("An exception occurred")
     finally:
-      f.close()
+        f.close()
+        if os.path.exists("trails.json"):
+            os.remove("trails.json")
 else:
     print('exiting!')
 
