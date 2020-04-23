@@ -28,7 +28,7 @@ $ python -m venv ./venv
 2. Activate virtual environment. <br/>
 Windows | Linux/Mac
 ```bash 
-$ venv\Scripts\activate.bat | $ venv/Scripts/activate
+$ venv\Scripts\activate.bat | $ ./venv/bin/activate
 ```
 3. Change directory to js-infra and install requirements.
 ```bash 
