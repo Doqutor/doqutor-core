@@ -1,5 +1,9 @@
 # Incident Response
 
+Requirements: [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html "Install AWS CLI")
+<br/>
+:information_source: Select JSON/None as the [default output format](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html "Configuring the AWS CLI")
+<br/>
 To simulate incident response we must install requirements and additional packages.
 <br/>
 ```bash
@@ -12,5 +16,5 @@ To simulate with a wizard
 ```bash
 $ python cloudtrail_ir.py
  ```
-!x This is an error message.
+:warning: You can block yourself from AWS account. [Create an IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html "Create AWS IAM user guide") and change your [local AWS config](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html "Configuring the AWS CLI"). 
   
