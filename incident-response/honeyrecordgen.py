@@ -39,8 +39,8 @@ def generatePerson():
     }
 
 #  return value is pointless rn
-def clearExistingPattern(curfilter: dict):
-    print('A filter pattern already exists. You may quit running, or delete it and then rerun the program to create a new filter.')
+def clearExistingPattern(curfilter: dict, _loggroupName: str):
+    print('You may quit running, or delete it and then rerun the program to create a new filter.')
     curpattern = curfilter['filterPattern']
     filterPatternStart = '[type=INFO,timestamp=*Z,requestid=*-*,event=*'
     print(curpattern)
@@ -66,9 +66,10 @@ def clearExistingPattern(curfilter: dict):
         except:
             print('Filter string diverged from pattern and the deletion process may not delete all existing honey records')
         # print found ids
-        print('The following ids were found in the current filter pattern. Delete these database items and the current filter pattern? Y/N')
+        print('The following ids were found in the current filter pattern.')
         for i in range(len(foundids)):
             print(str(i+1) + ': ' + foundids[i])
+        print('Delete these database items and the current filter pattern? Y/N')
         if input().upper() != 'Y':
             return False
         for id in foundids:
@@ -80,7 +81,7 @@ def clearExistingPattern(curfilter: dict):
         if input().upper() != 'Y':
             return False
     response = logs.delete_subscription_filter(
-        logGroupName = loggroupName,
+        logGroupName = _loggroupName,
         filterName = curfilter['filterName']
     )
     return True
@@ -93,8 +94,8 @@ logs = boto3.client('logs')
 iam = boto3.client('iam')
 
 # extract arguments
-if len(sys.argv) != 5:
-    print(f"Usage: {sys.argv[0]} numberOfHoneyTokens tablename subscriptionFilterdestinationArn subscriptionFilterLogGroupName")
+if len(sys.argv) < 5:
+    print(f"Usage: {sys.argv[0]} numberOfHoneyTokens tablename subscriptionFilterdestinationArn subscriptionFilterLogGroupName subscriptionFilterLogGroupName2 ...")
     exit()
 
 n = int(sys.argv[1])
@@ -104,29 +105,35 @@ if n > 21:
     exit()
 tablename = sys.argv[2]#.rstrip()
 destarn = sys.argv[3]#.rstrip()
-loggroupName = sys.argv[4]#.rstrip()
+loggroupNames = sys.argv[4:]
+# loggroupName = sys.argv[4]#.rstrip()
 table = dynamodb.Table(tablename)
 #print(tablename)
 #print(destarn)
 #print(loggroupName)
 
 # check current filter
-response = logs.describe_subscription_filters(
-    logGroupName = loggroupName
-)
-#print(response)
-filters = response['subscriptionFilters']
-if filters == []:
-    print('No existing pattern. Continuing...')
-else:
-    res = clearExistingPattern(filters[0])
+existing = False
+for loggroupName in loggroupNames:
+    response = logs.describe_subscription_filters(
+        logGroupName = loggroupName
+    )
+    #print(response)
+    filters = response['subscriptionFilters']
+    if filters == []:
+        print(f'No existing pattern in {loggroupName}. Continuing...')
+    else:
+        print(f'Existing pattern in {loggroupName}.')
+        res = clearExistingPattern(filters[0], loggroupName)
+        existing = True
+        print()
+    # print(filters)
+    # check current filter pattern and delete if necessary
+if existing:
     exit()
-# print(filters)
-# check current filter pattern and delete if necessary
 
 # add records to database and make new filter
 filterPattern = '[type=INFO,timestamp=*Z,requestid=*-*,'
-filterName = loggroupName + '-subscription'   
 
 ids = []
 
@@ -149,13 +156,14 @@ for i in range(1, len(ids)):
 filterPattern += ']'
 print(filterPattern)
 
-response = logs.put_subscription_filter(
-    logGroupName = loggroupName,
-    filterName = filterName,
-    filterPattern = filterPattern,
-    destinationArn = destarn#,
-    #roleArn = createRole()
-)
+for loggroupName in loggroupNames:
+    response = logs.put_subscription_filter(
+        logGroupName = loggroupName,
+        filterName = loggroupName + '-subscription',
+        filterPattern = filterPattern,
+        destinationArn = destarn#,
+        #roleArn = createRole()
+    )
 
 
 # atm running this will overwrite existing subscription filter (can only have one per log group)
