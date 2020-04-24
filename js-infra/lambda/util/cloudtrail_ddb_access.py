@@ -23,7 +23,7 @@ def main(event, context):
             print("rollback occurred")
             print(curr['dynamodb']['Keys']['id']['S'])
             table = dynamodb.Table(TABLE_NAME)
-            print(table.creation_date_time)
+            #print(table.creation_date_time)
             restore_item = {
                 'id': curr['dynamodb']['Keys']['id']['S'],
                 'name': curr['dynamodb']['OldImage']['name']['S'],
@@ -33,8 +33,10 @@ def main(event, context):
                 'is_active': curr['dynamodb']['OldImage']['is_active']['BOOL'],
                 'insurance_id': curr['dynamodb']['OldImage']['insurance_id']['S']
             }
+            table.delete_item(Key={ 'id': curr['dynamodb']['Keys']['id']['S'] })
             response = table.put_item(Item=restore_item)
             print(response)
+                
     
     return event
      

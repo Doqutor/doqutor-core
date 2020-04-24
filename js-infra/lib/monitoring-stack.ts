@@ -123,59 +123,6 @@ export class MonitoringStack extends cdk.Stack {
     //const debugLambda = createPythonLambda(this, 'util', 'dummy_lambda');
     //snsTopicCw.addSubscription(new subscriptions.LambdaSubscription(debugLambda));
 
-    /* Deny administrator access to sensitive medical info */
-    const ddbEventPattern: events.EventPattern = {
-      source: ['aws.dynamodb'],
-      detailType: ["AWS API Call via CloudTrail"],
-      detail: {
-        eventSource: [
-          ServicePrincipals.DYNAMO_DB
-        ],
-        eventName: [
-          "DeleteBackup",
-          "DeleteTable",
-          "UpdateGlobalTable",
-          "UpdateTable",
-          "UpdateItem",
-          "UpdateTimeToLive",
-          "DescribeTable"
-        ]
-      }
-    };
-    const ddbRule = new events.Rule(this, 'illegalAccessDatabase', {
-      eventPattern: ddbEventPattern,
-      description: "If non-lambda roles access database, they will be blocked"
-    });
-    // CHECK EVENT, THEN CHECK USER'S ROLE, THEN BLOCK 
-    const lambdaDdbAccess = createPythonLambda(this, 'util', 'cloudtrail_ddb_access');
-    const snsTopicDdb = new sns.Topic(this, 'DynamoDBAlert', {
-      displayName: 'DynamoDB illegal access alert'
-    });
-    snsTopicDdb.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
-    lambdaDdbAccess.addEnvironment('TRAIL_ARN', trail.trailArn);
-    lambdaDdbAccess.addEnvironment('SNS_ARN', snsTopicDdb.topicArn);
-    lambdaDdbAccess.addEnvironment('TABLE_ARN', cdk.Fn.importValue(stackName+"-PatientTableArn")); 
-    lambdaDdbAccess.addEnvironment('TABLE_NAME', cdk.Fn.importValue(stackName+"-PatientTable")); 
-    snsTopicDdb.grantPublish(lambdaDdbAccess);
-    ddbRule.addTarget(new targets.LambdaFunction(lambdaDdbAccess));
-    ddbRule.addTarget(new targets.SnsTopic(snsTopicDdb));
-
-    lambdaDdbAccess.addToRolePolicy(new iam.PolicyStatement({
-      actions: [
-        'cloudtrail:*'
-      ],
-      effect: iam.Effect.ALLOW,
-      resources: [trail.trailArn]
-    }));
-
-    // judy TODO: look at restricting resource list...
-    lambdaDdbAccess.addToRolePolicy(new iam.PolicyStatement({
-      actions: [
-        'iam:*'
-      ],
-      effect: iam.Effect.ALLOW,
-      resources: ["*"]
-    }));
 
     
     /*
@@ -185,7 +132,6 @@ export class MonitoringStack extends cdk.Stack {
     const adminGroup = iam.Group.fromGroupArn(this, 'adminusers', "arn:aws:iam::018904123317:group/adminusers");
     const policy = new iam.Policy(this, 'BlockPatientTable');
 
-    // TODO: move this to a json file
     const ddbPatientBlock = {
         "Sid": "VisualEditor0",
         "Effect": "Deny",
