@@ -17,9 +17,7 @@ response = requests.get(endpoint, headers = {"Authorization": token})
 responsejson = response.json()
 print(response, response.content)
 print()
-if 'data' not in responsejson:
-    print(response, response.content)
-else:
+if 'data' in responsejson:
     patientslist = responsejson['data']
     #print(patientslist)
     for patient in patientslist:
@@ -30,6 +28,5 @@ else:
         print(response, response.content)
         print()
         #time.sleep(2)
-
 
 response.close()
