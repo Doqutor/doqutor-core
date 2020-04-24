@@ -6,8 +6,9 @@ table = get_table(table_name)
 tokens_table_name = os.environ.get('TOKENS_TABLE_NAME')
 tokens_table = get_table(tokens_table_name)
 
-# I think probably we don't want this to exist?
-# Maybe a version where we just list patient names without details
+# This is a version that just lists patient names and ids
+# so patients_list doesn't give all the info of patients_get and patients_get is more meaningful
+# because if people can just get all the info from patients_list then they have no reason to use patients_get and trigger honeytoken
     
 def main(event, context):
     if not checkToken(tokens_table, event['headers']):
