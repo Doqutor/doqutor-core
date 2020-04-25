@@ -44,12 +44,12 @@ $ npm run build
 ```
 6. Now deploy the AWS stack. We customize the stack name with your OS username. We have two stacks, you can deploy them separately or else use regex style *. But "infrastructure stack" must be created first as "monitoring stack" requires some inputs from "infrastructure stack". 
 ```bash
-$ cdk deploy *stack-name*
+$ cdk deploy "your-stack-name"
 ```
 
 To destroy the stack
 ```bash
-$ cdk destroy *stack-name*
+$ cdk destroy "your-stack-name*"
 ```
 
 
