@@ -20,7 +20,7 @@ export class MonitoringStack extends cdk.Stack {
     /*
     * CloudTrail and sns
     */
-    const trail = new cloudtrail.Trail(this, 'cloudwatch', {
+    const trail = new cloudtrail.Trail(this, 'cloudtrail', {
       sendToCloudWatchLogs: true
     });
     const snsTopic = new sns.Topic(this, 'CloudtrailAlert', {
