@@ -60,4 +60,4 @@ More information on AWS CDK
 [CDK Workshop](https://cdkworkshop.com/) |
 [Getting Started](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html) |
 [API Reference](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-construct-library.html) |
-[Examples](https://github.com/aws-samples/aws-cdk-examples) |
+[Examples](https://github.com/aws-samples/aws-cdk-examples) 
