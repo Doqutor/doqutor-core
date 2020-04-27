@@ -94,11 +94,12 @@ export class InfraStack extends cdk.Stack {
       ]
     });
     const cfnAuthClient = authClient.node.defaultChild as cognito.CfnUserPoolClient;
+    cfnAuthClient.addDependsOn(cfnResourceServer);
     cfnAuthClient.readAttributes = ['email', 'email_verified', 'phone_number', 'phone_number_verified', 'custom:type'];
     cfnAuthClient.preventUserExistenceErrors = "ENABLED";
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
     cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
-    cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', `${cfnResourceServer.name}/application`];
+    cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', `doqutore/application`];
     cfnAuthClient.callbackUrLs = ['http://localhost', `https://${env}.aws9447.me/login`];
     
     
