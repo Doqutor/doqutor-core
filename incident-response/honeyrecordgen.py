@@ -51,7 +51,6 @@ def extractArgs(argv: list) -> (int, str, str, list):
     tablename = sys.argv[2]#.rstrip()
     destarn = sys.argv[3]#.rstrip()
     loggroupNames = sys.argv[4:]
-    table = dynamodb.Table(tablename)
     #print(tablename)
     #print(destarn)
     #print(loggroupName)
@@ -127,7 +126,7 @@ def clearExistingFilters(_loggroupNames: list) -> bool:
             print(f'No existing pattern in {loggroupName}. Continuing...') # not print continuing from function
         else:
             print(f'Existing pattern in {loggroupName}.')
-            res = clearExistingPattern(filters[0], loggroupName)
+            clearExistingPattern(filters[0], loggroupName)
             existing = True
             print()
         # print(filters)
@@ -186,4 +185,3 @@ if not existing:
     if err is False:
         filterPattern = createPattern(ids)
         addSubscriptions(loggroupNames, filterPattern, destarn)
-        
