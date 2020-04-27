@@ -49,7 +49,7 @@ $ cdk deploy "your-stack-name"
 
 To destroy the stack
 ```bash
-$ cdk destroy "your-stack-name*"
+$ cdk destroy "your-stack-name"
 ```
 
 
