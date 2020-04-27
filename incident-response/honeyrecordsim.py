@@ -6,7 +6,7 @@ import sys
 if len(sys.argv) != 3:
     print('Usage: %s APIEndpoint', sys.argv[0])
     exit()
-
+    
 endpoint = sys.argv[1]
 token = sys.argv[2]
 
