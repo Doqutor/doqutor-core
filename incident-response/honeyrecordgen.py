@@ -186,3 +186,4 @@ if not existing:
     if err is False:
         filterPattern = createPattern(ids)
         addSubscriptions(loggroupNames, filterPattern, destarn)
+        
