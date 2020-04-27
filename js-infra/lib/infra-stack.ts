@@ -65,6 +65,12 @@ export class InfraStack extends cdk.Stack {
       }*/
       // this is commented out because of problems when I deploy lambdas in util folder
     });
+    // export
+    new CfnOutput(this, 'DoqutoreCognitoPool', {
+      value: authPool.userPoolId,
+      exportName: this.stackName + '-CognitoPool'
+    });
+
     const cfnAuthPool = authPool.node.defaultChild as cognito.CfnUserPool;
     cfnAuthPool.userPoolAddOns = {
       advancedSecurityMode: 'ENFORCED'
@@ -96,13 +102,13 @@ export class InfraStack extends cdk.Stack {
       ]
     });
     const cfnAuthClient = authClient.node.defaultChild as cognito.CfnUserPoolClient;
+    cfnAuthClient.addDependsOn(cfnResourceServer);
     cfnAuthClient.readAttributes = ['email', 'email_verified', 'phone_number', 'phone_number_verified', 'custom:type'];
     cfnAuthClient.preventUserExistenceErrors = "ENABLED";
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
     cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
-    //cfnAuthClient.allowedOAuthFlows = ['implicit']; // for me to use API
-    cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', `${cfnResourceServer.name}/application`];
-    cfnAuthClient.callbackUrLs = ['http://localhost', 'https://dev.aws9447.me/login'];
+    cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', `doqutore/application`];
+    cfnAuthClient.callbackUrLs = ['http://localhost', `https://${env}.aws9447.me/login`];
     
     
     const lambdaCognitoPolicy = new iam.PolicyStatement({
