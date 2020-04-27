@@ -57,6 +57,12 @@ export class InfraStack extends cdk.Stack {
         postAuthentication: lambdaCognitoHandler
       }
     });
+    // export
+    new CfnOutput(this, 'DoqutoreCognitoPool', {
+      value: authPool.userPoolId,
+      exportName: this.stackName + '-CognitoPool'
+    });
+
     const cfnAuthPool = authPool.node.defaultChild as cognito.CfnUserPool;
     cfnAuthPool.userPoolAddOns = {
       advancedSecurityMode: 'ENFORCED'
@@ -93,7 +99,7 @@ export class InfraStack extends cdk.Stack {
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
     cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
     cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', `${cfnResourceServer.name}/application`];
-    cfnAuthClient.callbackUrLs = ['http://localhost', 'https://dev.aws9447.me/login'];
+    cfnAuthClient.callbackUrLs = ['http://localhost', `https://${env}.aws9447.me/login`];
     
     
     const lambdaCognitoPolicy = new iam.PolicyStatement({
