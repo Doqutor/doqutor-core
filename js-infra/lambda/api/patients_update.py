@@ -9,8 +9,20 @@ dynamodbexceptions = boto3.client('dynamodb').exceptions
 def main(event, context):
     log_event(event)
 
+    user = get_user(event)
+
     params = event['pathParameters']
     _id = params['id']
+
+    data = table.get_item(Key={
+        'id': _id
+    })
+
+    if "Item" in data:    
+        if get_role(user) != 'doctor' and user['attributes']['sub'] != data['Item']['id']:
+            return send_error(403, 'you are not authorized to view this resource')
+        return send_response(200, data["Item"])
+
     body = get_body(event)
 
     item = {

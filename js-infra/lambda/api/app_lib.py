@@ -52,7 +52,23 @@ def send_error(statusCode=500, error='internal server error', headers=None):
         }
 
 
+def get_user(event):
+    client = boto3.client('cognito-idp')
+    # check if the role is either doctor or patient
+    # headers are case sensitive for some reason
+    pool_id = event['requestContext']['authorizer']['claims']['iss'].split('/')[-1]
+    username = event['requestContext']['authorizer']['claims']['username']
+    res = client.admin_get_user(UserPoolId=pool_id, Username=username)
+    return {
+        'username': res['Username'],
+        'attributes': {
+            i['Name']: i['Value'] for i in res['UserAttributes']
+        },
+        'status': res['UserStatus']
+    }
 
+def get_role(user):
+    return user['attributes']['custom:type']
 
 def decimal_default(obj):
     if isinstance(obj, Decimal):

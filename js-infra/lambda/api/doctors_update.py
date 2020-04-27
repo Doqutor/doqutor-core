@@ -9,6 +9,10 @@ dynamodbexceptions = boto3.client('dynamodb').exceptions
 def main(event, context):
     log_event(event)
 
+    user = get_user(event)
+    if get_role(user) != 'doctor':
+        return send_error(403, 'you are not authorized to view this resource')
+
     params = event['pathParameters']
     _id = params['id']
     body = get_body(event)

@@ -10,6 +10,8 @@ import * as iam from '@aws-cdk/aws-iam';
 import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
 import * as cw_actions from '@aws-cdk/aws-cloudwatch-actions';
 import { Duration } from '@aws-cdk/core';
+//import * as wafv2 from '@aws-cdk/aws-wafv2';
+
 
 export class MonitoringStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -18,7 +20,7 @@ export class MonitoringStack extends cdk.Stack {
     /*
     * CloudTrail and sns
     */
-    const trail = new cloudtrail.Trail(this, 'cloudwatch', {
+    const trail = new cloudtrail.Trail(this, 'cloudtrail', {
       sendToCloudWatchLogs: true
     });
     const snsTopic = new sns.Topic(this, 'CloudtrailAlert', {
@@ -129,7 +131,9 @@ export class MonitoringStack extends cdk.Stack {
     * IAM Policy to block admins from reading patient table
     */
     // TODO: change ARN into something agnostic
-    const adminGroup = iam.Group.fromGroupArn(this, 'adminusers', "arn:aws:iam::018904123317:group/adminusers");
+    const awsAccountId = cdk.Stack.of(this).account;
+    const adminGroupName = "adminusers"
+    const adminGroup = iam.Group.fromGroupArn(this, 'adminusers', "arn:aws:iam::"+awsAccountId+":group/"+adminGroupName);
     const policy = new iam.Policy(this, 'BlockPatientTable');
 
     const ddbPatientBlock = {
