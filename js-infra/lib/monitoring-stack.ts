@@ -84,6 +84,36 @@ export class MonitoringStack extends cdk.Stack {
     rule.addTarget(new targets.SnsTopic(snsTopic));
 
     /*
+    * Events for detecting that s3 was tampered with
+    */
+    /*
+    * Events for detecting that s3 was tampered with
+    */
+    const pattern: events.EventPattern = {
+      source: ['aws.cloudtrail'],
+      detail: {
+        eventSource: [
+          ServicePrincipals.S3
+        ],
+        eventName: [
+          "DeleteObject",
+          "PutObject"
+        ]
+      }
+    };
+
+    const frontendRule = new events.Rule(this, 's3Modified', {
+      eventPattern: eventPattern,
+      description: "If the frontend S3 bucket is modified then this event will fire"
+    });
+
+    const lambdaFrontendCloudtrailLogging = createPythonLambda(this, 'util', 'cloudtrail_retrigger_pipeline');
+    lambdaFrontendCloudtrailLogging.addEnvironment('SNS_ARN', snsTopic.topicArn);
+
+    frontendRule.addTarget(new targets.LambdaFunction(lambdaFrontendCloudtrailLogging));
+    frontendRule.addTarget(new targets.SnsTopic(snsTopic));
+
+    /*
     * CloudWatch rulesets here
     */
 
