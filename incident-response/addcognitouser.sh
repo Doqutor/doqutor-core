@@ -1,7 +1,8 @@
 #!/bin/bash
 # make some adjustment to this. 
 # The user pool id is an output from cdk deploy, so probably don't need to get it from stackname
-# I will convert this to python
+# I will convert this to python if necesssary
+# maybe can use cognito initiate-auth to sign in and get token? or some kind of request
 
 USERPOOLID=$1
 EMAIL=$2

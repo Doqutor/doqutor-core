@@ -28,4 +28,13 @@ To simulate with a wizard
 $ python cloudtrail_ir.py
  ```
 :warning: You can block yourself from AWS account if you did not follow step 0. 
-  
+
+
+#### 2. Honeyrecord accessed by website user:
+in progress
+Honeyrecords can be generated and set up with the honeyrecordgen.py script.
+To generate the required inputs for honeyrecordgen.py from the stack name, and then run honeyrecordgen, run runhoneygen.sh
+To simulate, run honeyrecordsim.py. You will need a cognito user and a current access token.
+A user can be created with addcognitouser.sh
+
+
