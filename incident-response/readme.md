@@ -28,4 +28,35 @@ To simulate with a wizard
 $ python cloudtrail_ir.py
  ```
 :warning: You can block yourself from AWS account if you did not follow step 0. 
-  
+
+
+#### 2. Honeyrecord accessed by website user:
+in progress
+
+Honeyrecords can be generated and set up with the honeyrecordgen.py script.
+To generate the required inputs for honeyrecordgen.py from the stack name, and then run honeyrecordgen, run runhoneygen.sh
+To simulate, run honeyrecordsim.py. You will need a cognito user and a current access token.
+A user can be created with addcognitouser.sh.
+
+Two ways to get an API token:
+1. Launch cognito hosted ui and change the following query parameters before logging in, then extract access_token from the redirect url:
+
+            response_type=token
+            scope=doqutore/application
+2. Login using website, and retrieve config:token from cookies
+
+Then prepend 'bearer '. If using option 1, the token can be generated from the redirect url with following python:
+```python
+print("Bearer " + (url.split("access_token=", 1)[1]).split("&")[0])
+```
+The API endpoint can be retrieved from cdk deploy output.
+Then run
+```bash
+$ python honeyrecordsim.py APIEndpoint AuthToken
+```
+eg
+```bash
+$ python honeyrecordsim.py APIEndpoint "$(python -c 'print("Bearer " + url.split("access_token=", 1)[1].split("&")[0])')"
+```
+
+

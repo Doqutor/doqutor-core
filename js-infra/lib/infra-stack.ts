@@ -12,6 +12,10 @@ import * as lambda from '@aws-cdk/aws-lambda';
 import { DynamoEventSource } from '@aws-cdk/aws-lambda-event-sources';
 import { Config } from '../bin/infra';
 
+// for honeytoken only, to be removed if moved to monitoring-stack
+import * as subscriptions from '@aws-cdk/aws-sns-subscriptions';
+import { ServicePrincipals } from 'cdk-constants';
+
 
 export class InfraStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, config: Config, props?: cdk.StackProps) {
@@ -100,6 +104,7 @@ export class InfraStack extends cdk.Stack {
       lambdaTriggers: {
         postAuthentication: lambdaCognitoHandler
       }
+      // this was commented out because of problems when I deploy lambdas in util folder
     });
     // export
     new CfnOutput(this, 'DoqutoreCognitoPool', {
@@ -138,7 +143,7 @@ export class InfraStack extends cdk.Stack {
       ]
     });
     const cfnAuthClient = authClient.node.defaultChild as cognito.CfnUserPoolClient;
-    cfnAuthClient.addDependsOn(cfnResourceServer);
+    cfnAuthClient.addDependsOn(cfnResourceServer);  // maybe its this
     cfnAuthClient.readAttributes = ['email', 'email_verified', 'phone_number', 'phone_number_verified', 'custom:type'];
     cfnAuthClient.preventUserExistenceErrors = "ENABLED";
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
@@ -154,6 +159,7 @@ export class InfraStack extends cdk.Stack {
     lambdaCognitoPolicy.addResources(authPool.userPoolArn);
     lambdaCognitoPolicy.addActions("cognito-idp:*");
 
+
     /*
      * Lambdas for doctor CRUD
      */
@@ -163,7 +169,7 @@ export class InfraStack extends cdk.Stack {
     const lambdaDoctorGet = createPythonLambda(this, 'api', 'doctors_get');
     const lambdaDoctorList = createPythonLambda(this, 'api', 'doctors_list');
     const lambdaDoctorDelete = createPythonLambda(this, 'api', 'doctors_delete');
-    
+
     lambdaDoctorCreate.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
     lambdaDoctorUpdate.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
     lambdaDoctorGet.addEnvironment('TABLE_NAME', dynamoDoctorsTable.tableName);
@@ -219,6 +225,11 @@ export class InfraStack extends cdk.Stack {
 
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
+      },
+      deployOptions: {
+        loggingLevel: apigateway.MethodLoggingLevel.INFO,
+        dataTraceEnabled: true
+        // add custom access logs maybe
       }
     });
 
@@ -255,7 +266,6 @@ export class InfraStack extends cdk.Stack {
     const resourceDoctors = api.root.addResource('doctors');
     resourceDoctors.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorList), authOptions);
     resourceDoctors.addMethod('POST', new apigateway.LambdaIntegration(lambdaDoctorCreate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.doctor]}});
-
     const resourceDoctorId = resourceDoctors.addResource('{id}');
     resourceDoctorId.addMethod('GET', new apigateway.LambdaIntegration(lambdaDoctorGet), authOptions);
     resourceDoctorId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaDoctorUpdate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.doctor]}});
@@ -270,5 +280,83 @@ export class InfraStack extends cdk.Stack {
     resourcePatientId.addMethod('GET', new apigateway.LambdaIntegration(lambdaPatientGet), authOptions);
     resourcePatientId.addMethod('PUT', new apigateway.LambdaIntegration(lambdaPatientUpdate), {...authOptions, requestModels: {'application/json': apiSchemas[Models.patient]}});
     resourcePatientId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaPatientDelete), authOptions);
+
+
+    /*
+    * Honeytoken IR
+    * in infra-stack for the moment because it needs access to the lambdas
+    */
+    // sns topic
+    const snsTopicHT = new sns.Topic(this, 'HoneytokenSNS', {
+      displayName: 'Honeytoken SNS'
+    });
+    snsTopicHT.addSubscription(new subscriptions.EmailSubscription('059aa1ad.groups.unsw.edu.au@apac.teams.ms'));
+
+    // test user
+    const user = new iam.User(this, 'testUser');
+    user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
+
+    // block user lambda
+    // const lambdaBlockUser = createPythonLambda(this, 'util', 'block_user');
+    const lambdaBlockUser = createPythonLambda(this, 'api', 'block_user2');
+    // const lambdaBlockUser = createPythonLambda(this, 'api/blockuser2.zip', 'block_user2') 
+    const denyAllPolicy = new iam.PolicyStatement({
+      actions: [
+        'iam:AttachUserPolicy'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: ['*'],
+      conditions: {ArnEquals: {"iam:PolicyARN" : "arn:aws:iam::aws:policy/AWSDenyAll"}}
+    });
+    const cognitoPolicy = new iam.PolicyStatement({
+      actions: [
+        'cognito-idp:AdminDisableUser',
+        'cognito-idp:AdminUserGlobalSignOut'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: [authPool.userPoolArn]
+    });
+    const snsPolicy = new iam.PolicyStatement({
+      actions: [
+        'SNS:Publish'
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: [snsTopicHT.topicArn]
+    });
+    lambdaBlockUser.addToRolePolicy(denyAllPolicy);
+    lambdaBlockUser.addToRolePolicy(cognitoPolicy);
+    lambdaBlockUser.addToRolePolicy(snsPolicy);
+    lambdaBlockUser.addEnvironment('SNS_TOPIC_ARN', snsTopicHT.topicArn);
+    lambdaBlockUser.addEnvironment('USERPOOL_ID', authPool.userPoolId);
+    lambdaBlockUser.addPermission('cloudwatchinvokeblockuser', {principal: new iam.ServicePrincipal(ServicePrincipals.LOGS)})
+
+    // revoked tokens table
+    const revokedTokensTable = new dynamodb.Table(this, "revokedTokens", {
+      partitionKey: { name: 'token', type: dynamodb.AttributeType.STRING },
+      removalPolicy: RemovalPolicy.DESTROY,
+      timeToLiveAttribute: 'expiry'
+    });
+    revokedTokensTable.grantWriteData(lambdaBlockUser);
+    revokedTokensTable.grantReadData(lambdaDoctorGet);
+    revokedTokensTable.grantReadData(lambdaDoctorCreate);
+    revokedTokensTable.grantReadData(lambdaDoctorDelete);
+    revokedTokensTable.grantReadData(lambdaDoctorList);
+    revokedTokensTable.grantReadData(lambdaDoctorUpdate);
+    revokedTokensTable.grantReadData(lambdaPatientGet);
+    revokedTokensTable.grantReadData(lambdaPatientCreate);
+    revokedTokensTable.grantReadData(lambdaPatientDelete);
+    revokedTokensTable.grantReadData(lambdaPatientList);
+    revokedTokensTable.grantReadData(lambdaPatientUpdate);
+    lambdaBlockUser.addEnvironment('TABLE_NAME', revokedTokensTable.tableName);
+    lambdaDoctorGet.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaDoctorCreate.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaDoctorDelete.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaDoctorList.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaDoctorUpdate.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaPatientGet.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaPatientCreate.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaPatientDelete.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaPatientList.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+    lambdaPatientUpdate.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
   }
 }

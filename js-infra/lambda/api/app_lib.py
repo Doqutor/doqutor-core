@@ -75,3 +75,15 @@ def decimal_default(obj):
         return int(obj)
     return obj
 
+
+# ideally will eventually have this inside custom authorizer
+# or maybe not, it might not be worth the complication and extra lambda latency
+def checkToken(tokenstable, eventHeaders):
+    # if token in table, deny
+    if eventHeaders is not None and 'Authorization' in eventHeaders:
+        token = eventHeaders['Authorization'].split("Bearer ", 1)[1]
+        print(token)
+        data = tokenstable.get_item(Key={'token': token})
+        if "Item" in data:
+            return False
+    return True
