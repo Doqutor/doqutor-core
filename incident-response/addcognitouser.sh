@@ -3,6 +3,12 @@
 # The user pool id is an output from cdk deploy, so probably don't need to get it from stackname
 # I will convert this to python if necesssary
 # maybe can use cognito initiate-auth to sign in and get token? or some kind of request
+# initiate-auth: can't get to work. request: too complicated to copy request made by browser
+# maybe can at least generate signin link
+# make this a gettoken script
+# that creates user, provides signin link, and takes redirect url and provides token
+# or maybe should just simulate using website..
+
 
 USERPOOLID=$1
 EMAIL=$2

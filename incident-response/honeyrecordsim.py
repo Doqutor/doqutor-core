@@ -11,7 +11,7 @@ import sys
 # prepend 'Bearer ' to token
 
 if len(sys.argv) != 3:
-    print('Usage: %s APIEndpoint', sys.argv[0])
+    print(f'Usage: {sys.argv[0]} APIEndpoint AuthToken')
     exit()
     
 endpoint = sys.argv[1]
