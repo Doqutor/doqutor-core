@@ -1,6 +1,7 @@
 #!/bin/bash
 # make some adjustment to this. 
 # The user pool id is an output from cdk deploy, so probably don't need to get it from stackname
+# I will convert this to python
 
 USERPOOLID=$1
 EMAIL=$2
