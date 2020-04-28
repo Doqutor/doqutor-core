@@ -100,10 +100,10 @@ export class InfraStack extends cdk.Stack {
         email: true,
         phoneNumber: true
       },
-      /*lambdaTriggers: {
+      lambdaTriggers: {
         postAuthentication: lambdaCognitoHandler
-      }*/
-      // this is commented out because of problems when I deploy lambdas in util folder
+      }
+      // this was commented out because of problems when I deploy lambdas in util folder
     });
     // export
     new CfnOutput(this, 'DoqutoreCognitoPool', {
