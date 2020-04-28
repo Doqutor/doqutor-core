@@ -1,6 +1,7 @@
 #!/bin/bash
 # This is an example of intended use. It will add the records to the patients table,
 # and put a subscription filter on the patients get and patients delete lambdas
+# Maybe just put this in the documentation, not as a standalone file
 
 if [ $# -lt 2 ]
 then
