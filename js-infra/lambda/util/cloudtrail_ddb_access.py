@@ -3,106 +3,59 @@ import logging
 import os
 import json
 
-#TRAIL = os.getenv('TRAIL_ARN')
+TABLE_NAME = os.getenv('TABLE_NAME')
+SNS_ARN = os.getenv('SNS_ARN')
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-client = boto3.client('iam')
-iam = boto3.resource('iam')
+dynamodb = boto3.resource('dynamodb')
+cloudtrail = boto3.client('cloudtrail')
+sns = boto3.client('sns')
 
-def make_ddb_policy():
-    ddb_iam_policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "VisualEditor0",
-                "Effect": "Deny",
-                "Action": [
-                    "dynamodb:ListContributorInsights",
-                    "dynamodb:DescribeReservedCapacityOfferings",
-                    "dynamodb:ListGlobalTables",
-                    "dynamodb:ListTables",
-                    "dynamodb:DescribeReservedCapacity",
-                    "dynamodb:ListBackups",
-                    "dynamodb:PurchaseReservedCapacityOfferings",
-                    "dynamodb:DescribeLimits",
-                    "dynamodb:ListStreams"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "VisualEditor1",
-                "Effect": "Deny",
-                "Action": "dynamodb:*",
-                "Resource": "*"
-            }
-        ]
-    }
-
-    ddb_block = client.create_policy(
-        PolicyName='blockDynamoDBAccess',
-        PolicyDocument=json.dumps(ddb_iam_policy)
+def publish_logging(client, sns_arn, subject, patient_id, modify_data):
+    client.publish(
+        TargetArn=sns_arn,
+        Subject=subject,
+        Message=f'Unauthorised modification of patient table data type {modify_data} on id: {patient_id}',
     )
-    return ddb_block
-
-def make_iam_policy():
-    iam_deny_policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "VisualEditor0",
-                "Effect": "Deny",
-                "Action": "iam:*",
-            "Resource": "*"
-            }
-        ]
-    }
-            
-    iam_block = client.create_policy(
-        PolicyName='blockIAMaccess',
-        PolicyDocument=json.dumps(iam_deny_policy)
-    )
-    return iam_block
-    
-
 
 def main(event, context):
-    #logger.info('Event details: %s', event['userIdentity'])
-    action = event['userIdentity']
-    username = action["userName"]
-    if action["type"] == "IAMUser":
-        user = iam.User(username)
-        group = iam.Group("adminusers")
-        admin_users = group.users.all()
-        if user in admin_users:
-            print(username + " is admin")
-            policies = client.list_policies(Scope='Local')
-            #print(policies)
-            policy_list = policies['Policies']
-            print(policies['Policies'][2]['PolicyName'])
-            hasDbPolicy = False
-            hasIAMPolicy = False
-            ddb_arn = ""
-            iam_arn = ""
-            for policy in policy_list:
-                if policy['PolicyName'] == 'blockDynamoDBAccess':
-                    hasDbPolicy = True
-                    ddb_arn = policy['Arn']
-                elif policy['PolicyName'] == 'blockIAMaccess':
-                    hasIAMPolicy = True
-                    iam_arn = policy['Arn']
-
-            
-            if hasDbPolicy:
-                user.attach_policy(PolicyArn=ddb_arn)
-            else:
-                ddb_policy = make_ddb_policy()
-                user.attach_policy(PolicyArn=ddb_policy['Policy']['Arn'])
-
-            if hasIAMPolicy:
-                user.attach_policy(PolicyArn=iam_arn)
-            else:
-                iam_policy = make_iam_policy()
-                user.attach_policy(PolicyArn=iam_policy['Policy']['Arn'])
+    print(json.dumps(event))
+    if event['Records'][0]['eventName'] == 'MODIFY':
+        print('modify event')
+        curr = event['Records'][0]
+        # check on non alterable value
+        new_image = curr['dynamodb']['NewImage']
+        old_image = curr['dynamodb']['OldImage']
+        new_image_insurance_id = new_image['insurance_id']['S']
+        old_image_insurance_id = old_image['insurance_id']['S']
+        print("new: " + new_image_insurance_id + " old: " + old_image_insurance_id)
+        if new_image_insurance_id != old_image_insurance_id:
+            # trigger a "rollback" on bad value editing
+            print("rollback occurred")
+            print(curr['dynamodb']['Keys']['id']['S'])
+            table = dynamodb.Table(TABLE_NAME)
+            target_id = curr['dynamodb']['Keys']['id']['S']
+            restore_item = {
+                'id': target_id,
+                'name': old_image['name']['S'],
+                'email': old_image['email']['S'],
+                'phone_number': old_image['phone_number']['S'],
+                'age': old_image['age']['S'],
+                'is_active': old_image['is_active']['BOOL'],
+                'insurance_id': old_image['insurance_id']['S']
+            }
+            table.delete_item(Key={ 'id': target_id })
+            response = table.put_item(Item=restore_item)
+            if response:
+                subject = "WARNING: Illegal write operation in Patient table"
+                publish_logging(client=sns, 
+                                sns_arn=SNS_ARN, 
+                                subject=subject, 
+                                modify_data="insurance_id",
+                                patient_id=target_id)
+            print(response)
+                
+    
     return event
      
