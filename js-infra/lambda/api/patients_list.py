@@ -27,4 +27,4 @@ def main(event, context):
     for patient in response["Items"]:
         data.append({"id": patient["id"], "name": patient["name"]})
 
-    return send_response(200, data["Items"])
+    return send_response(200, data)

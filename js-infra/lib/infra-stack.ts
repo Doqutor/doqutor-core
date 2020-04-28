@@ -11,11 +11,8 @@ import * as subs from '@aws-cdk/aws-sns-subscriptions';
 import * as lambda from '@aws-cdk/aws-lambda';
 import { DynamoEventSource } from '@aws-cdk/aws-lambda-event-sources';
 
-// for honeytoken only, maybe to be removed when moved to monitoring-stack
+// for honeytoken only, to be removed if moved to monitoring-stack
 import * as subscriptions from '@aws-cdk/aws-sns-subscriptions';
-//import * as LogGroup from '@aws-cdk/aws-logs';
-import * as sns from '@aws-cdk/aws-sns';
-//import * as LogsDestinations from '@aws-cdk/aws-logs-destinations';
 import { ServicePrincipals } from 'cdk-constants';
 
 
@@ -145,7 +142,7 @@ export class InfraStack extends cdk.Stack {
       ]
     });
     const cfnAuthClient = authClient.node.defaultChild as cognito.CfnUserPoolClient;
-    cfnAuthClient.addDependsOn(cfnResourceServer);
+    cfnAuthClient.addDependsOn(cfnResourceServer);  // maybe its this
     cfnAuthClient.readAttributes = ['email', 'email_verified', 'phone_number', 'phone_number_verified', 'custom:type'];
     cfnAuthClient.preventUserExistenceErrors = "ENABLED";
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
@@ -160,6 +157,7 @@ export class InfraStack extends cdk.Stack {
     });
     lambdaCognitoPolicy.addResources(authPool.userPoolArn);
     lambdaCognitoPolicy.addActions("cognito-idp:*");
+
 
     /*
      * Lambdas for doctor CRUD
@@ -283,10 +281,9 @@ export class InfraStack extends cdk.Stack {
     resourcePatientId.addMethod('DELETE', new apigateway.LambdaIntegration(lambdaPatientDelete), authOptions);
 
 
-
     /*
     * Honeytoken IR
-    * left this in infra-stack for the moment because it needs access to the lambdas
+    * in infra-stack for the moment because it needs access to the lambdas
     */
     // sns topic
     const snsTopicHT = new sns.Topic(this, 'HoneytokenSNS', {
@@ -298,8 +295,8 @@ export class InfraStack extends cdk.Stack {
     const user = new iam.User(this, 'testUser');
     user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
 
-    // lambda
-    //const lambdaBlockAWSUser = createPythonLambda(this, 'util', 'block_user');
+    // block user lambda
+    // const lambdaBlockUser = createPythonLambda(this, 'util', 'block_user');
     const lambdaBlockUser = createPythonLambda(this, 'api', 'block_user2');
     // const lambdaBlockUser = createPythonLambda(this, 'api/blockuser2.zip', 'block_user2') 
     const denyAllPolicy = new iam.PolicyStatement({
@@ -331,8 +328,8 @@ export class InfraStack extends cdk.Stack {
     lambdaBlockUser.addEnvironment('SNS_TOPIC_ARN', snsTopicHT.topicArn);
     lambdaBlockUser.addEnvironment('USERPOOL_ID', authPool.userPoolId);
     lambdaBlockUser.addPermission('cloudwatchinvokeblockuser', {principal: new iam.ServicePrincipal(ServicePrincipals.LOGS)})
-    // what about mistakes. prob want to make sure it doesn't block the root account or smth
 
+    // revoked tokens table
     const revokedTokensTable = new dynamodb.Table(this, "revokedTokens", {
       partitionKey: { name: 'token', type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
