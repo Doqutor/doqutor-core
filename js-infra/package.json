@@ -33,7 +33,6 @@
     "aws-sdk": "^2.651.0",
     "cdk-constants": "^3.0.3",
     "cdk-watchful": "0.4.6",
-    "source-map-support": "0.5.16",
-    "@aws-cdk/assert": "1.30.0"
+    "source-map-support": "0.5.16"
   }
 }

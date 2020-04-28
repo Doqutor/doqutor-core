@@ -36,7 +36,7 @@ def main(event, context):
             publish(f'INCIDENT RESPONDED: Honeytoken triggered by AWS user {username} -> user blocked successfully', f'Honeytoken triggered by AWS user {username}\nfrom IP {sourceip}\nat {requesttime}.\nAWS user blocked.')
         except:
             publish(f'INCIDENT RESPONSE FAILED: Honeytoken triggered by AWS user {username}', f'Honeytoken triggered by AWS user {username}\nfrom IP {sourceip}\nat {requesttime}.\nFailed to apply deny policy to IAM account. Please investigate.')
-    elif e['headers'] is not None and 'Authorization' in e['headers']:
+    elif fields['headers'] is not None and 'Authorization' in fields['headers']:
         # lambda triggered through api call -> block cognito user and invalidate token
         error = False
         message = ''
@@ -69,7 +69,7 @@ def main(event, context):
         # access vs id tokens - how to invalidate both?
     else:
         pass
-        # how did this get triggered?
+        # not possible with current setup afaik
     
 
 def publish(subject: str, message: str):
@@ -77,14 +77,14 @@ def publish(subject: str, message: str):
 
 def interpretEvent(event: dict) -> dict:
     encodeddata = event['awslogs']['data']
-    decodeddata = base64.b64decode(decodeddata)
+    decodeddata = base64.b64decode(encodeddata)
     uncompresseddata = gzip.decompress(decodeddata)
     payload = json.loads(uncompresseddata)
     print(payload)
     #log_event(payload)
     return json.loads(payload['logEvents'][0]['extractedFields']['event'])
 
-def extractAuth(fields: dict) -> str, str, str:
+def extractAuth(fields: dict) -> (str, str, str):
     claims = fields['requestContext']['authorizer']['claims']
     expiry = claims['exp']
     username = claims['username']
@@ -93,7 +93,7 @@ def extractAuth(fields: dict) -> str, str, str:
     # check split failure
     return username, token, expiry
 
-def addToDB(item: dict) -> bool, str:
+def addToDB(item: dict) -> (bool, str):
     try:
         response = table.put_item(Item=item) # raises exception on failure
         if response['ResponseMetadata']['HTTPStatusCode'] != 200:
@@ -107,7 +107,7 @@ def addToDB(item: dict) -> bool, str:
         #message = "Could not invalidate user's token\n"
         return True, "Could not invalidate user's token\n"
 
-def disableUser(username: str) -> bool, str:
+def disableUser(username: str) -> (bool, str):
     # sign out and disable user
     # force password change with mfa or something?
     # can get userpool id from iss field like: "https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_CzNUhN04s"
@@ -127,8 +127,6 @@ def disableUser(username: str) -> bool, str:
         return True, 'User could not be signed out and disabled\n'
 
 
-# https://stackoverflow.com/questions/50295838/cloudwatch-logs-stream-to-lambda-python
-
 '''
 #from jose import jwt
 import jwt
@@ -140,7 +138,4 @@ def getTokenExpiry(token):
     print(claims)
     return claims['exp']
 '''
-# https://github.com/awslabs/aws-support-tools/blob/master/Cognito/decode-verify-jwt/decode-verify-jwt.py
 
-# https://www.programiz.com/python-programming/datetime/strptime
-# https://stackoverflow.com/questions/7241170/how-to-convert-current-date-to-epoch-timestamp
