@@ -10,10 +10,11 @@ import * as sns from '@aws-cdk/aws-sns';
 import * as subs from '@aws-cdk/aws-sns-subscriptions';
 import * as lambda from '@aws-cdk/aws-lambda';
 import { DynamoEventSource } from '@aws-cdk/aws-lambda-event-sources';
+import { Config } from '../bin/infra';
 
 
 export class InfraStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps, env='dev') {
+  constructor(scope: cdk.Construct, id: string, config: Config, props?: cdk.StackProps) {
     super(scope, id, props);
 
     const dynamoDoctorsTable = new dynamodb.Table(this, "doctors", {
@@ -51,7 +52,7 @@ export class InfraStack extends cdk.Stack {
     const snsTopicDdb = new sns.Topic(this, 'DynamoDBAlert', {
       displayName: 'DynamoDB illegal access alert'
     });
-    snsTopicDdb.addSubscription(new subs.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
+    snsTopicDdb.addSubscription(new subs.EmailSubscription(config.email));
     snsTopicDdb.grantPublish(lambdaDdbAccess);
     lambdaDdbAccess.addEnvironment('SNS_ARN', snsTopicDdb.topicArn);
     lambdaDdbAccess.addEnvironment('TABLE_NAME', dynamoPatientsTable.tableName); 
@@ -116,7 +117,7 @@ export class InfraStack extends cdk.Stack {
     // };
 
     new cognito.CfnUserPoolDomain(this, 'crm-users-login', {
-      domain: `login-${this.stackName}-${env}`,
+      domain: `login-${this.stackName}-${config.env}`,
       userPoolId: authPool.userPoolId
     });
     
@@ -143,7 +144,7 @@ export class InfraStack extends cdk.Stack {
     cfnAuthClient.supportedIdentityProviders = ['COGNITO'];
     cfnAuthClient.allowedOAuthFlows = ['implicit', 'code'];
     cfnAuthClient.allowedOAuthScopes = ['openid', 'phone', 'email', `doqutore/application`];
-    cfnAuthClient.callbackUrLs = ['http://localhost', `https://${env}.aws9447.me/login`];
+    cfnAuthClient.callbackUrLs = ['http://localhost', `https://${config.env}.aws9447.me/login`];
     
     
     const lambdaCognitoPolicy = new iam.PolicyStatement({

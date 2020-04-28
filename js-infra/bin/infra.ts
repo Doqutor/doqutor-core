@@ -7,13 +7,32 @@ import * as os from 'os';
 import {randomBytes} from 'crypto';
 import { MonitoringStack } from '../lib/monitoring-stack';
 
-let config: {prefix: String, env: string} = {prefix: os.userInfo().username.toLowerCase() + '-' + randomBytes(3).toString('hex'), env: 'dev'};
+export interface Config {
+    prefix: string;
+    env: string;
+    email: string;
+}
+
+let config: Config = {
+    prefix: os.userInfo().username.toLowerCase() + '-' + randomBytes(3).toString('hex'),
+    env: 'dev',
+    email: '747b13b7.groups.unsw.edu.au@apac.teams.ms'
+};
 // crm-users-login domain name won't allow upper case letters
 
 if (fs.existsSync(__dirname + '/../config.json')) {
     config = require(__dirname + '/../config.json');
+    let cfgChanged = false;
     if (!config.env) {
         config.env = 'dev';
+        cfgChanged = true;
+    }
+    if (!config.email) {
+        config.email = '747b13b7.groups.unsw.edu.au@apac.teams.ms';
+        cfgChanged = true;
+    }
+
+    if (cfgChanged) {
         console.log('updating config to config.json');
         fs.writeFileSync(__dirname + '/../config.json', JSON.stringify(config));
     }
@@ -23,5 +42,5 @@ if (fs.existsSync(__dirname + '/../config.json')) {
 }
 
 const app = new cdk.App();
-new InfraStack(app, `${config.prefix}-infrastructure`, undefined, config.env);
-new MonitoringStack(app, `${config.prefix}-monitoring`);
+new InfraStack(app, `${config.prefix}-infrastructure`, config);
+new MonitoringStack(app, `${config.prefix}-monitoring`, config);
