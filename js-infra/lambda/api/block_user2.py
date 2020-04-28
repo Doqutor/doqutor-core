@@ -56,8 +56,8 @@ def main(event, context):
         # add token to invalidated tokens database
         # old tokens cleared with dynamodb ttl
         item = {'token': token, 'expiry': expiryepoch}
-        message, error = addToDB(item)
-        cognitoMessage, cognitoError = disableUser(username)
+        error, message = addToDB(item)
+        cognitoError, cognitoMessage = disableUser(username)
         message += cognitoMessage
         error |= cognitoError
 

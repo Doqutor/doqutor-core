@@ -7,9 +7,26 @@ import random
 from faker import Faker
 fake = Faker()
 
-# problem: filter pattern can only fit 21 uuids 
-# and a log group can only have one subscription filter
-# so maximum of 21 honey records in entire database
+# Arguments:
+# numberOfHoneyTokens tablename subscriptionFilterdestinationArn sourceLogGroupName sourceLogGroupName2 ...
+# tablename: name of patients table. 
+#           Example: jm-c51d2d-infrastructure-patientsE885E6D7-7THM1LUCBR93   
+#           Retrieval: printed out in cdk deploy outputs, or available from CloudFormation, through console or cli
+# destination: arn of block_user lambda. 
+#           Example: arn:aws:lambda:ap-southeast-2:acctNumber:function:jm-c51d2d-infrastructure-blockuser2A1530289-3T5FMKMM5GX5
+#           Retrieval: CloudFormation, with console or cli
+# sourceLogGroup: name of log group that is source for subscription filter.
+#           Example: /aws/lambda/jm-c51d2d-infrastructure-patientsget88C45C74-1SQ0SB66ERZKW
+#           can be retrieved from Cloudwatch, with console or cli, or inferred from lambda's physical id
+# The log group must exist before a subscription filter is added, meaning that the source lambdas must be invoked at least once and perform some logging
+
+# Example invocation:
+# STACKNAME=<stackname>
+# TABLENAME=$(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep patients.*AWS::DynamoDB::Table | cut -f4)
+# DESTARN=$(aws lambda get-function --function-name $(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep blockuser.*AWS::Lambda::Function | cut -f4) |  grep -o 'arn:aws:lambda[a-zA-Z0-9:-]*')
+# SRC1=$(echo /aws/lambda/$(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep patientsget.*AWS::Lambda::Function | cut -f4)
+# SRC2=$(echo /aws/lambda/$(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep patientsdelete.*AWS::Lambda::Function | cut -f4)
+# python honeyrecordgen.py 10 $TABLENAME $DESTARN $SRC1 $SRC2
 
 def generateName() -> str:
     return fake.name()
@@ -41,7 +58,7 @@ def generatePerson() -> dict:
 #------------------------------------------------------------------------
 def extractArgs(argv: list) -> (int, str, str, list):
     if len(sys.argv) < 5:
-        print(f"Usage: {sys.argv[0]} numberOfHoneyTokens tablename subscriptionFilterdestinationArn subscriptionFilterLogGroupName subscriptionFilterLogGroupName2 ...")
+        print(f"Usage: {sys.argv[0]} numberOfHoneyTokens tablename subscriptionFilterdestinationArn sourceLogGroupName sourceLogGroupName2 ...")
         exit()
 
     n = int(sys.argv[1])
@@ -161,6 +178,7 @@ def createPattern(ids: list) -> str:
     return filterPattern
 
 def addSubscriptions(_loggroupNames: list, filterPattern: str, _destarn: str):
+    print(_destarn)
     for loggroupName in _loggroupNames:
         response = logs.put_subscription_filter(
             logGroupName = loggroupName,
