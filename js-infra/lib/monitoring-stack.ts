@@ -9,8 +9,8 @@ import {createPythonLambda} from './common/lambda';
 import * as iam from '@aws-cdk/aws-iam';
 import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
 import * as cw_actions from '@aws-cdk/aws-cloudwatch-actions';
-import * as wafv2 from '@aws-cdk/aws-wafv2';
 import { Duration } from '@aws-cdk/core';
+import * as wafv2 from '@aws-cdk/aws-wafv2';
 
 
 export class MonitoringStack extends cdk.Stack {
@@ -121,81 +121,36 @@ export class MonitoringStack extends cdk.Stack {
     ddbExcessReadAlarmDoc.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
     ddbExcessReadAlarmPat.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
 
-    // creating a lambda triggered by sns topic notification
-    //const debugLambda = createPythonLambda(this, 'util', 'dummy_lambda');
-    //snsTopicCw.addSubscription(new subscriptions.LambdaSubscription(debugLambda));
+    /*
+    * IAM Policy to block admins from reading patient table
+    */
+    // TODO: change ARN into something agnostic
+    const awsAccountId = cdk.Stack.of(this).account;
+    const adminGroupName = "adminusers"
+    const adminGroup = iam.Group.fromGroupArn(this, 'adminusers', "arn:aws:iam::"+awsAccountId+":group/"+adminGroupName);
+    const policy = new iam.Policy(this, 'BlockPatientTable');
 
-    /* Deny administrator access to sensitive medical info */
-    const ddbEventPattern: events.EventPattern = {
-      source: ['aws.dynamodb'],
-      detail: {
-        eventSource: [
-          ServicePrincipals.CLOUD_TRAIL
+    const ddbPatientBlock = {
+        "Sid": "VisualEditor0",
+        "Effect": "Deny",
+        "Action": [
+            "dynamodb:BatchGetItem",
+            "dynamodb:ConditionCheckItem",
+            "dynamodb:DescribeTable",
+            "dynamodb:GetItem",
+            "dynamodb:Scan",
+            "dynamodb:ListTagsOfResource",
+            "dynamodb:Query",
+            "dynamodb:DescribeTimeToLive",
+            "dynamodb:DescribeTableReplicaAutoScaling"
         ],
-        eventName: [
-          "CreateBackup",
-          "CreateGlobalTable",
-          "CreateTable",
-          "DeleteBackup",
-          "DeleteTable",
-          "DescribeBackup",
-          "DescribeContinuousBackups",
-          "DescribeGlobalTable",
-          "DescribeLimits",
-          "DescribeTable",
-          "DescribeTimeToLive",
-          "ListBackups",
-          "ListTables",
-          "ListTagsOfResource",
-          "ListGlobalTables",
-          "RestoreTableFromBackup",
-          "RestoreTableToPointInTime",
-          "TagResource",
-          "UntagResource",
-          "UpdateGlobalTable",
-          "UpdateTable",
-          "UpdateTimeToLive",
-          "DescribeReservedCapacity",
-          "DescribeReservedCapacityOfferings",
-          "DescribeScalableTargets",
-          "RegisterScalableTarget",
-          "PurchaseReservedCapacityOfferings"
-        ]
-      }
-    };
-    const ddbRule = new events.Rule(this, 'illegalAccessDatabase', {
-      eventPattern: eventPattern,
-      description: "If non-lambda roles access database, they will be blocked"
-    });
-    // CHECK EVENT, THEN CHECK USER'S ROLE, THEN BLOCK 
-    const lambdaDdbAccess = createPythonLambda(this, 'util', 'cloudtrail_ddb_access');
-    const snsTopicDdb = new sns.Topic(this, 'DynamoDBAlert', {
-      displayName: 'DynamoDB illegal access alert'
-    });
-    snsTopicDdb.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
-    lambdaDdbAccess.addEnvironment('TRAIL_ARN', trail.trailArn);
-    lambdaDdbAccess.addEnvironment('SNS_ARN', snsTopicDdb.topicArn);
-    snsTopicDdb.grantPublish(lambdaDdbAccess);
-    ddbRule.addTarget(new targets.LambdaFunction(lambdaDdbAccess));
-    ddbRule.addTarget(new targets.SnsTopic(snsTopicDdb));
+        "Resource": cdk.Fn.importValue(stackName+"-PatientTableArn")
+      };
+      const ddbPatientBlockPolicy = iam.PolicyStatement.fromJson(ddbPatientBlock);
+      policy.addStatements(ddbPatientBlockPolicy);
+      policy.attachToGroup(adminGroup);
 
-    lambdaDdbAccess.addToRolePolicy(new iam.PolicyStatement({
-      actions: [
-        'cloudtrail:*'
-      ],
-      effect: iam.Effect.ALLOW,
-      resources: [trail.trailArn]
-    }));
-
-    lambdaDdbAccess.addToRolePolicy(new iam.PolicyStatement({
-      actions: [
-        'iam:*'
-      ],
-      effect: iam.Effect.ALLOW,
-      resources: ['*'],
-    }));
-
-        // WAF
+    // WAF
     // only allow 128 requests per 5 minutes, a pretty generous limit for a small practice
     // assuming that a clinic is located at the same ip address
     const wafAPI = new wafv2.CfnWebACL(this, 'waf-api', {
@@ -210,8 +165,44 @@ export class MonitoringStack extends cdk.Stack {
       scope: 'REGIONAL',
       rules: [
         {
-          name: 'ratelimit',
+          name: "AWS-AWSManagedRulesAmazonIpReputationList",
+          priority: 0,
+          statement: {
+            managedRuleGroupStatement: {
+              vendorName: "AWS",
+              name: "AWSManagedRulesAmazonIpReputationList"
+            }
+          },
+          overrideAction: {
+            none: {}
+          },
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: "waf-apigateway-ipreputation"
+          }
+        },
+        {
+          name: "AWS-AWSManagedRulesCommonRuleSet",
           priority: 1,
+          statement: {
+            managedRuleGroupStatement: {
+              vendorName: "AWS",
+              name: "AWSManagedRulesCommonRuleSet"
+            }
+          },
+          overrideAction: {
+            none: {}
+          },
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: "waf-apigateway-commonattacks"
+          }
+        },
+        {
+          name: 'ratelimit',
+          priority: 2,
           statement: {
             rateBasedStatement: {
               limit: 128,
@@ -233,7 +224,27 @@ export class MonitoringStack extends cdk.Stack {
       resourceArn: `arn:aws:apigateway:${this.region}::/restapis/${cdk.Fn.importValue(stackName+"-APIGateway")}/stages/prod`,
       webAclArn: wafAPI.attrArn
     });
+  
+    // grab cloudwatch metric and crate alarm
+    const wafMetric = new cloudwatch.Metric({
+      metricName: 'BlockedRequests',
+      namespace: 'AWS/WAFV2',
+      statistic: 'Sum',
+      dimensions: {
+        Rule: 'waf-apigateway-ratelimit',
+        WebACL: cdk.Fn.select(0, cdk.Fn.split('|', cdk.Fn.ref(wafAPI.logicalId))),
+        Region: 'ap-southeast-2'
+      }
+    });
 
+    const wafAlarm = new cloudwatch.Alarm(this, 'waf-apigateway-ratelimit-breached', {
+      metric: wafMetric,
+      threshold: 128,
+      period: Duration.seconds(60),
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
+    });
 
+    wafAlarm.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
   }
 }

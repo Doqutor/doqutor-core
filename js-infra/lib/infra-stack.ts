@@ -6,6 +6,10 @@ import { createPythonLambda } from './common/lambda';
 import { RemovalPolicy, CfnOutput } from '@aws-cdk/core';
 import * as iam from "@aws-cdk/aws-iam";
 import getModels, { Models } from './api-schema';
+import * as sns from '@aws-cdk/aws-sns';
+import * as subs from '@aws-cdk/aws-sns-subscriptions';
+import * as lambda from '@aws-cdk/aws-lambda';
+import { DynamoEventSource } from '@aws-cdk/aws-lambda-event-sources';
 
 // for honeytoken only, maybe to be removed when moved to monitoring-stack
 import * as subscriptions from '@aws-cdk/aws-sns-subscriptions';
@@ -19,9 +23,13 @@ export class InfraStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps, env='dev') {
     super(scope, id, props);
 
-
     const dynamoDoctorsTable = new dynamodb.Table(this, "doctors", {
         partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+        removalPolicy: RemovalPolicy.DESTROY
+    });
+    const dynamoPatientsTable = new dynamodb.Table(this, "patients", {
+        partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+        stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
         removalPolicy: RemovalPolicy.DESTROY
     });
 
@@ -33,19 +41,54 @@ export class InfraStack extends cdk.Stack {
       exportName: this.stackName + "-DoctorTable"
     });
     
-    const dynamoPatientsTable = new dynamodb.Table(this, "patients", {
-        partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
-        removalPolicy: RemovalPolicy.DESTROY
-    });
     new cdk.CfnOutput(this, 'PatientTable', {
       value: dynamoPatientsTable.tableName,
       exportName: this.stackName + "-PatientTable"
     });
-    
-    
+    new cdk.CfnOutput(this, 'PatientTableArn', {
+      value: dynamoPatientsTable.tableArn,
+      exportName: this.stackName + "-PatientTableArn"
+    });
+
     /*
-     * Cognito and user authentication
-     */
+    * Setup rollback operations for patients table
+    */
+    /* Deny administrator access to sensitive medical info */
+    const lambdaDdbAccess = createPythonLambda(this, 'util', 'cloudtrail_ddb_access');
+    const snsTopicDdb = new sns.Topic(this, 'DynamoDBAlert', {
+      displayName: 'DynamoDB illegal access alert'
+    });
+    snsTopicDdb.addSubscription(new subs.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
+    snsTopicDdb.grantPublish(lambdaDdbAccess);
+    lambdaDdbAccess.addEnvironment('SNS_ARN', snsTopicDdb.topicArn);
+    lambdaDdbAccess.addEnvironment('TABLE_NAME', dynamoPatientsTable.tableName); 
+    lambdaDdbAccess.addEventSource(new DynamoEventSource(dynamoPatientsTable, {
+        startingPosition: lambda.StartingPosition.TRIM_HORIZON,
+        batchSize: 1,
+        bisectBatchOnError: true,
+        retryAttempts: 10
+    }))
+
+    lambdaDdbAccess.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        "dynamodb:DeleteItem",
+        "dynamodb:PutItem",
+        "dynamodb:DescribeStream",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:ListStreams",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: ["*"]
+    }));
+
+      
+    /*
+    * Cognito and user authentication
+    */
     const lambdaCognitoHandler = createPythonLambda(this, 'util', 'cognito_postauth_trigger');
     dynamoDoctorsTable.grantReadWriteData(lambdaCognitoHandler);
     dynamoPatientsTable.grantReadWriteData(lambdaCognitoHandler);
