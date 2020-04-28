@@ -62,9 +62,14 @@ models[Models.patient] = {
             },
             is_active: {
                 type: 'boolean'
-            }
+            },
+            insurance_id: {
+                type: 'string',
+                minLength: 1,
+                maxLength: 50
+            },
         },
-        required: ['name', 'email', 'phone_number', 'age'],
+        required: ['name', 'email', 'phone_number', 'age', 'insurance_id'],
         additionalProperties: false
     }
 };
