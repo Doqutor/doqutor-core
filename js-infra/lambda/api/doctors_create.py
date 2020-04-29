@@ -22,8 +22,9 @@ def main(event, context):
 
     body = get_body(event)
 
+    _id = str(uuid.uuid4())
     item = {
-        'id': str(uuid.uuid4()),
+        'id': _id,
         'name': body['name'],
         'email': body['email'],
         'phone_number': body['phone_number'],
@@ -34,6 +35,6 @@ def main(event, context):
     try:
         data = table.put_item(Item=item, ConditionExpression='attribute_not_exists(id)')
     except dynamodbexceptions.ConditionalCheckFailedException:
-        return send_error(400, f"doctor with id {id_} already exists. please try adding again. And watch yourself because you are very unlucky.")
+        return send_error(400, f"doctor with id {_id} already exists. please try adding again. And watch yourself because you are very unlucky.")
         
     return send_response(200, item)
