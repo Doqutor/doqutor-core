@@ -158,31 +158,31 @@ export class MonitoringStack extends cdk.Stack {
     /*
     * IAM Policy to block admins from reading patient table
     */
-    // TODO: change ARN into something agnostic
-    const awsAccountId = cdk.Stack.of(this).account;
-    const adminGroupName = "adminusers"
-    const adminGroup = iam.Group.fromGroupArn(this, 'adminusers', "arn:aws:iam::"+awsAccountId+":group/"+adminGroupName);
-    const policy = new iam.Policy(this, 'BlockPatientTable');
+    // // TODO: change ARN into something agnostic
+    // const awsAccountId = cdk.Stack.of(this).account;
+    // const adminGroupName = "adminusers"
+    // const adminGroup = iam.Group.fromGroupArn(this, 'adminusers', "arn:aws:iam::"+awsAccountId+":group/"+adminGroupName);
+    // const policy = new iam.Policy(this, 'BlockPatientTable');
 
-    const ddbPatientBlock = {
-        "Sid": "VisualEditor0",
-        "Effect": "Deny",
-        "Action": [
-            "dynamodb:BatchGetItem",
-            "dynamodb:ConditionCheckItem",
-            "dynamodb:DescribeTable",
-            "dynamodb:GetItem",
-            "dynamodb:Scan",
-            "dynamodb:ListTagsOfResource",
-            "dynamodb:Query",
-            "dynamodb:DescribeTimeToLive",
-            "dynamodb:DescribeTableReplicaAutoScaling"
-        ],
-        "Resource": cdk.Fn.importValue(stackName+"-PatientTableArn")
-      };
-      const ddbPatientBlockPolicy = iam.PolicyStatement.fromJson(ddbPatientBlock);
-      policy.addStatements(ddbPatientBlockPolicy);
-      policy.attachToGroup(adminGroup);
+    // const ddbPatientBlock = {
+    //     "Sid": "VisualEditor0",
+    //     "Effect": "Deny",
+    //     "Action": [
+    //         "dynamodb:BatchGetItem",
+    //         "dynamodb:ConditionCheckItem",
+    //         "dynamodb:DescribeTable",
+    //         "dynamodb:GetItem",
+    //         "dynamodb:Scan",
+    //         "dynamodb:ListTagsOfResource",
+    //         "dynamodb:Query",
+    //         "dynamodb:DescribeTimeToLive",
+    //         "dynamodb:DescribeTableReplicaAutoScaling"
+    //     ],
+    //     "Resource": cdk.Fn.importValue(stackName+"-PatientTableArn")
+    //   };
+    //   const ddbPatientBlockPolicy = iam.PolicyStatement.fromJson(ddbPatientBlock);
+    //   policy.addStatements(ddbPatientBlockPolicy);
+    //   policy.attachToGroup(adminGroup);
 
     // WAF
     // only allow 128 requests per 5 minutes, a pretty generous limit for a small practice
