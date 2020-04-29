@@ -31,22 +31,21 @@ $ python cloudtrail_ir.py
 
 
 #### 2. Honeyrecord accessed by website user:
-in progress
-
 Explanation
 
-Note that the honeyrecord generation script serves as part of the deployment stack, intended to be run after cdk deploy. The relevant lambdas (patients_get and patients_delete) will also need to be run once before the script is executed, to create the log groups that will be monitored. The lambdas could be run through the website/API or the API Gateway test console.
+Note that the honeyrecord generation script runhoneygen.py serves as part of the deployment stack, intended to be run after cdk deploy. The relevant lambdas (patients_get and patients_delete) will also need to be run once before the script is executed, to create the log groups that will be monitored. The lambdas could be run through the website/API or the API Gateway test console.
 
 Running simulation:
 1. <b>Generate honeyrecords</b>  
-Honeyrecords can be generated and set up with the honeyrecordgen.py script:
-    ```bash
-    $ python honeyrecordgen.py $numberOfHoneyTokens $tablename $subscriptionFilterdestinationArn $sourceLogGroupName $sourceLogGroupName2 ...
-    ```
-    Or, to run honeyrecordgen.py with intended inputs generated from the stack name, run runhoneygen.py (script in progress, bash version available):
+To complete deployment by generating honeyrecords and creating the subscription filter, run runhoneygen.py (script in progress, bash version available):
     ```bash
     $ python runhoneygen.py $numberOfHoneyTokens $stackName
     ```
+    Or, to run the backing script with custom inputs, use honeyrecordgen.py:
+    ```bash
+    $ python honeyrecordgen.py $numberOfHoneyTokens $tablename $subscriptionFilterdestinationArn $sourceLogGroupName $sourceLogGroupName2 ...
+    ```
+    
 2. <b>Retrieve auth token for API access</b>  
 in progress.  
 First: Create a cognito user. This can be done through the aws cli, for example with:
