@@ -20,20 +20,20 @@ fake = Faker()
 #           can be retrieved from Cloudwatch, with console or cli, or inferred from lambda's physical id
 # The log group must exist before a subscription filter is added, meaning that the source lambdas must be invoked at least once and perform some logging
 
-# Example invocation:
-# STACKNAME=<stackname>
-# TABLENAME=$(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep patients.*AWS::DynamoDB::Table | cut -f4)
-# DESTARN=$(aws lambda get-function --function-name $(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep blockuser.*AWS::Lambda::Function | cut -f4) |  grep -o 'arn:aws:lambda[a-zA-Z0-9:-]*')
-# SRC1=$(echo /aws/lambda/$(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep patientsget.*AWS::Lambda::Function | cut -f4)
-# SRC2=$(echo /aws/lambda/$(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep patientsdelete.*AWS::Lambda::Function | cut -f4)
-# python honeyrecordgen.py 10 $TABLENAME $DESTARN $SRC1 $SRC2
+
+dynamodb = boto3.resource('dynamodb')
+dynamodbexceptions = boto3.client('dynamodb').exceptions
+logs = boto3.client('logs')
+iam = boto3.client('iam')
+
 
 def generateName() -> str:
     return fake.name()
     # return "Barry Fake"
 
 def generateEmail(name: str) -> str:
-    suffixes = ["gmail.com", "outlook.com", "bigpond.com.au", "live.com", "protonmail.com"]
+    suffixes = ["gmail.com", "outlook.com", "bigpond.com.au", "live.com", "protonmail.com"] # for generating honey people
+    #suffixes = ["realperson.com"] # for generating real people
     separators = ["_", ".", "", "-"]
     return name.replace(" ", random.choice(separators)) + "@" + random.choice(suffixes)
 
@@ -43,6 +43,9 @@ def generatePhoneNumber() -> str:
 def generateAge() -> int:
     return random.randint(0, 100)
 
+def generateInsuranceid() -> str:
+    return str(random.randint(10**5, (10**7)-1))
+
 def generatePerson() -> dict:
     name = generateName()
     return {
@@ -51,11 +54,13 @@ def generatePerson() -> dict:
         'email': generateEmail(name),
         'phone_number': generatePhoneNumber(),
         'age': generateAge(),
-        'is_active': True
+        'is_active': True,
+        'insurance_id': generateInsuranceid()
         # should is_active be false?
     }
 
 #------------------------------------------------------------------------
+# maybe return (bool, (int, str, str, list))?
 def extractArgs(argv: list) -> (int, str, str, list):
     if len(sys.argv) < 5:
         print(f"Usage: {sys.argv[0]} numberOfHoneyTokens tablename subscriptionFilterdestinationArn sourceLogGroupName sourceLogGroupName2 ...")
@@ -94,15 +99,14 @@ def extractids(pattern: str) -> (list, bool):
     return foundids, False
 
 
-def clearExistingPattern(curfilter: dict, _loggroupName: str):
+def clearExistingPattern(curfilter: dict, loggroupName: str, table):
     deleteSubscription = False
     print('You may quit running, or delete it and then rerun the program to create a new filter.')
     curpattern = curfilter['filterPattern']
     filterPatternStart = '[type=INFO,timestamp=*Z,requestid=*-*,event=*'
     print(curpattern)
     if curpattern.startswith(filterPatternStart):
-        print('The filter pattern seems to match the known pattern. Delete it and its honey records? Y/N')
-        if input().upper() == 'Y':
+        if input('The filter pattern seems to match the known pattern. Check it for honeyrecords to delete? Y/N ').upper() == 'Y':
             idsstring = curpattern.split('[type=INFO,timestamp=*Z,requestid=*-*,event=', 1)[1]
             # extract ids from filter pattern
             foundids, err = extractids(idsstring)
@@ -111,29 +115,28 @@ def clearExistingPattern(curfilter: dict, _loggroupName: str):
             print('The following ids were found in the current filter pattern.')
             for i in range(len(foundids)):
                 print(str(i+1) + ': ' + foundids[i])
-            print('Delete these database items and the current filter pattern? Y/N')
-            if input().upper() == 'Y':
+            if input('Delete these database items and the current filter pattern? Y/N ').upper() == 'Y':
                 deleteSubscription = True
                 for id in foundids:
                     # delete id
                     response = table.delete_item(Key = {'id': id})
                     # print(response)
     else:
-        print("The filter pattern is not compatible with this program's filter pattern structure and the program will not be able to perform any actions relating to its contents.\nDelete it anyway? Y/N")
-        deleteSubscription = (input().upper() == 'Y')
+        prompt = "The filter pattern is not compatible with this program's filter pattern structure and the program will not be able to perform any actions relating to its contents.\nDelete it anyway? Y/N "
+        deleteSubscription = (input(prompt).upper() == 'Y')
 
     if deleteSubscription:
         response = logs.delete_subscription_filter(
-            logGroupName = _loggroupName,
+            logGroupName = loggroupName,
             filterName = curfilter['filterName']
         )
     # don't have to delete filter pattern, will just get overridden
 
 # return True if there is an existing filter
-def clearExistingFilters(_loggroupNames: list) -> bool:
+def clearExistingFilters(loggroupNames: list, table) -> bool:
     # check current filter pattern and delete if necessary
     existing = False
-    for loggroupName in _loggroupNames:
+    for loggroupName in loggroupNames:
         response = logs.describe_subscription_filters(
             logGroupName = loggroupName
         )
@@ -143,7 +146,7 @@ def clearExistingFilters(_loggroupNames: list) -> bool:
             print(f'No existing pattern in {loggroupName}. Continuing...') # not print continuing from function
         else:
             print(f'Existing pattern in {loggroupName}.')
-            clearExistingPattern(filters[0], loggroupName)
+            clearExistingPattern(filters[0], loggroupName, table)
             existing = True
             print()
         # print(filters)
@@ -155,6 +158,7 @@ def clearExistingFilters(_loggroupNames: list) -> bool:
 # return True to indicate error
 def addRecords(table, n: int) -> (list, bool):
     ids = []
+    # maybe ask if would like to provide particular names, comma separated?
     for i in range(n):
         item = generatePerson()
         try:
@@ -177,29 +181,42 @@ def createPattern(ids: list) -> str:
     print(filterPattern)
     return filterPattern
 
-def addSubscriptions(_loggroupNames: list, filterPattern: str, _destarn: str):
-    print(_destarn)
-    for loggroupName in _loggroupNames:
+def addSubscriptions(loggroupNames: list, filterPattern: str, destarn: str):
+    #print(destarn)
+    for loggroupName in loggroupNames:
         response = logs.put_subscription_filter(
             logGroupName = loggroupName,
             filterName = loggroupName + '-subscription',
             filterPattern = filterPattern,
-            destinationArn = _destarn#,
+            destinationArn = destarn#,
             #roleArn = createRole()
         )
 
 #----------------------------------------------------------------------------
 
-dynamodb = boto3.resource('dynamodb')
-dynamodbexceptions = boto3.client('dynamodb').exceptions
-logs = boto3.client('logs')
-iam = boto3.client('iam')
+def generate(numRecords: str, tablename: str, destarn: str, loggroupNames: list):
+    table = dynamodb.Table(tablename)
+    existing = clearExistingFilters(loggroupNames, table)
+    if not existing:
+        ids, err = addRecords(table, numRecords)
+        if err is False:
+            filterPattern = createPattern(ids)
+            addSubscriptions(loggroupNames, filterPattern, destarn)
 
-numRecords, tablename, destarn, loggroupNames = extractArgs(sys.argv)
-table = dynamodb.Table(tablename)
-existing = clearExistingFilters(loggroupNames)
-if not existing:
-    ids, err = addRecords(table, numRecords)
-    if err is False:
-        filterPattern = createPattern(ids)
-        addSubscriptions(loggroupNames, filterPattern, destarn)
+
+if __name__ == "__main__":
+    #numRecords, tablename, destarn, loggroupNames = extractArgs(sys.argv)
+    if len(sys.argv) < 5:
+        print(f"Usage: {sys.argv[0]} numberOfHoneyTokens tablename subscriptionFilterdestinationArn sourceLogGroupName sourceLogGroupName2 ...")
+    else:
+        numRecords = int(sys.argv[1])
+        if numRecords < 1 or numRecords > 21:
+            print("n must be at least 1. Maximum n is 21 as filter patterns can only be up to 1024 bytes in length")
+        else:
+            tablename = sys.argv[2]#.rstrip()
+            destarn = sys.argv[3]#.rstrip()
+            loggroupNames = sys.argv[4:]
+            #print(tablename)
+            #print(destarn)
+            #print(loggroupName)
+            generate(numRecords, tablename, destarn, loggroupNames)
