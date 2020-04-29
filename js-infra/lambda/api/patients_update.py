@@ -37,7 +37,8 @@ def main(event, context):
         'email': body['email'],
         'phone_number': body['phone_number'],
         'age': body['age'],
-        'is_active': body.get('is_active', True)
+        'is_active': body.get('is_active', True),
+        'insurance_id': body['insurance_id']
     }
 
     try:
