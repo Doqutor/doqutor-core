@@ -119,6 +119,7 @@ export class MonitoringStack extends cdk.Stack {
 
     const lambdaFrontendCloudtrailLogging = createPythonLambda(this, 'util', 'cloudtrail_retrigger_pipeline', 1);
     lambdaFrontendCloudtrailLogging.addEnvironment('SNS_ARN', frontendSnsTopic.topicArn);
+    frontendSnsTopic.grantPublish(lambdaFrontendCloudtrailLogging);
 
     frontendRule.addTarget(new targets.LambdaFunction(lambdaFrontendCloudtrailLogging));
     frontendRule.addTarget(new targets.SnsTopic(frontendSnsTopic));

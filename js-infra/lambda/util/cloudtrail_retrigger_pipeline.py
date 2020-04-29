@@ -48,6 +48,7 @@ def main(event, context):
     reqHeaders = {"Accept":"application/vnd.github.everest-preview+json"}
     r = requests.post(reqUrl, json=reqJson, auth=reqAuth, headers=reqHeaders)
     return event
+    
 
     # if action == 'StopLogging':
     #     user = event['detail']['userIdentity']['userName']
