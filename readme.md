@@ -52,6 +52,8 @@ To destroy the stack
 $ cdk destroy "your-stack-name"
 ```
 
+Due to some issues with cdk, complete implementation of one of our IRs requires running a python script after deploying. See the incident-response folder.
+
 
 -------
 More information on AWS CDK

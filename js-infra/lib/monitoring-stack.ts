@@ -11,10 +11,11 @@ import * as cloudwatch from '@aws-cdk/aws-cloudwatch';
 import * as cw_actions from '@aws-cdk/aws-cloudwatch-actions';
 import { Duration } from '@aws-cdk/core';
 import * as wafv2 from '@aws-cdk/aws-wafv2';
+import { Config } from '../bin/infra';
 
 
 export class MonitoringStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: cdk.Construct, id: string, config: Config, props?: cdk.StackProps) {
     super(scope, id, props);
 
     /*
@@ -23,13 +24,16 @@ export class MonitoringStack extends cdk.Stack {
     const trail = new cloudtrail.Trail(this, 'cloudtrail', {
       sendToCloudWatchLogs: true
     });
+    trail.addS3EventSelector([cdk.Fn.join('', ['arn:aws:s3:::', cdk.Fn.importValue('doqutore-frontend-S3Bucket'),'/'])], {
+      readWriteType: cloudtrail.ReadWriteType.WRITE_ONLY
+    });
     const snsTopic = new sns.Topic(this, 'CloudtrailAlert', {
       displayName: 'Cloudtrail Alert'
     });
     const user = new iam.User(this, 'testUser');
     user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
-
-    snsTopic.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
+    const emailSubscription = new subscriptions.EmailSubscription(config.email);
+    snsTopic.addSubscription(emailSubscription);
 
     /*
     * Events for detecting that cloudtrail was turned off
@@ -87,7 +91,7 @@ export class MonitoringStack extends cdk.Stack {
     const snsTopicCw = new sns.Topic(this, 'CloudwatchAlert', {
       displayName: 'Cloudwatch Alert'
     });
-    snsTopicCw.addSubscription(new subscriptions.EmailSubscription('747b13b7.groups.unsw.edu.au@apac.teams.ms'));
+    snsTopicCw.addSubscription(emailSubscription);
 
     const ddbMetric = new cloudwatch.Metric({
       metricName: "ConsumedReadCapacityUnits",
@@ -244,7 +248,10 @@ export class MonitoringStack extends cdk.Stack {
       evaluationPeriods: 1,
       datapointsToAlarm: 1,
     });
-
-    wafAlarm.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
+    const snsTopicWAF = new sns.Topic(this, 'WAFAlert', {
+      displayName: 'WAF Alert'
+    });
+    snsTopicWAF.addSubscription(emailSubscription);
+    wafAlarm.addAlarmAction(new cw_actions.SnsAction(snsTopicWAF));
   }
 }

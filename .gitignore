@@ -22,4 +22,5 @@ cdk.out
 tmp/
 .vscode/
 incident-response/trails.json
+.history/
 venv/*
