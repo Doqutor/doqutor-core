@@ -61,8 +61,7 @@ First: Create a cognito user. This can be done through the aws cli, for example 
     Then: Retrieve token and prepend with 'Bearer ' using one of these methods:  
     a) Login using hosted ui with the following query parameters after client_id:
     ```
-    response_type=token&scope=doqutore/application&redirect_uri=http://localhost
-    ! CHECK THIS
+    &response_type=token&scope=doqutore/application&redirect_uri=http://localhost
     ```
     and extract access_token from the redirect url, for example with
     ```bash
