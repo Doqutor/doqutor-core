@@ -84,6 +84,47 @@ export class MonitoringStack extends cdk.Stack {
     rule.addTarget(new targets.SnsTopic(snsTopic));
 
     /*
+    * Events for detecting that s3 was tampered with
+    */
+    /*
+    * Events for detecting that s3 was tampered with
+    */
+    const frontendPattern: events.EventPattern = {
+      source: ['aws.s3'],
+      detail: {
+        eventSource: [
+          ServicePrincipals.S3
+        ],
+        eventName: [
+          "DeleteObject",
+          "PutObject"
+        ],
+        requestParameters: {
+          bucketName: [
+            cdk.Fn.importValue(config.prefix + "-frontend-S3Bucket")
+          ]
+        }
+      }
+    };
+    
+    const frontendSnsTopic = new sns.Topic(this, 'FrontendAlert', {
+      displayName: 'Frontend Alert'
+    });
+    frontendSnsTopic.addSubscription(emailSubscription);
+
+    const frontendRule = new events.Rule(this, 's3Modified', {
+      eventPattern: frontendPattern,
+      description: "If the frontend S3 bucket is modified then this event will fire"
+    });
+
+    const lambdaFrontendCloudtrailLogging = createPythonLambda(this, 'util', 'cloudtrail_retrigger_pipeline', 1);
+    lambdaFrontendCloudtrailLogging.addEnvironment('SNS_ARN', frontendSnsTopic.topicArn);
+    frontendSnsTopic.grantPublish(lambdaFrontendCloudtrailLogging);
+
+    frontendRule.addTarget(new targets.LambdaFunction(lambdaFrontendCloudtrailLogging));
+    frontendRule.addTarget(new targets.SnsTopic(frontendSnsTopic));
+
+    /*
     * CloudWatch rulesets here
     */
 
@@ -128,31 +169,31 @@ export class MonitoringStack extends cdk.Stack {
     /*
     * IAM Policy to block admins from reading patient table
     */
-    // TODO: change ARN into something agnostic
-    const awsAccountId = cdk.Stack.of(this).account;
-    const adminGroupName = "adminusers"
-    const adminGroup = iam.Group.fromGroupArn(this, 'adminusers', "arn:aws:iam::"+awsAccountId+":group/"+adminGroupName);
-    const policy = new iam.Policy(this, 'BlockPatientTable');
+    // // TODO: change ARN into something agnostic
+    // const awsAccountId = cdk.Stack.of(this).account;
+    // const adminGroupName = "adminusers"
+    // const adminGroup = iam.Group.fromGroupArn(this, 'adminusers', "arn:aws:iam::"+awsAccountId+":group/"+adminGroupName);
+    // const policy = new iam.Policy(this, 'BlockPatientTable');
 
-    const ddbPatientBlock = {
-        "Sid": "VisualEditor0",
-        "Effect": "Deny",
-        "Action": [
-            "dynamodb:BatchGetItem",
-            "dynamodb:ConditionCheckItem",
-            "dynamodb:DescribeTable",
-            "dynamodb:GetItem",
-            "dynamodb:Scan",
-            "dynamodb:ListTagsOfResource",
-            "dynamodb:Query",
-            "dynamodb:DescribeTimeToLive",
-            "dynamodb:DescribeTableReplicaAutoScaling"
-        ],
-        "Resource": cdk.Fn.importValue(stackName+"-PatientTableArn")
-      };
-      const ddbPatientBlockPolicy = iam.PolicyStatement.fromJson(ddbPatientBlock);
-      policy.addStatements(ddbPatientBlockPolicy);
-      policy.attachToGroup(adminGroup);
+    // const ddbPatientBlock = {
+    //     "Sid": "VisualEditor0",
+    //     "Effect": "Deny",
+    //     "Action": [
+    //         "dynamodb:BatchGetItem",
+    //         "dynamodb:ConditionCheckItem",
+    //         "dynamodb:DescribeTable",
+    //         "dynamodb:GetItem",
+    //         "dynamodb:Scan",
+    //         "dynamodb:ListTagsOfResource",
+    //         "dynamodb:Query",
+    //         "dynamodb:DescribeTimeToLive",
+    //         "dynamodb:DescribeTableReplicaAutoScaling"
+    //     ],
+    //     "Resource": cdk.Fn.importValue(stackName+"-PatientTableArn")
+    //   };
+    //   const ddbPatientBlockPolicy = iam.PolicyStatement.fromJson(ddbPatientBlock);
+    //   policy.addStatements(ddbPatientBlockPolicy);
+    //   policy.attachToGroup(adminGroup);
 
     // WAF
     // only allow 128 requests per 5 minutes, a pretty generous limit for a small practice
