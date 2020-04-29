@@ -14,7 +14,7 @@ Platform:
   darwin x64
 
 Trace: 
-  Invariant Violation: expected hoisted manifest for "cdk-watchful#@aws-cdk/aws-dynamodb#@aws-cdk/aws-cloudformation#@aws-cdk/core"
+  Invariant Violation: expected hoisted manifest for "cdk-watchful#@aws-cdk/aws-dynamodb#@aws-cdk/aws-cloudformation#@aws-cdk/aws-iam"
       at invariant (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:2314:15)
       at _loop2 (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:94965:9)
       at PackageHoister.init (/usr/local/Cellar/yarn/1.22.4/libexec/lib/cli.js:95035:19)
@@ -40,7 +40,6 @@ npm manifest:
       "cdk": "cdk"
     },
     "devDependencies": {
-      "@aws-cdk/assert": "1.30.0",
       "@types/jest": "^24.0.22",
       "@types/node": "10.17.5",
       "aws-cdk": "^1.30.0",
@@ -50,12 +49,19 @@ npm manifest:
       "typescript": "~3.7.2"
     },
     "dependencies": {
+      "@aws-cdk/assert": "1.30.0",
       "@aws-cdk/aws-cloudtrail": "1.30.0",
+      "@aws-cdk/aws-cloudwatch": "1.30.0",
+      "@aws-cdk/aws-cloudwatch-actions": "1.30.0",
       "@aws-cdk/aws-cognito": "1.30.0",
       "@aws-cdk/aws-dynamodb": "1.30.0",
       "@aws-cdk/aws-events-targets": "1.30.0",
+      "@aws-cdk/aws-iam": "1.30.0",
       "@aws-cdk/aws-lambda": "1.30.0",
+      "@aws-cdk/aws-lambda-event-sources": "1.30.0",
+      "@aws-cdk/aws-wafv2": "1.30.0",
       "@aws-cdk/core": "1.30.0",
+      "aws-sdk": "^2.651.0",
       "cdk-constants": "^3.0.3",
       "cdk-watchful": "0.4.6",
       "source-map-support": "0.5.16"

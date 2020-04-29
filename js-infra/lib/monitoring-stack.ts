@@ -90,7 +90,7 @@ export class MonitoringStack extends cdk.Stack {
     * Events for detecting that s3 was tampered with
     */
     const pattern: events.EventPattern = {
-      source: ['aws.cloudtrail'],
+      source: ['aws.s3'],
       detail: {
         eventSource: [
           ServicePrincipals.S3
@@ -103,7 +103,7 @@ export class MonitoringStack extends cdk.Stack {
     };
 
     const frontendRule = new events.Rule(this, 's3Modified', {
-      eventPattern: eventPattern,
+      eventPattern: pattern,
       description: "If the frontend S3 bucket is modified then this event will fire"
     });
 

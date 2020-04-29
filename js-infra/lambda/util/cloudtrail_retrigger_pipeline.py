@@ -7,6 +7,13 @@ logger.setLevel(logging.INFO)
 
 sns_client = boto3.client('sns')
 
+# Global variable hack is a temporary fix
+# Serverless functions should be stateless and idempotent
+# This should work 99% of the time
+# In the event that this hot fix doesn't work, the repercussions are insignificant
+# It will just trigger the CI/CD pipeline multiple times which will queue them up on GitHub Actions
+already_run = False
+
 def publish_logging(client, sns_arn, event, subject, user):
     client.publish(
         TargetArn=sns_arn,
@@ -16,6 +23,12 @@ def publish_logging(client, sns_arn, event, subject, user):
 
 
 def main(event, context):
+    global already_run
+    if already_run:
+        return
+    
+    already_run = True
+
     logger.info('Event details: %s', event['detail'])
 
     sns_arn = os.environ['SNS_ARN']
