@@ -43,13 +43,14 @@ Honeyrecords can be generated and set up with the honeyrecordgen.py script:
     ```bash
     $ python honeyrecordgen.py $numberOfHoneyTokens $tablename $subscriptionFilterdestinationArn $sourceLogGroupName $sourceLogGroupName2 ...
     ```
-    Or, to run honeyrecordgen.py with intended inputs generated from the stack name, run runhoneygen.py (script in progress):
+    Or, to run honeyrecordgen.py with intended inputs generated from the stack name, run runhoneygen.py (script in progress, bash version available):
     ```bash
     $ python runhoneygen.py $numberOfHoneyTokens $stackName
     ```
 2. <b>Retrieve auth token for API access</b>  
 in progress.  
 First: Create a cognito user. This can be done through the aws cli, for example with:
+    !! check these inputs they might be old
     ```bash
     $ aws cognito-idp admin-create-user \
     --user-pool-id $USERPOOLID \
@@ -57,7 +58,7 @@ First: Create a cognito user. This can be done through the aws cli, for example 
     --user-attributes Name=email,Value=$EMAIL Name=phone_number,Value="+1212555123" Name=custom:type,Value=doctor Name=email_verified,Value=True Name=phone_number_verified,Value=True \
     --temporary-password $PASSWORD
     ```
-    Then: Retrieve token and prepend with 'Bearer ' using either of these methods:  
+    Then: Retrieve token and prepend with 'Bearer ' using one of these methods:  
     a) Login using hosted ui with the following query parameters after client_id:
     ```
     response_type=token&scope=doqutore/application&redirect_uri=http://localhost
@@ -76,3 +77,6 @@ The API endpoint can be retrieved from cdk deploy output.
     ```bash
     $ python honeyrecordsim.py $APIEndpoint "$AuthToken"
     ```
+
+
+#### 3.
