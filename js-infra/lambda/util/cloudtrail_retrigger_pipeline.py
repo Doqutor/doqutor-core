@@ -1,6 +1,7 @@
 import boto3
 import logging
 import os
+from botocore.vendored import requests
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -21,6 +22,7 @@ def publish_logging(client, sns_arn, event, subject, user):
         Message=f'CloudTrail event {event} invoked by user {user}',
     )
 
+#  curl -v -X POST -u "aws-devops-bot:047ffcdcb64eb943171429ea7fd34ebb9efc1ba1" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" --data '{"event_type":"Redeploy from webhook!"}' https://api.github.com/repos/MarkSonn/doqutore-view/dispatches
 
 def main(event, context):
     global already_run
@@ -35,12 +37,16 @@ def main(event, context):
 
     user = event['detail']['userIdentity']['userName']
     if user == 'frontend-deployment':
-        publish_logging(client=sns_client, sns_arn=sns_arn, event=action, subject='THIS IS A GOOD DEPLOY', user=user)
         return event
 
-
-
-    publish_logging(client=sns_client, sns_arn=sns_arn, event=action, subject='THIS IS A BAD DEPLOY', user=user)
+    
+    # publish_logging(client=sns_client, sns_arn=sns_arn, event=event, subject='THIS IS A BAD DEPLOY', user=user)
+    
+    reqUrl = "https://api.github.com/repos/MarkSonn/doqutore-view/dispatches"
+    reqJson = {"event_type": "Redeploy from webhook!"}
+    reqAuth = ('aws-devops-bot', '047ffcdcb64eb943171429ea7fd34ebb9efc1ba1')
+    reqHeaders = {"Accept":"application/vnd.github.everest-preview+json"}
+    r = requests.post(reqUrl, json=reqJson, auth=reqAuth, headers=reqHeaders)
     return event
 
     # if action == 'StopLogging':
