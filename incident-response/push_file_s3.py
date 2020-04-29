@@ -53,6 +53,9 @@ def main_program():
             # upload file to S3
             if upload_file(FILE_NAME, bucket['Name']):
                 print('File uploaded')
+            break
+        else:
+            print('Could not find S3 BUCKET, exiting!')
 
     # clean up
     if os.path.exists(FILE_NAME):
