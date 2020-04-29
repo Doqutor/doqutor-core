@@ -98,7 +98,12 @@ export class MonitoringStack extends cdk.Stack {
         eventName: [
           "DeleteObject",
           "PutObject"
-        ]
+        ],
+        requestParameters: {
+          bucketName: [
+            cdk.Fn.importValue(config.prefix + "-frontend-S3Bucket")
+          ]
+        }
       }
     };
     
