@@ -290,7 +290,7 @@ export class InfraStack extends cdk.Stack {
     const snsTopicHT = new sns.Topic(this, 'HoneytokenSNS', {
       displayName: 'Honeytoken SNS'
     });
-    snsTopicHT.addSubscription(new subscriptions.EmailSubscription('059aa1ad.groups.unsw.edu.au@apac.teams.ms'));
+    snsTopicHT.addSubscription(new subscriptions.EmailSubscription(config.email));
 
     // test user
     const user = new iam.User(this, 'testUser');
