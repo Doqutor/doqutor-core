@@ -25,6 +25,6 @@ def main(event, context):
     response = table.scan()
     data = []
     for patient in response["Items"]:
-        data.append({"id": patient["id"], "name": patient["name"]})
+        data.append({"id": patient["id"], "name": patient["name"], "insurance_id": patient["insurance_id"]})
 
     return send_response(200, data)
