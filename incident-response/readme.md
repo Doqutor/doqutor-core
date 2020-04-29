@@ -79,4 +79,10 @@ The API endpoint can be retrieved from cdk deploy output.
     ```
 
 
-#### 3.
+#### 3. Illegal write into Patient table
+Data that is assumed to be unmodifiable (in this case _insurance_id_) is rolled back if an administrator makes changes to that field
+
+Wizard and demo of the incident can be executed using below command.
+```bash
+$ python ddb_access_ir.py
+```

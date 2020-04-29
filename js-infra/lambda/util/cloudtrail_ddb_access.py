@@ -40,8 +40,7 @@ def main(event, context):
                 'id': target_id,
                 'name': old_image['name']['S'],
                 'email': old_image['email']['S'],
-                'phone_number': old_image['phone_number']['S'],
-                'age': old_image['age']['S'],
+                'phone': old_image['phone']['S'],
                 'is_active': old_image['is_active']['BOOL'],
                 'insurance_id': old_image['insurance_id']['S']
             }
