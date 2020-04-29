@@ -89,7 +89,7 @@ export class MonitoringStack extends cdk.Stack {
     /*
     * Events for detecting that s3 was tampered with
     */
-    const pattern: events.EventPattern = {
+    const frontendPattern: events.EventPattern = {
       source: ['aws.s3'],
       detail: {
         eventSource: [
@@ -101,17 +101,22 @@ export class MonitoringStack extends cdk.Stack {
         ]
       }
     };
+    
+    const frontendSnsTopic = new sns.Topic(this, 'FrontendAlert', {
+      displayName: 'Frontend Alert'
+    });
+    frontendSnsTopic.addSubscription(emailSubscription);
 
     const frontendRule = new events.Rule(this, 's3Modified', {
-      eventPattern: pattern,
+      eventPattern: frontendPattern,
       description: "If the frontend S3 bucket is modified then this event will fire"
     });
 
-    const lambdaFrontendCloudtrailLogging = createPythonLambda(this, 'util', 'cloudtrail_retrigger_pipeline');
-    lambdaFrontendCloudtrailLogging.addEnvironment('SNS_ARN', snsTopic.topicArn);
+    const lambdaFrontendCloudtrailLogging = createPythonLambda(this, 'util', 'cloudtrail_retrigger_pipeline', 1);
+    lambdaFrontendCloudtrailLogging.addEnvironment('SNS_ARN', frontendSnsTopic.topicArn);
 
     frontendRule.addTarget(new targets.LambdaFunction(lambdaFrontendCloudtrailLogging));
-    frontendRule.addTarget(new targets.SnsTopic(snsTopic));
+    frontendRule.addTarget(new targets.SnsTopic(frontendSnsTopic));
 
     /*
     * CloudWatch rulesets here
