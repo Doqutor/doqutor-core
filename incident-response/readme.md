@@ -49,7 +49,7 @@ To complete deployment by generating honeyrecords and creating the subscription 
 2. <b>Retrieve auth token for API access</b>  
 Run gettoken.py and follow the instructions:
     ```bash
-    $ python gettoken.py $STACKNAME
+    $ python gettoken.py $stackName
     ```
     The process can also be done manually and involves:  
     1. Create a cognito user
