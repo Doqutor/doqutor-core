@@ -37,7 +37,7 @@ Note that the honeyrecord generation script runhoneygen.py serves as part of the
 
 Running simulation:
 1. <b>Generate honeyrecords</b>  
-To complete deployment by generating honeyrecords and creating the subscription filter, run runhoneygen.py (script in progress, bash version runhoneygen.sh available):
+To complete deployment by generating honeyrecords and creating the subscription filter, run runhoneygen.py:
     ```bash
     $ python runhoneygen.py $numberOfHoneyTokens $stackName
     ```
