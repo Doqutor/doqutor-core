@@ -8,28 +8,27 @@ from typing import Callable
 cognito = boto3.client('cognito-idp')
 cloudformation = boto3.client('cloudformation')
 
-def searchStackResources(stackname: str, compareFn: Callable[[dict], bool]) -> str:
-    response: dict = cloudformation.list_stack_resources(
-            StackName = stackname
-    )
-    for item in response['StackResourceSummaries']:
+# returns physical id for first stack resource for which compareFn(resource) returns true
+def searchStackResources(stackResources: dict, stackName: str, compareFn: Callable[[dict], bool]) -> str:
+    for item in stackResources['StackResourceSummaries']:
+        #print(item['LogicalResourceId'], item['ResourceType'])
         if compareFn(item):
             return item['PhysicalResourceId']
     
-    nextToken = response.get('nextToken', None)
+    nextToken = stackResources.get('NextToken', None)
     while nextToken != None:
-        response = cloudformation.list_stack_resources(
-            StackName = stackname,
+        stackResources = cloudformation.list_stack_resources(
+            StackName = stackName,
             NextToken = nextToken
         )
-        for item in response['StackResourceSummaries']:
+        for item in stackResources['StackResourceSummaries']:
             if compareFn(item):
                 return item['PhysicalResourceId']
-        nextToken = response.get('nextToken', None)
+        nextToken = stackResources.get('nextToken', None)
     return None
 
 # return url, err
-def getURL(stackname: str, userpoolid: str) -> (str, str):
+def getURL(stackResources: dict, stackName: str, userpoolid: str) -> (str, str):
     response = cognito.describe_user_pool(
         UserPoolId = userpoolid
     )
@@ -40,7 +39,7 @@ def getURL(stackname: str, userpoolid: str) -> (str, str):
     domain = response['UserPool']['Domain']
     regionname = boto3.session.Session().region_name
     compareFn = lambda item: item['LogicalResourceId'].startswith('appclient') and item['ResourceType'] == 'AWS::Cognito::UserPoolClient'
-    clientid = searchStackResources(stackname, compareFn)
+    clientid = searchStackResources(stackResources, stackName, compareFn)
     url = 'https://' + domain + '.auth.' + regionname + '.amazoncognito.com' + '/login' + '?' + 'client_id=' + clientid + '&response_type=token&scope=doqutore/application&redirect_uri=http://localhost'
     return url, None
 
@@ -103,15 +102,31 @@ def addUser(userpoolid: str, username: str, password: str) -> str:
     # can't capture cognito.exceptions.* in variable name
     return None
 
-def getUserPoolid(stackname: str) -> str:
+def getUserPoolid(stackResources: dict, stackName: str) -> str:
     compareFn = lambda item: item['LogicalResourceId'].startswith('crmusers') and item['ResourceType'] == 'AWS::Cognito::UserPool'
-    item = searchStackResources(stackname, compareFn)
-    return item
+    userpoolid = searchStackResources(stackResources, stackName, compareFn)
+    return userpoolid
     # logical id crmusers44BE6CEC	
     # type AWS::Cognito::UserPool
 
+# Return resourcelist, err
+def getStackResources(stackname: str) -> (dict, str):
+    response: dict = cloudformation.list_stack_resources(
+        StackName = stackname
+    )
+    if response['ResponseMetadata']['HTTPStatusCode'] != 200:
+        # do something
+        responsemetadata = response['ResponseMetadata']
+        #return None, f'List stack resources failed: {response['ResponseMetadata']}' # why is this invalid syntax
+        return None, f'List stack resources failed: {responsemetadata}'
+    return response, None
+
 def getToken(stackname: str) -> str:
-    userpoolid = getUserPoolid(stackname)
+    stackResources, err = getStackResources(stackname)
+    if err != None:
+        print(err)
+        return None
+    userpoolid = getUserPoolid(stackResources, stackname)
     print(f'Userpoolid: {userpoolid}')
     newUserChoice = input('Create a new cognito user (Y) or use an existing user (N): ')
     if newUserChoice.upper() == 'Y':
@@ -123,7 +138,7 @@ def getToken(stackname: str) -> str:
             print(err)
             return None
 
-    url, err = getURL(stackname, userpoolid)
+    url, err = getURL(stackResources, stackname, userpoolid)
     if err != None:
         print(err)
         return None
