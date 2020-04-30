@@ -36,6 +36,10 @@ def write_to_ddb(event):
     item = table.get_item(Key={'id':attr['sub']})
     if 'Item' in item:
         table.update_item(Key={'id':attr['sub']}, AttributeUpdates={
+            'name': {
+                'Value': attr.get('given_name', '') + ' ' + attr.get('family_name', ''),
+                'Action': 'PUT'
+            },
             'email': {
                 'Value': attr.get('email', ''),
                 'Action': 'PUT'
@@ -53,6 +57,7 @@ def write_to_ddb(event):
     else:
         table.put_item(Item={
             'id': attr['sub'],
+            'name': attr.get('given_name', '') + ' ' + attr.get('family_name', ''),
             'email': attr.get('email', ''),
             'phone_number': attr.get('phone_number', ''),
             'is_active': True

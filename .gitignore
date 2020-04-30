@@ -24,3 +24,4 @@ tmp/
 incident-response/trails.json
 .history/
 venv/*
+v/
