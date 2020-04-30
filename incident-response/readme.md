@@ -37,7 +37,7 @@ Note that the honeyrecord generation script runhoneygen.py serves as part of the
 
 Running simulation:
 1. <b>Generate honeyrecords</b>  
-To complete deployment by generating honeyrecords and creating the subscription filter, run runhoneygen.py (script in progress, bash version available):
+To complete deployment by generating honeyrecords and creating the subscription filter, run runhoneygen.py (script in progress, bash version runhoneygen.sh available):
     ```bash
     $ python runhoneygen.py $numberOfHoneyTokens $stackName
     ```
@@ -47,27 +47,16 @@ To complete deployment by generating honeyrecords and creating the subscription 
     ```
     
 2. <b>Retrieve auth token for API access</b>  
-in progress.  
-First: Create a cognito user. This can be done through the aws cli, for example with:
-    !! check these inputs they might be old
+Run gettoken.py and follow the instructions:
     ```bash
-    $ aws cognito-idp admin-create-user \
-    --user-pool-id $USERPOOLID \
-    --username honeytestuser \
-    --user-attributes Name=email,Value=$EMAIL Name=phone_number,Value="+1212555123" Name=custom:type,Value=doctor Name=email_verified,Value=True Name=phone_number_verified,Value=True \
-    --temporary-password $PASSWORD
+    $ python gettoken.py $STACKNAME
     ```
-    Then: Retrieve token and prepend with 'Bearer ' using one of these methods:  
-    a) Login using hosted ui with the following query parameters after client_id:
-    ```
-    &response_type=token&scope=doqutore/application&redirect_uri=http://localhost
-    ```
-    and extract access_token from the redirect url, for example with
-    ```bash
-    $ python -c 'print("Bearer " + YOUR_URL.split("access_token=", 1)[1].split("&")[0])'
-    ```
-    b) Login using website, and copy config:token from localstorage  
-    c) Somehow get cognito initiate-auth to work in AWS cli
+    The process can also be done manually and involves:  
+    1. Create a cognito user
+    2. Login using cognito user and extract access_token from login result, eg by  
+    a) Logging in through hosted ui (with query parameters '&response_type=token&scope=doqutore/application&redirect_uri=http://localhost' following client_id) and extracting access_token from redirect url  
+    b) Logging in through website and getting config:token from localstorage  
+    c) Perhaps using cognito initiate-auth using aws cli (?)
  
  3. <b>Simulate</b>  
 Run honeyrecordsim.py.
