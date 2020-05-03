@@ -1,19 +1,65 @@
-# Welcome to your CDK TypeScript project!
 
-This is a blank project for TypeScript development with CDK.
+# Doqutore CRM AWS Infrastructure
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
-## Useful commands
+We are using Typescript and Python throughout the code base. 
+* Typescript: AWS infrastructure deployment
+* Python 3: AWS Lambda
 
- * `npm run build`   compile typescript to js
- * `npm run watch`   watch for changes and compile
- * `npm run test`    perform the jest unit tests
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk synth`       emits the synthesized CloudFormation template
+To follow the installations steps, you require
 
-## Notes
-After the CDK finishes creating, go into the Cloudformation stack to find the UserPool. Go to the
-userpool and navigate to `App Client Settings`. Uncheck and recheck `openid` as Cognito is currently
-a bit funky.
+* JavaScript, TypeScript ([Node.js ≥ 10.12.0](https://nodejs.org/download/release/latest-v10.x/))
+* Python ([Python ≥ 3.6](https://www.python.org/downloads/))
+* NPM 6.12.0+
+-------
+
+To get started with deploying the complete stack follow the steps below.
+The stacks is divided into two parts:
+* <b>Infrastructure Stack</b>: contains all infrastructure for CRM. 
+* <b>Monitoring Stack</b>: contains active monitoring for different components.
+
+Steps:
+1. Make a new virtual environment for python.
+ 
+```bash
+$ python -m venv ./venv
+```
+
+2. Activate virtual environment. <br/>
+Windows | Linux/Mac
+```bash 
+$ venv\Scripts\activate.bat | $ source ./venv/bin/activate
+```
+3. Change directory to js-infra and install requirements.
+```bash 
+$ pip install -r requirements.txt
+```
+4. Install Node modules.
+```bash 
+$ npm install
+```
+5. Transpile TypeScript to js. 
+```bash
+$ npm run build
+```
+6. Now deploy the AWS stack. We customize the stack name with your OS username. We have two stacks, you can deploy them separately or else use regex style *. But "infrastructure stack" must be created first as "monitoring stack" requires some inputs from "infrastructure stack". 
+```bash
+$ cdk deploy "your-stack-name"
+```
+
+To destroy the stack
+```bash
+$ cdk destroy "your-stack-name"
+```
+
+Due to some issues with cdk, complete implementation of one of our IRs requires running a python script after deploying. See the incident-response folder.
+
+
+-------
+More information on AWS CDK
+
+[Developer Guide](https://docs.aws.amazon.com/cdk/latest/guide) |
+[CDK Workshop](https://cdkworkshop.com/) |
+[Getting Started](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html) |
+[API Reference](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-construct-library.html) |
+[Examples](https://github.com/aws-samples/aws-cdk-examples) 
