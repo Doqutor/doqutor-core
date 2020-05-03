@@ -19,6 +19,8 @@ The stacks is divided into two parts:
 * <b>Monitoring Stack</b>: contains active monitoring for different components.
 
 Steps:
+
+0. You have to be in the root of the project to follow the below steps. i.e. venv should be in the root of the folder. 
 1. Make a new virtual environment for python.
  
 ```bash
