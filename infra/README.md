@@ -32,7 +32,7 @@ Windows | Linux/Mac
 ```bash 
 $ venv\Scripts\activate.bat | $ source ./venv/bin/activate
 ```
-3. Change directory to js-infra and install requirements.
+3. Change directory to infra and install requirements.
 ```bash 
 $ pip install -r requirements.txt
 ```

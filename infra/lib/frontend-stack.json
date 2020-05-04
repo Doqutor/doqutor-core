@@ -1,0 +1,321 @@
+{
+  "Parameters" : {
+    "ParamDomainName": {
+      "Type" : "String",
+      "Default" : ".aws9447.me",
+      "Description" : "Root domain name for hosting application"
+    },
+    "ParamCFCertificateARN": {
+      "Type": "String",
+      "Description": "ARN of certificate for cloudfront."
+    },
+    "ParamZoneId": {
+      "Type": "String",
+      "Description": "Hosted zone id to place domain name"
+    }
+  },
+  "Resources": {
+    "FrontendCFAccessIdentity": {
+      "Type" : "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+      "Properties" : {
+          "CloudFrontOriginAccessIdentityConfig" : {
+            "Comment": "Read access for FrontendCF"
+          }
+        }
+    },
+    "FrontendCF": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig": {
+          "Aliases": [
+            { "Ref": "ParamDomainName" }
+          ],
+          "DefaultRootObject": "index.html",
+          "Origins": [
+            {
+              "Id": "S3-frontend",
+              "DomainName": {
+                "Fn::Join": [
+                  "", [
+                    { "Ref": "FrontendS3Bucket" },
+                    ".s3.ap-southeast-2.amazonaws.com"
+                  ]
+                ]
+                
+              },
+              "OriginPath": "",
+              "S3OriginConfig": {
+                "OriginAccessIdentity": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "origin-access-identity/cloudfront/",
+                      { "Ref": "FrontendCFAccessIdentity" }
+                    ]
+                  ]
+                }
+              }
+            }
+          ],
+          "DefaultCacheBehavior": {
+            "TargetOriginId": "S3-frontend",
+            "ForwardedValues": {
+              "QueryString": false,
+              "Cookies": {
+                "Forward": "none"
+              }
+            },
+            "ViewerProtocolPolicy": "redirect-to-https",
+            "MinTTL": 0,
+            "AllowedMethods": [
+              "HEAD",
+              "GET"
+            ],
+            "CachedMethods": [
+              "HEAD",
+              "GET"
+            ],
+            "DefaultTTL": 0,
+            "MaxTTL": 3600,
+            "Compress": true
+          },
+          "CustomErrorResponses": [
+            {
+              "ErrorCode": 403,
+              "ResponsePagePath": "/200.html",
+              "ResponseCode": "200",
+              "ErrorCachingMinTTL": 300
+            },
+            {
+              "ErrorCode": 404,
+              "ResponsePagePath": "/200.html",
+              "ResponseCode": "200",
+              "ErrorCachingMinTTL": 300
+            }
+          ],
+          "Comment": "",
+          "PriceClass": "PriceClass_All",
+          "Enabled": true,
+          "ViewerCertificate": {
+            "AcmCertificateArn": {
+              "Ref": "ParamCFCertificateARN"
+            },
+            "SslSupportMethod": "sni-only",
+            "MinimumProtocolVersion": "TLSv1.1_2016"
+          },
+          "HttpVersion": "http2"
+        }
+      }
+    },
+    "FrontendS3Bucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "AccessControl": "Private",
+        "VersioningConfiguration": {
+          "Status": "Suspended"
+        }
+      }
+    },
+    "FrontendDNSRecord": {
+      "Type" : "AWS::Route53::RecordSet",
+      "Properties" : {
+        "Comment" : "doqutore-frontend cloudfront distrubution",
+        "Name" : { "Ref": "ParamDomainName" },
+        "Type": "A",
+        "AliasTarget": {
+          "DNSName": {
+            "Fn::GetAtt": [
+              "FrontendCF",
+              "DomainName"
+            ]
+          },
+          "HostedZoneId": "Z2FDTNDATAQYW2"
+        },
+        "HostedZoneId": {
+          "Ref": "ParamZoneId"
+        }
+      }
+    },
+    "FrontendBucketDeploymentPolicy": {
+      "Type" : "AWS::IAM::Policy",
+      "Properties" : {
+        "PolicyName": "FrontendBucketDeployment",
+        "Users": [
+          {"Ref": "FrontendDeploymentUser"}
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:ListBucket"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      { "Ref": "FrontendS3Bucket" }
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      { "Ref": "FrontendS3Bucket" },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },   
+    "FrontendDeploymentUser": {
+      "Type" : "AWS::IAM::User",
+      "Properties" : {
+        "UserName" : "frontend-deployment"
+      }
+    },
+    "FrontendDeploymentUserAccessKey": {
+      "Type" : "AWS::IAM::AccessKey",
+      "Properties" : {
+          "Serial" : 1,
+          "UserName" : {"Ref" : "FrontendDeploymentUser"}
+        }
+    },    
+    "FrontendS3BucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "FrontendS3Bucket"
+        },
+        "PolicyDocument": {
+          "Version": "2008-10-17",
+          "Id": "PolicyForCloudFrontPrivateContent",
+          "Statement": [
+            {
+              "Sid": "1",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    " ",
+                    [
+                      "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity",
+                      { "Ref": "FrontendCFAccessIdentity" }
+                    ]
+                  ]
+                }
+              },
+              "Action": "s3:GetObject",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:s3:::",
+                    { "Ref": "FrontendS3Bucket" },
+                    "/*"
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "FrontendAPICertificate": {
+      "Type" : "AWS::CertificateManager::Certificate",
+      "Properties": {
+        "DomainName" : {
+          "Fn::Join": [
+            ".",
+            [
+              "api",
+              { "Ref": "ParamDomainName" }
+            ]
+          ]
+        },
+        "ValidationMethod": "DNS"
+      }
+    },
+    "FrontendAPIGatewayDomain": {
+      "Type" : "AWS::ApiGateway::DomainName",
+      "Properties" : {
+        "DomainName" : {
+          "Fn::Join": [
+            ".",
+            [
+              "api",
+              { "Ref": "ParamDomainName" }
+            ]
+          ]
+        },
+        "EndpointConfiguration" : {
+          "Types": ["REGIONAL"]
+        },
+        "RegionalCertificateArn" : { "Ref": "FrontendAPICertificate" },
+        "SecurityPolicy" : "TLS_1_2"
+      }
+    },
+    "FrontendAPIGatewayMapping": {
+      "Type" : "AWS::ApiGateway::BasePathMapping",
+      "Properties" : {
+        "DomainName" : { "Ref": "FrontendAPIGatewayDomain" },
+        "RestApiId" : { "Fn::ImportValue" : "doqutore-infrastructure-APIGateway" },
+        "Stage" : "prod"
+      }
+    },
+    "FrontendAPIGatewayDNSRecord": {
+      "Type" : "AWS::Route53::RecordSet",
+      "Properties" : {
+        "Comment" : "doqutore-frontend api",
+        "Name" : { "Ref": "FrontendAPIGatewayDomain" },
+        "Type": "A",
+        "AliasTarget": {
+          "DNSName": {
+            "Fn::GetAtt": [
+              "FrontendAPIGatewayDomain",
+              "RegionalDomainName"
+            ]
+          },
+          "HostedZoneId": {
+            "Fn::GetAtt": [
+              "FrontendAPIGatewayDomain",
+              "RegionalHostedZoneId"
+            ]
+          }
+        },
+        "HostedZoneId": {
+          "Ref": "ParamZoneId"
+        }
+      }
+    }
+  },
+  "Outputs" : {
+    "BucketName" : {
+      "Description": "Bucket name for frontend assets",  
+      "Value" : { "Ref": "FrontendS3Bucket" },
+      "Export": {
+      	"Name": "doqutore-frontend-S3Bucket"
+      }
+    },
+    "DeployAccessKeyId" : {
+      "Description": "public key for deployment user",  
+      "Value" : { "Ref": "FrontendDeploymentUserAccessKey" }
+    },
+    "DeployAccessKeySecret" : {
+      "Description": "private key for deployment user",  
+      "Value" : { "Fn::GetAtt": ["FrontendDeploymentUserAccessKey", "SecretAccessKey"] }
+    }
+  }
+}
