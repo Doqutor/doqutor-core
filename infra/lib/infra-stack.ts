@@ -292,8 +292,8 @@ export class InfraStack extends cdk.Stack {
     snsTopicHT.addSubscription(new subscriptions.EmailSubscription(config.email));
 
     // test user
-    const user = new iam.User(this, 'testUser');
-    user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
+    /*const user = new iam.User(this, 'testUser');
+    user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));*/
 
     // block user lambda
     // const lambdaBlockUser = createPythonLambda(this, 'util', 'block_user');
