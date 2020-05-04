@@ -60,6 +60,19 @@ Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-
 
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/dynamo.png)
 #### 5. Compromised CRM Account/Brute-force Attack
+This is routinely featured on the OWASP top-10 list as Broken Authentication. By breaking authentication, an adversary can compromise user accounts, as well as user data if an administrator’s credentials are found.
 
+Our solution uses a Cognito user pool to handle all aspects of user management, from signing up new users, to multi factor authentication and password management. We used Cognito’s built-in features to perform the detection for us, mainly because it is already implemented but also because we didn’t have access to the internals API to retrieve metrics from Cognito.
+
+When the user tries a password too many times, Cognito will start to rate limit their attempts and will also gradually increase the time which they can retry the password. Additionally if a user logs in from a new location, Cognito will also trigger a Multi Factor Authentication event, which will require the user to enter in a code from a text message. On top of this, we have configured a lambda function to send an email to the user on any suspicious login attempts.
+
+Simulate this incident with the given [demo]().
 
 #### 6. API Attack
+Rate limiting is important to web applications as it prevents resources from being exhausted, as well as detecting and preventing data exfiltration. In the cloud where resources are easily auto scaled, another risk known as economic denial of sustainability can surface where a malicious attacker attempts to inflate the bill of a cloud customer by triggering the autoscaling capabilities within the customer’s apps. Other risks involve cross-site scripting and injection attacks, which could compromise the security and data of an application.
+
+A Web Application Firewall (WAF) can be used to detect and prevent most of these attacks. With Amazon’s WAF, we set up a rule to limit requests to 128 every 5 minutes, which is plenty for a user at home to view and update their medical records. We also enabled other options such as XSS and an IP reputation list, to better secure our application against other attacks that we may have not thought about. 
+
+Once the WAF detects more than our threshold of requests in a certain timeframe, it immediately starts to block access to the web application. In addition to this, a sample of the requests coming through the WAF is taken for further analysis for the developers to gain some insight from possible attacks. If the number of blocked requests from a source reaches a further 128 requests from the baseline of blocked requests, we will then notify the administrator about the problem.
+
+Simulate this incident with the given [demo]().
