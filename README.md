@@ -40,7 +40,7 @@ When a trail is turned off by a user, we flag that user as malicious. It could h
 
 We respond the event by switching on the CloudTrail instance and blocking the user by attaching the policy of “deny-all”. We also emit important log information about events through simple notification service to the subscribed channels. For blocking the user, we use the lambda functions. Lambda function utilizes serverless code which can execute at an event and we do not need to run them an event detection process on a server. We use an instance of IAM from python AWS SDK, boto3 for attaching the policy to the user. We also send notifications to inform the subscribed channels about “StoppedLogging” and “StartLogging”. These notifications also contain the username of the arguable malicious AWS account user.
 
-[Demo](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#1-cloudtrail-stopped-by-user)
+Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#1-cloudtrail-stopped-by-user). Make sure to [set up a dummy user](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#0-set-up-dummy-user)
 #### 3. Data Exfiltration
 #### 4. Non-Patient Reading Patient Data
 #### 5. Compromised CRM Account/Brute-force Attack
