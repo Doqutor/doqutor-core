@@ -42,7 +42,7 @@ def main(event, context):
     
     # publish_logging(client=sns_client, sns_arn=sns_arn, event=event, subject='THIS IS A BAD DEPLOY', user=user)
     
-    reqUrl = "https://api.github.com/repos/MarkSonn/doqutore-view/dispatches"
+    reqUrl = "https://api.github.com/repos/Doqutor/doqutor-frontend/dispatches"
     reqJson = {"event_type": "Redeploy from webhook!"}
     reqAuth = ('aws-devops-bot', '047ffcdcb64eb943171429ea7fd34ebb9efc1ba1')
     reqHeaders = {"Accept":"application/vnd.github.everest-preview+json"}
