@@ -10,6 +10,7 @@ cognito = boto3.client('cognito-idp')
 sns = boto3.client('sns')
 
 # this is in api folder because I get permission issues with lambdas in util folder
+# ideally it would be in util folder
 
 # [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb* || event=*5555*]
 
@@ -98,13 +99,9 @@ def addToDB(item: dict) -> (bool, str):
         response = table.put_item(Item=item) # raises exception on failure
         if response['ResponseMetadata']['HTTPStatusCode'] != 200:
             raise Exception()
-        #error = False
-        #message = "User's token invalidated\n"
         return False, "User's token invalidated\n"
     except Exception as err:
         print(err)
-        #error = True
-        #message = "Could not invalidate user's token\n"
         return True, "Could not invalidate user's token\n"
 
 def disableUser(username: str) -> (bool, str):

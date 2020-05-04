@@ -48,6 +48,7 @@ export class InfraStack extends cdk.Stack {
       exportName: this.stackName + "-PatientTableArn"
     });
 
+
     /*
     * Setup rollback operations for patients table
     */
@@ -284,6 +285,7 @@ export class InfraStack extends cdk.Stack {
     /*
     * Honeytoken IR
     * in infra-stack for the moment because it needs access to the lambdas
+    * Could export all 10 of the lambdas
     */
     // sns topic
     const snsTopicHT = new sns.Topic(this, 'HoneytokenSNS', {
@@ -291,13 +293,9 @@ export class InfraStack extends cdk.Stack {
     });
     snsTopicHT.addSubscription(new subscriptions.EmailSubscription(config.email));
 
-    // test user
-    /*const user = new iam.User(this, 'testUser');
-    user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));*/
-
     // block user lambda
     // const lambdaBlockUser = createPythonLambda(this, 'util', 'block_user');
-    const lambdaBlockUser = createPythonLambda(this, 'api', 'block_user2');
+    const lambdaBlockUser = createPythonLambda(this, 'api', 'block_user');
     const denyAllPolicy = new iam.PolicyStatement({
       actions: [
         'iam:AttachUserPolicy'
@@ -356,5 +354,13 @@ export class InfraStack extends cdk.Stack {
     lambdaPatientDelete.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
     lambdaPatientList.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
     lambdaPatientUpdate.addEnvironment('TOKENS_TABLE_NAME', revokedTokensTable.tableName);
+
+
+    /*
+    * General purpose
+    */
+    // test user
+    const user = new iam.User(this, 'testUser');
+    user.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
   }
 }
