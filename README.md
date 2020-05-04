@@ -45,6 +45,10 @@ Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-
 ![CloudTrail IR](https://github.com/Doqutor/doqutor-core/blob/master/images/cloudtrail.png)
 
 #### 3. Data Exfiltration
+Data exfiltration is described as unauthorized copying, or retrieval of sensitive data from a computer system. Organizations with high-value data are particularly at high risk of these types of attacks, whether they are from outside attackers or trusted insiders. Data exfiltration is among organizations’ top concerns today. Data breaches can be very damaging to an organisation’s reputation, share price and profitability, and socially-focused organisations will also be concerned about the personal impact on their clients. According to a research, more than 50% of security professionals responded that they have experienced a data breach at their current work or organization.
+Our implementation of a honey token, or honey record, is an item added to a database that does not represent any real-world entity. A genuine user (i.e. a doctor, receptionist) would only access patient records of patients they are working with, so patient records that are not assigned to any doctor should not be accessed. If they are accessed through the API, we take it to signal that a doctor’s website account, or their current authorization token, has been compromised. Perhaps an attacker is attempting to download certain attractive patient records, or many random patient records.
+We came up with detecting access to honey tokens as an indicator of compromised or abused credentials, and of data exfiltration. When this indicator is triggered, our response is to sign out and disable the website user, and then invalidate their current authorisation token. We also notify the administrators.
+Simulate this incident with the given [Demo](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#2-honeyrecord-accessed-by-website-user).
 
 
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/honeytoken.png)
