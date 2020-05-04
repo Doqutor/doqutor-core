@@ -104,7 +104,6 @@ export class InfraStack extends cdk.Stack {
       lambdaTriggers: {
         postAuthentication: lambdaCognitoHandler
       }
-      // this was commented out because of problems when I deploy lambdas in util folder
     });
     // export
     new CfnOutput(this, 'DoqutoreCognitoPool', {
@@ -299,7 +298,6 @@ export class InfraStack extends cdk.Stack {
     // block user lambda
     // const lambdaBlockUser = createPythonLambda(this, 'util', 'block_user');
     const lambdaBlockUser = createPythonLambda(this, 'api', 'block_user2');
-    // const lambdaBlockUser = createPythonLambda(this, 'api/blockuser2.zip', 'block_user2') 
     const denyAllPolicy = new iam.PolicyStatement({
       actions: [
         'iam:AttachUserPolicy'
