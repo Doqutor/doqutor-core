@@ -29,11 +29,9 @@ iam = boto3.client('iam')
 
 def generateName() -> str:
     return fake.name()
-    # return "Barry Fake"
 
 def generateEmail(name: str) -> str:
     suffixes = ["gmail.com", "outlook.com", "bigpond.com.au", "live.com", "protonmail.com"] # for generating honey people
-    #suffixes = ["realperson.com"] # for generating real people
     separators = ["_", ".", "", "-"]
     return name.replace(" ", random.choice(separators)) + "@" + random.choice(suffixes)
 
@@ -130,7 +128,7 @@ def clearExistingPattern(curfilter: dict, loggroupName: str, table):
             logGroupName = loggroupName,
             filterName = curfilter['filterName']
         )
-    # don't have to delete filter pattern, will just get overridden
+    # don't *have* to delete filter pattern, will just get overridden
 
 # return True if there is an existing filter
 def clearExistingFilters(loggroupNames: list, table) -> bool:
@@ -154,7 +152,7 @@ def clearExistingFilters(loggroupNames: list, table) -> bool:
 
 #--------------------------------------------------------------------------------------------
 
-# to database
+# Add records to database
 # return True to indicate error
 def addRecords(table, n: int) -> (list, bool):
     ids = []
@@ -189,7 +187,6 @@ def addSubscriptions(loggroupNames: list, filterPattern: str, destarn: str):
             filterName = loggroupName + '-subscription',
             filterPattern = filterPattern,
             destinationArn = destarn#,
-            #roleArn = createRole()
         )
 
 #----------------------------------------------------------------------------

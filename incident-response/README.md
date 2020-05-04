@@ -60,7 +60,8 @@ Run gettoken.py and follow the instructions:
  
  3. <b>Simulate</b>  
 Run honeyrecordsim.py.
-The API endpoint can be retrieved from cdk deploy output.
+The API endpoint can be retrieved from output of cdk deploy.
+Intended use requires appending '/patients' to that url.
     ```bash
     $ python honeyrecordsim.py $APIEndpoint "$AuthToken"
     ```
