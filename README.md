@@ -6,12 +6,12 @@
 - [Architecture](#architecture)
 - [Features](#features)
 - [Incident Response](#incident-response)
-    - [Attempted Vandalism](#1-attempted-vandalism)
-    - [Compromised AWS Account](#2-compromised-aws-account)
-    - [Data Exfiltration](#3-data-exfiltration)
-    - [Non-Patient Reading Patient Data](#4-non-patient-reading-patient-data)
-    - [Compromised CRM Account/Brute-force Attack](#5-compromised-crm-accountbrute-force-attack)
-    - [API Attack](#6-api-attack)
+    1. [Attempted Vandalism](#1-attempted-vandalism)
+    2. [Compromised AWS Account](#2-compromised-aws-account)
+    3. [Data Exfiltration](#3-data-exfiltration)
+    4. [Non-Patient Reading Patient Data](#4-non-patient-reading-patient-data)
+    5. [Compromised CRM Account/Brute-force Attack](#5-compromised-crm-accountbrute-force-attack)
+    6. [API Attack](#6-api-attack)
 
 
 ### Objective
