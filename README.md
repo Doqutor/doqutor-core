@@ -6,7 +6,7 @@
 - [Architecture](#architecture)
 - [Features](#features)
 - [Incident Response](#incident-response)
-    - [Attempted Vandalism](#Attempted Vandalism)
+    - [Attempted Vandalism](#1-attempted-vandalism)
 
 
 ### Objective
