@@ -7,6 +7,11 @@
 - [Features](#features)
 - [Incident Response](#incident-response)
     - [Attempted Vandalism](#1-attempted-vandalism)
+    - [Compromised AWS Account](#1-attempted-vandalism)
+    - [Data Exfiltration](#1-attempted-vandalism)
+    - [Non-Patient Reading Patient Data](#1-attempted-vandalism)
+    - [Compromised CRM Account/Brute-force Attack](#1-attempted-vandalism)
+    - [API Attack](#1-attempted-vandalism)
 
 
 ### Objective
@@ -25,3 +30,9 @@ Extraneous file added to S3 bucket : A potential attack vector we noticed was th
 To mitigate this potential attack vector, we have set up a watcher on the CloudTrail logs which detects changes to the S3 bucket. If the changes were enacted by the CI/CD pipeline (i.e. the " frontend-deployment" user with its own set of public and private keys), then the changes are ignored. If any other user makes the changes, then a lambda is triggered which reruns the CI/CD pipeline to create a fresh copy and deployment of the frontend to replace any of the unsolicited changes to the S3 bucket.
 
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/s3_IR.png)
+
+#### 2. Compromised AWS Account
+#### 3. Data Exfiltration
+#### 4. Non-Patient Reading Patient Data
+#### 5. Compromised CRM Account/Brute-force Attack
+#### 6. API Attack
