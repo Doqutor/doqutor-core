@@ -22,8 +22,6 @@ def publish_logging(client, sns_arn, event, subject, user):
         Message=f'CloudTrail event {event} invoked by user {user}',
     )
 
-#  curl -v -X POST -u "aws-devops-bot:047ffcdcb64eb943171429ea7fd34ebb9efc1ba1" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" --data '{"event_type":"Redeploy from webhook!"}' https://api.github.com/repos/MarkSonn/doqutore-view/dispatches
-
 def main(event, context):
     global already_run
     if already_run:
@@ -38,9 +36,6 @@ def main(event, context):
     user = event['detail']['userIdentity']['userName']
     if user == 'frontend-deployment':
         return event
-
-    
-    # publish_logging(client=sns_client, sns_arn=sns_arn, event=event, subject='THIS IS A BAD DEPLOY', user=user)
     
     reqUrl = "https://api.github.com/repos/Doqutor/doqutor-frontend/dispatches"
     reqJson = {"event_type": "Redeploy from webhook!"}
@@ -48,24 +43,3 @@ def main(event, context):
     reqHeaders = {"Accept":"application/vnd.github.everest-preview+json"}
     r = requests.post(reqUrl, json=reqJson, auth=reqAuth, headers=reqHeaders)
     return event
-    
-
-    # if action == 'StopLogging':
-    #     user = event['detail']['userIdentity']['userName']
-
-    #     publish_logging(client=sns_client, sns_arn=sns_arn, event=action, subject='WARNING: CloudTrail stopped by user',
-    #                     user=user, trail_arn=trail_arn)
-    #     cloudtrail_client.start_logging(Name=trail_arn)
-
-    #     #Below command is used to Block a user. Do not uncomment this for testing.
-    #     iam.attach_user_policy(UserName=user, PolicyArn='arn:aws:iam::aws:policy/AWSDenyAll')
-
-    #     logger.info('restarted cloudtrail with arn %s', trail_arn)
-    # if action == 'StartLogging':
-    #     publish_logging(client=sns_client, sns_arn=sns_arn, event=action, subject='CloudTrail started successfully',
-    #                     user='lambda/cloudtrail_restartlog', trail_arn=trail_arn)
-
-    # else:
-    #     logger.info('some other arn or event, not our problem')
-
-    # return event
