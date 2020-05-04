@@ -42,7 +42,17 @@ We respond the event by switching on the CloudTrail instance and blocking the us
 
 Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#1-cloudtrail-stopped-by-user). Make sure to [set up a dummy user](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#0-set-up-dummy-user).
 
+![CloudTrail IR](https://github.com/Doqutor/doqutor-core/blob/master/images/cloudtrail.png)
+
 #### 3. Data Exfiltration
+
+
+![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/honeytoken.png)
 #### 4. Non-Patient Reading Patient Data
+
+
+![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/dynamo.png)
 #### 5. Compromised CRM Account/Brute-force Attack
+
+
 #### 6. API Attack
