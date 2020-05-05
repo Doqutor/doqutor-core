@@ -32,7 +32,7 @@ To mitigate this potential attack vector, we have set up a watcher on the CloudT
 
 Reverts back the S3 bucket to previous version.
 
-![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/s3_IR.png)
+![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/s3_IR.png?raw=true)
 
 #### 2. Compromised AWS Account
 CloudTrail is a very important service from AWS. This service enables AWS account to maintain and store logs throughout the AWS account. These logs can be analysed for governance, compliance, operational auditing, and risk auditing of your AWS account. It maintains action history logs of all actions performed through AWS Management Console, AWS SDKs, command line tools, and other AWS services. With support from CloudWatch, we can add rules on special cases and fire events based on CloudTrail event. 
@@ -45,7 +45,7 @@ We respond the event by switching on the CloudTrail instance and blocking the us
 
 Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#1-cloudtrail-stopped-by-user). Make sure to [set up a dummy user](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#0-set-up-dummy-user).
 
-![CloudTrail IR](https://github.com/Doqutor/doqutor-core/blob/master/images/cloudtrail.png)
+![CloudTrail IR](https://github.com/Doqutor/doqutor-core/blob/master/images/cloudtrail.png?raw=true)
 
 #### 3. Data Exfiltration
 Data exfiltration is described as unauthorized copying, or retrieval of sensitive data from a computer system. Organizations with high-value data are particularly at high risk of these types of attacks, whether they are from outside attackers or trusted insiders. Data exfiltration is among organizations’ top concerns today. Data breaches can be very damaging to an organisation’s reputation, share price and profitability, and socially-focused organisations will also be concerned about the personal impact on their clients. According to a research, more than 50% of security professionals responded that they have experienced a data breach at their current work or organization.
@@ -59,7 +59,7 @@ We came up with detecting access to honey tokens as an indicator of compromised 
 Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#2-honeyrecord-accessed-by-website-user).
 
 
-![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/honeytoken.png)
+![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/honeytoken.png?raw=true)
 #### 4. Non-Patient Reading Patient Data
 In any application, one of the most important tasks is to maintain the security of the database. In this Medical CRM, we have created two tables – Doctors and Patients. In any medical facility, the administrators can be given the access of the Doctors information but is it secure to give them access of the Patient’s data like their prescriptions, medical history or in our case their insurance id.
 
@@ -70,7 +70,7 @@ In order to track the changes committed on the table, AWS provides us with Dynam
 We have enabled a stream on our patients table which triggers a lambda function “cloudtrail_ddb_access” whenever there is a change in the table. The stream emits an event which is used by the lambda to check if the event is “Modify”. It compares the old value of the insurance id with the new one. If there are any changes, the lambda stores the old values of all fields and deletes the current entry from the table. The lambda then generates a new entry with the restored values. Since this event is not a Modify event, the lambda will not be triggered and hence the changes made by the user will not be reflected in the table. Along with this we also send a notification using AWS Simple Notification Service to the subscribed channel indicating that there has been a change made in the table. The notification contains the primary key, which is called id, on which the changes has been made.
 
 Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#3-illegal-write-into-patient-table).
-![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/dynamo.png)
+![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/dynamo.png?raw=true)
 #### 5. Compromised CRM Account/Brute-force Attack
 This is routinely featured on the OWASP top-10 list as Broken Authentication. By breaking authentication, an adversary can compromise user accounts, as well as user data if an administrator’s credentials are found.
 
