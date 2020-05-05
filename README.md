@@ -1,6 +1,6 @@
 
 # [Doqutore](https://doqutor.github.io/doqutor-core/)
-### Indentification and simulation of automated security incident response using AWS serverless stack. 
+### Identification and simulation of automated security incident response using AWS serverless stack. 
 
 - [Objective](#objective)
 - [Architecture](#architecture)
@@ -15,13 +15,13 @@
 
 
 ### Objective
-The project aims to highlight common use cases in an web application based on AWS serverless infrastructure. We have used AWS CDK to deploy the complete [core project](https://github.com/Doqutor/doqutor-core/tree/master/infra). Use the [readme](https://github.com/Doqutor/doqutor-core/blob/master/infra/README.md) to set up and deploy the AWS infrastructure.
+The project aims to highlight common use cases in a web application based on AWS serverless infrastructure. We have used AWS CDK to deploy the complete [core project](https://github.com/Doqutor/doqutor-core/tree/master/infra). Use the [readme](https://github.com/Doqutor/doqutor-core/blob/master/infra/README.md) to set up and deploy the AWS infrastructure.
 
 ### Architecture
 ![Architecture Diagram](https://github.com/Doqutor/doqutor-core/blob/master/images/arch.jpg?raw=true "Arch Diag")
 
 ### Features
-- AWS [Lambda](https://github.com/Doqutor/doqutor-core/tree/master/infra/lambda/api) functions as rest API's
+- AWS [Lambda](https://github.com/Doqutor/doqutor-core/tree/master/infra/lambda/api) functions as REST API's
 
 ### Incident Response
 #### 1. Attempted Vandalism
@@ -30,7 +30,7 @@ A potential attack vector we noticed was that a bad actor could create or modify
 To mitigate this potential attack vector, we have set up a watcher on the CloudTrail logs which detects changes to the S3 bucket. If the changes were enacted by the CI/CD pipeline (i.e. the " frontend-deployment" user with its own set of public and private keys), then the changes are ignored. If any other user makes the changes, then a lambda is triggered which reruns the CI/CD pipeline to create a fresh copy and deployment of the frontend to replace any of the unsolicited changes to the S3 bucket.
 
 
-Reverts back the S3 bucket to previous version.
+Reverts back the S3 bucket to the previous version.
 
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/s3_IR.png?raw=true)
 
@@ -48,7 +48,7 @@ Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-
 ![CloudTrail IR](https://github.com/Doqutor/doqutor-core/blob/master/images/cloudtrail.png?raw=true)
 
 #### 3. Data Exfiltration
-Data exfiltration is described as unauthorized copying, or retrieval of sensitive data from a computer system. Organizations with high-value data are particularly at high risk of these types of attacks, whether they are from outside attackers or trusted insiders. Data exfiltration is among organizations’ top concerns today. Data breaches can be very damaging to an organisation’s reputation, share price and profitability, and socially-focused organisations will also be concerned about the personal impact on their clients. According to a research, more than 50% of security professionals responded that they have experienced a data breach at their current work or organization.
+Data exfiltration is described as unauthorized copying, or retrieval of sensitive data from a computer system. Organizations with high-value data are particularly at high risk of these types of attacks, whether they are from outside attackers or trusted insiders. Data exfiltration is among organizations’ top concerns today. Data breaches can be very damaging to an organisation’s reputation, share price and profitability, and socially-focused organisations will also be concerned about the personal impact on their clients. According to research, more than 50% of security professionals responded that they have experienced a data breach at their current work or organization.
 
 
 Our implementation of a honey token, or honey record, is an item added to a database that does not represent any real-world entity. A genuine user (i.e. a doctor, receptionist) would only access patient records of patients they are working with, so patient records that are not assigned to any doctor should not be accessed. If they are accessed through the API, we take it to signal that a doctor’s website account, or their current authorization token, has been compromised. Perhaps an attacker is attempting to download certain attractive patient records, or many random patient records.
