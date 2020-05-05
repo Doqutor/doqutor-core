@@ -48,19 +48,19 @@ Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-
 ![CloudTrail IR](https://github.com/Doqutor/doqutor-core/blob/master/images/cloudtrail.png?raw=true)
 
 #### 3. Data Exfiltration
-Data exfiltration is described as unauthorized copying, or retrieval of sensitive data from a computer system. Organizations with high-value data are particularly at high risk of these types of attacks, whether they are from outside attackers or trusted insiders. Data exfiltration is among organizations’ top concerns today. Data breaches can be very damaging to an organisation’s reputation, share price and profitability, and socially-focused organisations will also be concerned about the personal impact on their clients. According to research, more than 50% of security professionals responded that they have experienced a data breach at their current work or organization.
+Data exfiltration is described as unauthorized copying or retrieval of sensitive data from a computer system. Organizations with high-value data are particularly at high risk of these types of attacks, whether they are from outside attackers or trusted insiders. Data exfiltration is among organizations’ top concerns today. Data breaches can be very damaging to an organisation’s reputation, share price and profitability, and socially-focused organisations will also be concerned about the personal impact on their clients. According to research, more than 50% of security professionals responded that they have experienced a data breach at their current work or organization.
 
 
-Our implementation of a honey token, or honey record, is an item added to a database that does not represent any real-world entity. A genuine user (i.e. a doctor, receptionist) would only access patient records of patients they are working with, so patient records that are not assigned to any doctor should not be accessed. If they are accessed through the API, we take it to signal that a doctor’s website account, or their current authorization token, has been compromised. Perhaps an attacker is attempting to download certain attractive patient records, or many random patient records.
+Thus, we came up with detecting access to honey tokens as an indicator of compromised or abused credentials, and of data exfiltration. Our implementation of a honey token, or honey record, is an item added to a database that does not represent any real-world entity. A genuine user (i.e. a doctor, receptionist) would only access patient records of patients they are working with, so patient records that are not assigned to any doctor should not be accessed. If they are accessed through the API, we take it to signal that a doctor’s website account, or their current authorization token, has been compromised. Perhaps an attacker is attempting to download certain attractive patient records, or many random patient records.
 
-We came up with detecting access to honey tokens as an indicator of compromised or abused credentials, and of data exfiltration. When this indicator is triggered, our response is to sign out and disable the website user, and then invalidate their current authorisation token. We also notify the administrators.
+When this indicator is triggered, our response is to sign out and disable the website user, and then invalidate their current authorisation token. We also notify the administrators.
 
 
 Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#2-honeyrecord-accessed-by-website-user).
 
 
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/honeytoken.png?raw=true)
-#### 4. Non-Patient Reading Patient Data
+#### 4. Non-Patient Writing Patient Data
 In any application, one of the most important tasks is to maintain the security of the database. In this Medical CRM, we have created two tables – Doctors and Patients. In any medical facility, the administrators can be given the access of the Doctors information but is it secure to give them access of the Patient’s data like their prescriptions, medical history or in our case their insurance id.
 
 To avoid such a situation, we have created a customer managed IAM policy known as “BlockPatientTable” which is applied to a group called “adminusers” who have “AdministratorAccess” policy attached to it. The policy is an entity which when applied to a resource or identity defines their permission. This policy is used to deny the complete access of the patient table by any member of the mentioned group. Our main objective here is to be ready for a situation where a user despite having the BlockPatientTable permission tries to access the table from outside the application.
