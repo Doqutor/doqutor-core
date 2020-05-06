@@ -20,4 +20,6 @@ The API architecture uses a REST approach, with the URI uniquely specifying reso
 - DELETE /patients/{id}: Delete patient with given id\
 
 
-The block_user.py lambda in this folder should be in the util folder, but is here because of odd file permissions issues when deploying with cdk.
+
+
+Note: The block_user.py lambda in this folder should be in the util folder, but is here because of odd file permissions issues when deploying with cdk.
