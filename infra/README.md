@@ -54,8 +54,7 @@ To destroy the stack
 $ cdk destroy "your-stack-name"
 ```
 
-Complete implementation of one of our IRs requires running a python script after deploying. See "Generate honeyrecords" in the [incident-response readme](../incident-response).
-
+Note: Complete implementation of one of our IRs requires running a python script after deploying. See "Generate honeyrecords" in the [incident-response readme](../incident-response/README.md#2-honeyrecord-accessed-by-website-user).
 
 -------
 More information on AWS CDK
