@@ -18,7 +18,7 @@ The API architecture uses a REST approach, with the URI uniquely specifying reso
 - POST /patients: Create new patient
 - GET /patients/{id}: Get information on patient with given id
 - PUT /patients/{id}: Update information on patient with given id
-- DELETE /patients/{id}: Delete patient with given id\
+- DELETE /patients/{id}: Delete patient with given id
 
 
 
