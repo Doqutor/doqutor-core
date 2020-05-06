@@ -18,6 +18,7 @@ The project aims to highlight common use cases in a web application based on AWS
 
 ### Architecture
 ![Architecture Diagram](https://github.com/Doqutor/doqutor-core/blob/master/images/arch.jpg?raw=true "Arch Diag")
+We have utilized a completely serverless stack for this project. We are using DynamoDB as our database of choice. We are using AWS Lambda functions as the CRUD API’s and tied them to an API gateway which directs the request to the correct endpoint. We have also utilized an AWS WAF (Web Application Firewall) in front of the API gateway to protect it against some common web exploits that may affect availability, compromise security or consume excessive resources. We are using AWS Cognito for user authentication and authorization. For logging we utilize heavily on CloudWatch and CloudTrail. CloudWatch stores the logs for all the services used in AWS and cloudTrail saves all the events by AWS users.
 
 
 ### Incident Response
