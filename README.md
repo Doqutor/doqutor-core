@@ -14,7 +14,7 @@
 - [Features](#features)
 
 ### Objective
-The project aims to highlight common use cases in a web application based on AWS serverless infrastructure. We have used AWS CDK to deploy the complete [core project](https://github.com/Doqutor/doqutor-core/tree/master/infra). Use the [readme](https://github.com/Doqutor/doqutor-core/blob/master/infra/README.md) to set up and deploy the AWS infrastructure.
+The project aims to highlight common use cases in a web application based on AWS serverless infrastructure. We have used AWS CDK to deploy the complete [core project](./infra). Use the [readme](https://github.com/Doqutor/doqutor-core/blob/master/infra/README.md) to set up and deploy the AWS infrastructure.
 
 ### Architecture
 ![Architecture Diagram](https://github.com/Doqutor/doqutor-core/blob/master/images/arch.jpg?raw=true "Arch Diag")
