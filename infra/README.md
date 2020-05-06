@@ -54,7 +54,7 @@ To destroy the stack
 $ cdk destroy "your-stack-name"
 ```
 
-Due to some issues with cdk, complete implementation of one of our IRs requires running a python script after deploying. See the incident-response folder.
+Complete implementation of one of our IRs requires running a python script after deploying. See "Generate honeyrecords" in the [incident-response readme](../incident-response).
 
 
 -------
