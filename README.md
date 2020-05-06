@@ -87,5 +87,6 @@ Once the WAF detects more than our threshold of requests in a certain timeframe,
 Simulate this incident with the given [demo]().
 
 ### Features
-- AWS [Lambda](https://github.com/Doqutor/doqutor-core/tree/master/infra/lambda/api) functions as REST API's
+- AWS [Lambda](./infra/lambda/api) functions as REST API's.
+- Seperated [stacks](./infra/lib).
 
