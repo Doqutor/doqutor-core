@@ -91,5 +91,5 @@ Simulate this incident with the given [demo]().
 - AWS [Lambda](./infra/lambda/api) functions as serverless REST API's.
 - AWS [Lambda](./infra/lambda/util) functions for serverless automated incident response. 
 - Seperated [stacks](./infra/lib) using [AWS CDK](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-construct-library.html) and [cloudformation](https://aws.amazon.com/cloudformation/).
-- Custom [config](./infra/bin/infra.ts#L17) for [deploying](./infra/bin/) multiple stack names in the same account.
+- Custom [config](./infra/bin/infra.ts#L17) for deploying [multiple](./infra/bin/) stack names in the same account.
 
