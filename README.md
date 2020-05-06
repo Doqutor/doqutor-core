@@ -88,5 +88,6 @@ Simulate this incident with the given [demo]().
 
 ### Features
 - AWS [Lambda](./infra/lambda/api) functions as REST API's.
+- AWS [Lambda](./infra/lambda/util) functions for serverless automated incident response. 
 - Seperated [stacks](./infra/lib) using [AWS CDK](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-construct-library.html) and [cloudformation](https://aws.amazon.com/cloudformation/).
 
