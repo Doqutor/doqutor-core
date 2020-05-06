@@ -19,8 +19,6 @@ The project aims to highlight common use cases in a web application based on AWS
 ### Architecture
 ![Architecture Diagram](https://github.com/Doqutor/doqutor-core/blob/master/images/arch.jpg?raw=true "Arch Diag")
 
-### Features
-- AWS [Lambda](https://github.com/Doqutor/doqutor-core/tree/master/infra/lambda/api) functions as REST API's
 
 ### Incident Response
 #### 1. Attempted Vandalism
@@ -87,3 +85,7 @@ A Web Application Firewall (WAF) can be used to detect and prevent most of these
 Once the WAF detects more than our threshold of requests in a certain timeframe, it immediately starts to block access to the web application. In addition to this, a sample of the requests coming through the WAF is taken for further analysis for the developers to gain some insight from possible attacks. If the number of blocked requests from a source reaches a further 128 requests from the baseline of blocked requests, we will then notify the administrator about the problem.
 
 Simulate this incident with the given [demo]().
+
+### Features
+- AWS [Lambda](https://github.com/Doqutor/doqutor-core/tree/master/infra/lambda/api) functions as REST API's
+
