@@ -1,5 +1,5 @@
 
-# [Doqutore](https://doqutor.github.io/doqutor-core/)
+# [Doqutore-core](https://doqutor.github.io/doqutor-core/)
 ### Identification and simulation of automated security incident response using AWS serverless stack. 
 
 - [Objective](#objective)
