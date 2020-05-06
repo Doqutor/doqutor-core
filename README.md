@@ -4,7 +4,6 @@
 
 - [Objective](#objective)
 - [Architecture](#architecture)
-- [Features](#features)
 - [Incident Response](#incident-response)
     1. [Attempted Vandalism](#1-attempted-vandalism)
     2. [Compromised AWS Account](#2-compromised-aws-account)
@@ -12,7 +11,7 @@
     4. [Non-Patient Reading Patient Data](#4-non-patient-reading-patient-data)
     5. [Compromised CRM Account/Brute-force Attack](#5-compromised-crm-accountbrute-force-attack)
     6. [API Attack](#6-api-attack)
-
+- [Features](#features)
 
 ### Objective
 The project aims to highlight common use cases in a web application based on AWS serverless infrastructure. We have used AWS CDK to deploy the complete [core project](https://github.com/Doqutor/doqutor-core/tree/master/infra). Use the [readme](https://github.com/Doqutor/doqutor-core/blob/master/infra/README.md) to set up and deploy the AWS infrastructure.
