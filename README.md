@@ -53,7 +53,7 @@ Thus, we came up with detecting access to honey tokens as an indicator of compro
 When this indicator is triggered, our response is to sign out and disable the website user, and then invalidate their current authorisation token. We also notify the administrators.
 
 
-Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#2-honeyrecord-accessed-by-website-user).
+Simulate this incident with the given [demo](./incident-response#2-honeyrecord-accessed-by-website-user).
 
 
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/honeytoken.png?raw=true)
@@ -66,7 +66,7 @@ In order to track the changes committed on the table, AWS provides us with Dynam
 
 We have enabled a stream on our patients table which triggers a lambda function “cloudtrail_ddb_access” whenever there is a change in the table. The stream emits an event which is used by the lambda to check if the event is “Modify”. It compares the old value of the insurance id with the new one. If there are any changes, the lambda stores the old values of all fields and deletes the current entry from the table. The lambda then generates a new entry with the restored values. Since this event is not a Modify event, the lambda will not be triggered and hence the changes made by the user will not be reflected in the table. Along with this we also send a notification using AWS Simple Notification Service to the subscribed channel indicating that there has been a change made in the table. The notification contains the primary key, which is called id, on which the changes has been made.
 
-Simulate this incident with the given [demo](https://github.com/Doqutor/doqutor-core/tree/master/incident-response#3-illegal-write-into-patient-table).
+Simulate this incident with the given [demo](./incident-response#3-illegal-write-into-patient-table).
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/dynamo.png?raw=true)
 #### 5. Compromised CRM Account/Brute-force Attack
 This is routinely featured on the OWASP top-10 list as Broken Authentication. By breaking authentication, an adversary can compromise user accounts, as well as user data if an administrator’s credentials are found.
