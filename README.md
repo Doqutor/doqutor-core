@@ -88,5 +88,5 @@ Simulate this incident with the given [demo]().
 
 ### Features
 - AWS [Lambda](./infra/lambda/api) functions as REST API's.
-- Seperated [stacks](./infra/lib).
+- Seperated [stacks](./infra/lib) using [AWS CDK](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-construct-library.html) and [cloudformation](https://aws.amazon.com/cloudformation/).
 
