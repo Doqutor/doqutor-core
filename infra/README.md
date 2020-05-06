@@ -6,7 +6,7 @@ We are using Typescript and Python throughout the code base.
 * Typescript: AWS infrastructure deployment
 * Python 3: AWS Lambda
 
-To follow the installations steps, you require
+Prerequisites
 
 * JavaScript, TypeScript ([Node.js ≥ 10.12.0](https://nodejs.org/download/release/latest-v10.x/))
 * Python ([Python ≥ 3.6](https://www.python.org/downloads/))
