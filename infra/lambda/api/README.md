@@ -5,7 +5,7 @@ The API architecture uses a REST approach, with the URI uniquely specifying reso
 ## API Routes
 
 ### Doctor
-- GET /doctors: list doctor information
+- GET /doctors: list all doctors
 - POST /doctors: Create new doctor
 - GET /doctors/{id}: Get information on doctor with given id
 - PUT /doctors/{id}: Update information on doctor with given id
@@ -13,8 +13,11 @@ The API architecture uses a REST approach, with the URI uniquely specifying reso
 
 
 ### Patient
-- GET /patients: list patient information
+- GET /patients: list all patients
 - POST /patients: Create new patient
 - GET /patients/{id}: Get information on patient with given id
 - PUT /patients/{id}: Update information on patient with given id
-- DELETE /patients/{id}: Delete patient with given id
+- DELETE /patients/{id}: Delete patient with given id\
+
+
+The block_user.py lambda in this folder should be in the util folder, but is here because of odd file permissions issues when deploying with cdk.
