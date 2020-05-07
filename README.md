@@ -30,7 +30,7 @@ To mitigate this potential attack vector, we have set up a watcher on the CloudT
 
 Reverts back the S3 bucket to the previous version.
 
-Simulate this incident with the given [demo](./incident-response#6-illicit-modifications-to-the-frontend-s3-bucket).
+Simulate this incident with the given [demo](./incident-response#1-illicit-modifications-to-the-frontend-s3-bucket).
 
 
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/s3_IR.png?raw=true)
@@ -44,7 +44,7 @@ When a trail is turned off by a user, we flag that user as malicious. It could h
 
 We respond the event by switching on the CloudTrail instance and blocking the user by attaching the policy of “deny-all”. We also emit important log information about events through simple notification service to the subscribed channels. For blocking the user, we use the lambda functions. Lambda function utilizes serverless code which can execute at an event and we do not need to run them an event detection process on a server. We use an instance of IAM from python AWS SDK, boto3 for attaching the policy to the user. We also send notifications to inform the subscribed channels about “StoppedLogging” and “StartLogging”. These notifications also contain the username of the arguable malicious AWS account user.
 
-Simulate this incident with the given [demo](./incident-response#1-cloudtrail-stopped-by-user). Make sure to [set up a dummy user](./incident-response#0-set-up-dummy-user).
+Simulate this incident with the given [demo](./incident-response#2-cloudtrail-stopped-by-user). Make sure to [set up a dummy user](./incident-response#0-set-up-dummy-user).
 
 ![CloudTrail IR](https://github.com/Doqutor/doqutor-core/blob/master/images/cloudtrail.png?raw=true)
 
@@ -57,7 +57,7 @@ Thus, we came up with detecting access to honey tokens as an indicator of compro
 When this indicator is triggered, our response is to sign out and disable the website user, and then invalidate their current authorisation token. We also notify the administrators.
 
 
-Simulate this incident with the given [demo](./incident-response#2-honeyrecord-accessed-by-website-user).
+Simulate this incident with the given [demo](./incident-response#3-honeyrecord-accessed-by-website-user).
 
 
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/honeytoken.png?raw=true)
@@ -70,7 +70,7 @@ In order to track the changes committed on the table, AWS provides us with Dynam
 
 We have enabled a stream on our patients table which triggers a lambda function “cloudtrail_ddb_access” whenever there is a change in the table. The stream emits an event which is used by the lambda to check if the event is “Modify”. It compares the old value of the insurance id with the new one. If there are any changes, the lambda stores the old values of all fields and deletes the current entry from the table. The lambda then generates a new entry with the restored values. Since this event is not a Modify event, the lambda will not be triggered and hence the changes made by the user will not be reflected in the table. Along with this we also send a notification using AWS Simple Notification Service to the subscribed channel indicating that there has been a change made in the table. The notification contains the primary key, which is called id, on which the changes has been made.
 
-Simulate this incident with the given [demo](./incident-response#3-illegal-write-into-patient-table).
+Simulate this incident with the given [demo](./incident-response#4-illegal-write-into-patient-table).
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/dynamo.png?raw=true)
 #### 5. Compromised CRM Account/Brute-force Attack
 This is routinely featured on the OWASP top-10 list as Broken Authentication. By breaking authentication, an adversary can compromise user accounts, as well as user data if an administrator’s credentials are found.
@@ -90,7 +90,7 @@ A Web Application Firewall (WAF) can be used to detect and prevent most of these
 
 Once the WAF detects more than our threshold of requests in a certain timeframe, it immediately starts to block access to the web application. In addition to this, a sample of the requests coming through the WAF is taken for further analysis for the developers to gain some insight from possible attacks. If the number of blocked requests from a source reaches a further 128 requests from the baseline of blocked requests, we will then notify the administrator about the problem.
 
-Simulate this incident with the given [demo](./incident-response#4-rate-limiting).
+Simulate this incident with the given [demo](./incident-response#6-rate-limiting).
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/waf.png?raw=true)
 
 ### Features
