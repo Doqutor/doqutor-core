@@ -86,6 +86,7 @@ ParamCFCertificateARN=<arn of certificate> \
 ParamZoneId=<route53 zone id for frontend> \
 --capabilities CAPABILITY_NAMED_IAM # required for the creation of the frontend deployment user
 ```
+<sub><sup>If you want to skip installing front end and their infrastructure, comment out the section below the comment "Front-end IR and Infrastructure" in [monitoring-stack.ts](./lib/monitoring-stack.ts)</sup></sub>
 
 3. Finally, we can deploy the monitoring stack. Again, we just use the cdk.
 ```bash
