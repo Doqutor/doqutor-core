@@ -147,6 +147,7 @@ export class MonitoringStack extends cdk.Stack {
 
 
 
+    // Front-end IR and Infrastructure
     /*
      * Events for detecting that s3 was tampered with
      */
