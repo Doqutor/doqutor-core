@@ -102,10 +102,11 @@ def addToDB(item: dict) -> (bool, str):
         print(err)
         return True, "Could not invalidate user's token\n"
 
+# Sign out and disable user from Cognito user pool
 # Returns error (True if error, False if success), message
 def disableUser(username: str) -> (bool, str):
-    # sign out and disable user
     try:
+        # these cognito functions raise exceptions on failure, hence try/except, raise Exception() structure
         response = cognito.admin_user_global_sign_out(UserPoolId = userpoolid, Username = username)
         # print(response)
         if response['ResponseMetadata']['HTTPStatusCode'] != 200:
