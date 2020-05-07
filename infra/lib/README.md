@@ -1,4 +1,4 @@
 - api-schema.ts: helper file to help make API schemas. Includes models for doctor and patient objects.
-- frontend-stack.json	: Cloudformation script for creating front-end stack
-- infra-stack.ts : Infrastructure for the incident response and REST API's. 
-- monitoring-stack.ts	: Stack to detect incidents and monitor infrastructure stack. 
+- frontend-stack.json : Cloudformation script for creating front-end stack
+- infra-stack.ts : Infrastructure for the incident response and REST API's.
+- monitoring-stack.ts : Stack to detect incidents and monitor infrastructure stack.

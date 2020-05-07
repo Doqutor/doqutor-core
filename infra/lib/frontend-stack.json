@@ -1,9 +1,9 @@
 {
-  "Parameters" : {
+  "Parameters": {
     "ParamDomainName": {
-      "Type" : "String",
-      "Default" : ".aws9447.me",
-      "Description" : "Root domain name for hosting application"
+      "Type": "String",
+      "Default": ".aws9447.me",
+      "Description": "Root domain name for hosting application"
     },
     "ParamCFCertificateARN": {
       "Type": "String",
@@ -16,32 +16,30 @@
   },
   "Resources": {
     "FrontendCFAccessIdentity": {
-      "Type" : "AWS::CloudFront::CloudFrontOriginAccessIdentity",
-      "Properties" : {
-          "CloudFrontOriginAccessIdentityConfig" : {
-            "Comment": "Read access for FrontendCF"
-          }
+      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+      "Properties": {
+        "CloudFrontOriginAccessIdentityConfig": {
+          "Comment": "Read access for FrontendCF"
         }
+      }
     },
     "FrontendCF": {
       "Type": "AWS::CloudFront::Distribution",
       "Properties": {
         "DistributionConfig": {
-          "Aliases": [
-            { "Ref": "ParamDomainName" }
-          ],
+          "Aliases": [{ "Ref": "ParamDomainName" }],
           "DefaultRootObject": "index.html",
           "Origins": [
             {
               "Id": "S3-frontend",
               "DomainName": {
                 "Fn::Join": [
-                  "", [
+                  "",
+                  [
                     { "Ref": "FrontendS3Bucket" },
                     ".s3.ap-southeast-2.amazonaws.com"
                   ]
                 ]
-                
               },
               "OriginPath": "",
               "S3OriginConfig": {
@@ -67,14 +65,8 @@
             },
             "ViewerProtocolPolicy": "redirect-to-https",
             "MinTTL": 0,
-            "AllowedMethods": [
-              "HEAD",
-              "GET"
-            ],
-            "CachedMethods": [
-              "HEAD",
-              "GET"
-            ],
+            "AllowedMethods": ["HEAD", "GET"],
+            "CachedMethods": ["HEAD", "GET"],
             "DefaultTTL": 0,
             "MaxTTL": 3600,
             "Compress": true
@@ -117,17 +109,14 @@
       }
     },
     "FrontendDNSRecord": {
-      "Type" : "AWS::Route53::RecordSet",
-      "Properties" : {
-        "Comment" : "doqutore-frontend cloudfront distrubution",
-        "Name" : { "Ref": "ParamDomainName" },
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "Comment": "doqutore-frontend cloudfront distrubution",
+        "Name": { "Ref": "ParamDomainName" },
         "Type": "A",
         "AliasTarget": {
           "DNSName": {
-            "Fn::GetAtt": [
-              "FrontendCF",
-              "DomainName"
-            ]
+            "Fn::GetAtt": ["FrontendCF", "DomainName"]
           },
           "HostedZoneId": "Z2FDTNDATAQYW2"
         },
@@ -137,12 +126,10 @@
       }
     },
     "FrontendBucketDeploymentPolicy": {
-      "Type" : "AWS::IAM::Policy",
-      "Properties" : {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
         "PolicyName": "FrontendBucketDeployment",
-        "Users": [
-          {"Ref": "FrontendDeploymentUser"}
-        ],
+        "Users": [{ "Ref": "FrontendDeploymentUser" }],
         "PolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -158,20 +145,13 @@
                 {
                   "Fn::Join": [
                     "",
-                    [
-                      "arn:aws:s3:::",
-                      { "Ref": "FrontendS3Bucket" }
-                    ]
+                    ["arn:aws:s3:::", { "Ref": "FrontendS3Bucket" }]
                   ]
                 },
                 {
                   "Fn::Join": [
                     "",
-                    [
-                      "arn:aws:s3:::",
-                      { "Ref": "FrontendS3Bucket" },
-                      "/*"
-                    ]
+                    ["arn:aws:s3:::", { "Ref": "FrontendS3Bucket" }, "/*"]
                   ]
                 }
               ]
@@ -179,20 +159,20 @@
           ]
         }
       }
-    },   
+    },
     "FrontendDeploymentUser": {
-      "Type" : "AWS::IAM::User",
-      "Properties" : {
-        "UserName" : "frontend-deployment"
+      "Type": "AWS::IAM::User",
+      "Properties": {
+        "UserName": "frontend-deployment"
       }
     },
     "FrontendDeploymentUserAccessKey": {
-      "Type" : "AWS::IAM::AccessKey",
-      "Properties" : {
-          "Serial" : 1,
-          "UserName" : {"Ref" : "FrontendDeploymentUser"}
-        }
-    },    
+      "Type": "AWS::IAM::AccessKey",
+      "Properties": {
+        "Serial": 1,
+        "UserName": { "Ref": "FrontendDeploymentUser" }
+      }
+    },
     "FrontendS3BucketPolicy": {
       "Type": "AWS::S3::BucketPolicy",
       "Properties": {
@@ -221,11 +201,7 @@
               "Resource": {
                 "Fn::Join": [
                   "",
-                  [
-                    "arn:aws:s3:::",
-                    { "Ref": "FrontendS3Bucket" },
-                    "/*"
-                  ]
+                  ["arn:aws:s3:::", { "Ref": "FrontendS3Bucket" }, "/*"]
                 ]
               }
             }
@@ -234,65 +210,49 @@
       }
     },
     "FrontendAPICertificate": {
-      "Type" : "AWS::CertificateManager::Certificate",
+      "Type": "AWS::CertificateManager::Certificate",
       "Properties": {
-        "DomainName" : {
-          "Fn::Join": [
-            ".",
-            [
-              "api",
-              { "Ref": "ParamDomainName" }
-            ]
-          ]
+        "DomainName": {
+          "Fn::Join": [".", ["api", { "Ref": "ParamDomainName" }]]
         },
         "ValidationMethod": "DNS"
       }
     },
     "FrontendAPIGatewayDomain": {
-      "Type" : "AWS::ApiGateway::DomainName",
-      "Properties" : {
-        "DomainName" : {
-          "Fn::Join": [
-            ".",
-            [
-              "api",
-              { "Ref": "ParamDomainName" }
-            ]
-          ]
+      "Type": "AWS::ApiGateway::DomainName",
+      "Properties": {
+        "DomainName": {
+          "Fn::Join": [".", ["api", { "Ref": "ParamDomainName" }]]
         },
-        "EndpointConfiguration" : {
+        "EndpointConfiguration": {
           "Types": ["REGIONAL"]
         },
-        "RegionalCertificateArn" : { "Ref": "FrontendAPICertificate" },
-        "SecurityPolicy" : "TLS_1_2"
+        "RegionalCertificateArn": { "Ref": "FrontendAPICertificate" },
+        "SecurityPolicy": "TLS_1_2"
       }
     },
     "FrontendAPIGatewayMapping": {
-      "Type" : "AWS::ApiGateway::BasePathMapping",
-      "Properties" : {
-        "DomainName" : { "Ref": "FrontendAPIGatewayDomain" },
-        "RestApiId" : { "Fn::ImportValue" : "doqutore-infrastructure-APIGateway" },
-        "Stage" : "prod"
+      "Type": "AWS::ApiGateway::BasePathMapping",
+      "Properties": {
+        "DomainName": { "Ref": "FrontendAPIGatewayDomain" },
+        "RestApiId": {
+          "Fn::ImportValue": "doqutore-infrastructure-APIGateway"
+        },
+        "Stage": "prod"
       }
     },
     "FrontendAPIGatewayDNSRecord": {
-      "Type" : "AWS::Route53::RecordSet",
-      "Properties" : {
-        "Comment" : "doqutore-frontend api",
-        "Name" : { "Ref": "FrontendAPIGatewayDomain" },
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "Comment": "doqutore-frontend api",
+        "Name": { "Ref": "FrontendAPIGatewayDomain" },
         "Type": "A",
         "AliasTarget": {
           "DNSName": {
-            "Fn::GetAtt": [
-              "FrontendAPIGatewayDomain",
-              "RegionalDomainName"
-            ]
+            "Fn::GetAtt": ["FrontendAPIGatewayDomain", "RegionalDomainName"]
           },
           "HostedZoneId": {
-            "Fn::GetAtt": [
-              "FrontendAPIGatewayDomain",
-              "RegionalHostedZoneId"
-            ]
+            "Fn::GetAtt": ["FrontendAPIGatewayDomain", "RegionalHostedZoneId"]
           }
         },
         "HostedZoneId": {
@@ -301,21 +261,23 @@
       }
     }
   },
-  "Outputs" : {
-    "BucketName" : {
-      "Description": "Bucket name for frontend assets",  
-      "Value" : { "Ref": "FrontendS3Bucket" },
+  "Outputs": {
+    "BucketName": {
+      "Description": "Bucket name for frontend assets",
+      "Value": { "Ref": "FrontendS3Bucket" },
       "Export": {
-      	"Name": "doqutore-frontend-S3Bucket"
+        "Name": "doqutore-frontend-S3Bucket"
       }
     },
-    "DeployAccessKeyId" : {
-      "Description": "public key for deployment user",  
-      "Value" : { "Ref": "FrontendDeploymentUserAccessKey" }
+    "DeployAccessKeyId": {
+      "Description": "public key for deployment user",
+      "Value": { "Ref": "FrontendDeploymentUserAccessKey" }
     },
-    "DeployAccessKeySecret" : {
-      "Description": "private key for deployment user",  
-      "Value" : { "Fn::GetAtt": ["FrontendDeploymentUserAccessKey", "SecretAccessKey"] }
+    "DeployAccessKeySecret": {
+      "Description": "private key for deployment user",
+      "Value": {
+        "Fn::GetAtt": ["FrontendDeploymentUserAccessKey", "SecretAccessKey"]
+      }
     }
   }
 }
