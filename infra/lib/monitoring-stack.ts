@@ -25,7 +25,6 @@ export class MonitoringStack extends cdk.Stack {
     /*
     * Test user
     */
-    // !! this is repeated in infra-stack
     const user = new iam.User(this, "testUser");
     user.addManagedPolicy(
       iam.ManagedPolicy.fromAwsManagedPolicyName("AdministratorAccess")
