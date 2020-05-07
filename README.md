@@ -78,6 +78,8 @@ When the user tries a password too many times, Cognito will start to rate limit 
 
 Simulate this incident with the given [demo]().
 
+![cognito](https://github.com/Doqutor/doqutor-core/blob/master/images/brute-force-login.png?raw=true)
+
 #### 6. API Attack
 Rate limiting is important to web applications as it prevents resources from being exhausted, as well as detecting and preventing data exfiltration. In the cloud where resources are easily auto scaled, another risk known as economic denial of sustainability can surface where a malicious attacker attempts to inflate the bill of a cloud customer by triggering the autoscaling capabilities within the customer’s apps. Other risks involve cross-site scripting and injection attacks, which could compromise the security and data of an application.
 
