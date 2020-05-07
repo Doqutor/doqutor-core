@@ -37,6 +37,7 @@ def getLambdaArn(stackResources: dict, stackname: str, lambdanamestart: str) -> 
 # I can't find any way to get the name of the log group other than already the start of it
 def getLogGroupName(stackResources: dict, lambdanamestart: str) -> str:
     compareFn = lambda item: item['LogicalResourceId'].startswith(lambdanamestart) and item['ResourceType'] == 'AWS::Lambda::Function'
+    # def compareFn(item): return item['LogicalResourceId'].startswith(lambdanamestart) and item['ResourceType'] == 'AWS::Lambda::Function'
     lambdaname = searchStackResources(stackResources, stackname, compareFn)
     #print(stackResources)
     loggroupname = "/aws/lambda/" + lambdaname
@@ -65,11 +66,14 @@ if __name__ == "__main__":
 
 
 # Bash:
-# TABLENAME=$(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep patients.*AWS::DynamoDB::Table | cut -f4)
-# DESTARN=$(aws lambda get-function --function-name $(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep blockuser.*AWS::Lambda::Function | cut -f4) |  grep -o 'arn:aws:lambda[a-zA-Z0-9:-]*')
-# SRC1=$(echo /aws/lambda/$(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep patientsget.*AWS::Lambda::Function | cut -f4))
-# SRC2=$(echo /aws/lambda/$(aws cloudformation list-stack-resources --stack-name $STACKNAME | grep patientsdelete.*AWS::Lambda::Function | cut -f4))
-# python honeyrecordgen.py $NUM $TABLENAME $DESTARN $SRC1 $SRC2
+"""
+RESOURCES=$(aws cloudformation list-stack-resources --output text --stack-name $STACKNAME)
+TABLENAME=$( echo "$RESOURCES" | grep patients.*AWS::DynamoDB::Table | cut -f4)
+DESTARN=$(aws lambda get-function --output text --function-name $( echo "$RESOURCES" | grep blockuser.*AWS::Lambda::Function | cut -f4) |  grep -o 'arn:aws:lambda[a-zA-Z0-9:-]*')
+SRC1=$(echo /aws/lambda/$( echo "$RESOURCES" | grep patientsget.*AWS::Lambda::Function | cut -f4))
+SRC2=$(echo /aws/lambda/$( echo "$RESOURCES" | grep patientsdelete.*AWS::Lambda::Function | cut -f4))
+python honeyrecordgen.py $NUM $TABLENAME $DESTARN $SRC1 $SRC2
+"""
 
 # Powershell:
 """

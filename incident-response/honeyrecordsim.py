@@ -9,6 +9,7 @@ def simulate(endpoint: str, token: str):
     print(response, response.content)
     print()
     if 'data' in responsejson:
+        print("Hit enter to send a get request on a patient")
         patientslist = responsejson['data']
         #print(patientslist)
         for patient in patientslist:
