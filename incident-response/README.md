@@ -95,3 +95,9 @@ detection.
 ```sh
 $ python demo-password.py
 ```
+
+#### 6. Illicit modifications to the frontend S3 bucket
+When an illicit change (i.e. a change that was not deployed by the CI/CD pipeline) is detected, a full rerun of the pipeline will be commissioned.
+
+To trigger this action: try adding, deleting or modifying any file in the frontend S3 bucket. On prod this would be: `s3://doqutore-frontend-frontends3bucket-w62sbkd4m40y`
+
