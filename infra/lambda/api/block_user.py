@@ -85,6 +85,7 @@ def interpretEvent(event: dict) -> dict:
     #log_event(payload)
     return json.loads(payload['logEvents'][0]['extractedFields']['event'])
 
+# returns username, token, expiry from jwt claims
 def extractAuth(fields: dict) -> (str, str, str):
     claims = fields['requestContext']['authorizer']['claims']
     expiry = claims['exp']
@@ -94,6 +95,8 @@ def extractAuth(fields: dict) -> (str, str, str):
     # check split failure
     return username, token, expiry
 
+# Add item to database
+# Returns error (true if error, false if success), message
 def addToDB(item: dict) -> (bool, str):
     try:
         response = table.put_item(Item=item) # raises exception on failure
@@ -104,6 +107,7 @@ def addToDB(item: dict) -> (bool, str):
         print(err)
         return True, "Could not invalidate user's token\n"
 
+# Returns error (True if error, False if success), message
 def disableUser(username: str) -> (bool, str):
     # sign out and disable user
     # force password change with mfa or something?
