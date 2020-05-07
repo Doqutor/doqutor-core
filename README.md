@@ -76,7 +76,7 @@ Our solution uses a Cognito user pool to handle all aspects of user management, 
 
 When the user tries a password too many times, Cognito will start to rate limit their attempts and will also gradually increase the time which they can retry the password. Additionally if a user logs in from a new location, Cognito will also trigger a Multi Factor Authentication event, which will require the user to enter in a code from a text message. On top of this, we have configured a lambda function to send an email to the user on any suspicious login attempts.
 
-Simulate this incident with the given [demo]().
+Simulate this incident with the given [demo](./incident-response#).
 
 ![cognito](https://github.com/Doqutor/doqutor-core/blob/master/images/brute-force-login.png?raw=true)
 
@@ -87,7 +87,7 @@ A Web Application Firewall (WAF) can be used to detect and prevent most of these
 
 Once the WAF detects more than our threshold of requests in a certain timeframe, it immediately starts to block access to the web application. In addition to this, a sample of the requests coming through the WAF is taken for further analysis for the developers to gain some insight from possible attacks. If the number of blocked requests from a source reaches a further 128 requests from the baseline of blocked requests, we will then notify the administrator about the problem.
 
-Simulate this incident with the given [demo]().
+Simulate this incident with the given [demo](./incident-response#).
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/waf.png?raw=true)
 
 ### Features
