@@ -61,7 +61,7 @@ Simulate this incident with the given [demo](./incident-response#2-honeyrecord-a
 
 
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/honeytoken.png?raw=true)
-#### 4. Non-Patient Writing Patient Data
+#### 4. Non-Patient Reading/Writing Patient Data
 In any application, one of the most important tasks is to maintain the security of the database. In this Medical CRM, we have created two tables – Doctors and Patients. In any medical facility, the administrators can be given the access of the Doctors information but is it secure to give them access of the Patient’s data like their prescriptions, medical history or in our case their insurance id.
 
 To avoid such a situation, we have created a customer managed IAM policy known as “BlockPatientTable” which is applied to a group called “adminusers” who have “AdministratorAccess” policy attached to it. The policy is an entity which when applied to a resource or identity defines their permission. This policy is used to deny the complete access of the patient table by any member of the mentioned group. Our main objective here is to be ready for a situation where a user despite having the BlockPatientTable permission tries to access the table from outside the application.
