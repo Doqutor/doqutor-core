@@ -5,7 +5,7 @@ We are using Typescript and Python throughout the code base.
 - Typescript: AWS infrastructure deployment
 - Python 3: AWS Lambda
 
-Prerequisites
+## Prerequisites
 
 - JavaScript, TypeScript ([Node.js ≥ 10.12.0](https://nodejs.org/download/release/latest-v10.x/))
 - Python ([Python ≥ 3.6](https://www.python.org/downloads/))
@@ -13,56 +13,82 @@ Prerequisites
 
 ---
 
+## Steps
+
 To get started with deploying the complete stack follow the steps below.
 The stacks is divided into two parts:
 
 - <b>Infrastructure Stack</b>: contains all infrastructure for CRM.
 - <b>Monitoring Stack</b>: contains active monitoring for different components.
 
-Steps:
 
-0. You have to be in the root of the project to follow the below steps. i.e. venv should be in the root of the folder.
-1. Make a new virtual environment for python.
+
+1. You have to be in the root of the project to follow the below steps. i.e. venv should be in the root of the folder.
+2. Make a new virtual environment for python.
 
 ```bash
 $ python -m venv ./venv
 ```
 
-2. Activate virtual environment. <br/>
+3. Activate virtual environment. <br/>
    Windows | Linux/Mac
 
 ```bash
 $ venv\Scripts\activate.bat | $ source ./venv/bin/activate
 ```
 
-3. Change directory to infra and install requirements.
+4. Change directory to infra and install requirements.
 
 ```bash
 $ pip install -r requirements.txt
 ```
 
-4. Install Node modules.
+5. Install Node modules.
 
 ```bash
 $ npm install
 ```
 
-5. Transpile TypeScript to js.
+6. Transpile TypeScript to JavaScript.
 
 ```bash
 $ npm run build
 ```
 
-6. Now deploy the AWS stack. We customize the stack name with your OS username. We have two stacks, you can deploy them separately or else use regex style \*. But "infrastructure stack" must be created first as "monitoring stack" requires some inputs from "infrastructure stack".
+## Deployment 
 
-```bash
-$ cdk deploy "your-stack-name"
+Deployment of the stack involves deploying three seperate stacks, as the later stacks depend on some of the resources in the earlier stacks.
+
+Before deploying the stack, a config file is needed in order to set up the environment. Copy the example below into `config.json`, making sure the `email` and `githubKey` are set up properly.
+
+```json
+{
+   "env": "dev",
+   "prefix": "doqutor",
+   "email": "admin@doqutor.com",
+   "githubKey": "<github personal acces token>"
+}
 ```
 
-To destroy the stack
+1. The infrastructure stack has to be deployed first.
+```sh
+# in this case, the stack name is doqutor infrastructure as the prefix above is doqutor
+cdk deploy "doqutor-infrastructure"
+```
 
+2. The frontend stack comes after the intrastructure stack. The frontend depends on the API gateway in order to point it to the correct custom domain. The frontend is written in Cloudformation and therefore must be deployed with the AWS SDK. Before running these steps, make sure youe AWS access keys and secrets are set up properly. The frontend also depends on some parameters such as the route53 hosted zone id and the certificate id which must be set up manually. 
+```sh
+# make sure your --parameter-overrides are set up correctly
+aws cloudformation deploy --template-file lib/frontend-stack.json --stack-name doqutor-frontend \
+--parameter-overrides \
+ParamDomainName=prod.doqutor.me \
+ParamCFCertificateARN=<arn of certificate> \
+ParamZoneId=<route53 zone id for frontend>
+```
+
+3. Finally, we can deploy the monitoring stack. Again, we just use the cdk.
 ```bash
-$ cdk destroy "your-stack-name"
+cdk deploy "doqutor-infrastructure"
 ```
 
 Note: Complete implementation of one of our IRs requires running a python script after deploying. See "Generate honeyrecords" in the [incident-response readme](../incident-response/README.md#2-honeyrecord-accessed-by-website-user).

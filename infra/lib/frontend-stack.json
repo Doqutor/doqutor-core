@@ -111,14 +111,16 @@
     "FrontendDNSRecord": {
       "Type": "AWS::Route53::RecordSet",
       "Properties": {
-        "Comment": "doqutore-frontend cloudfront distrubution",
+        "Comment": "doqutor-frontend cloudfront distrubution",
         "Name": { "Ref": "ParamDomainName" },
         "Type": "A",
         "AliasTarget": {
           "DNSName": {
             "Fn::GetAtt": ["FrontendCF", "DomainName"]
           },
-          "HostedZoneId": "Z2FDTNDATAQYW2"
+          "HostedZoneId": {
+            "Ref": "ParamZoneId"
+          }
         },
         "HostedZoneId": {
           "Ref": "ParamZoneId"
@@ -236,7 +238,7 @@
       "Properties": {
         "DomainName": { "Ref": "FrontendAPIGatewayDomain" },
         "RestApiId": {
-          "Fn::ImportValue": "doqutore-infrastructure-APIGateway"
+          "Fn::ImportValue": "doqutor-infrastructure-APIGateway"
         },
         "Stage": "prod"
       }
@@ -244,7 +246,7 @@
     "FrontendAPIGatewayDNSRecord": {
       "Type": "AWS::Route53::RecordSet",
       "Properties": {
-        "Comment": "doqutore-frontend api",
+        "Comment": "doqutor-frontend api",
         "Name": { "Ref": "FrontendAPIGatewayDomain" },
         "Type": "A",
         "AliasTarget": {
@@ -266,7 +268,7 @@
       "Description": "Bucket name for frontend assets",
       "Value": { "Ref": "FrontendS3Bucket" },
       "Export": {
-        "Name": "doqutore-frontend-S3Bucket"
+        "Name": "doqutor-frontend-S3Bucket"
       }
     },
     "DeployAccessKeyId": {
