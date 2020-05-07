@@ -20,7 +20,6 @@ def get_table(table_name):
     return dynamodb.Table(table_name)
 
 def get_body(event):
-    #return event['body']
     return json.loads(event['body'])
 
 def send_response(statusCode=200, data={}, headers=None):
