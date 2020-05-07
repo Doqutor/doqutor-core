@@ -30,6 +30,9 @@ To mitigate this potential attack vector, we have set up a watcher on the CloudT
 
 Reverts back the S3 bucket to the previous version.
 
+Simulate this incident with the given [demo](./incident-response#6-illicit-modifications-to-the-frontend-s3-bucket).
+
+
 ![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/s3_IR.png?raw=true)
 
 #### 2. Compromised AWS Account
