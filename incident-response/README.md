@@ -91,3 +91,7 @@ $ ./create-cognito-user.sh
 
 This selenium script goes to the login page and tries to log in with the specified username and a random password for 15 times. This will allow it to trigger Cognito's suspicious login
 detection.
+
+```sh
+$ python demo-password.py
+```
