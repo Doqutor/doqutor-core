@@ -25,6 +25,9 @@ export class InfraStack extends cdk.Stack {
   ) {
     super(scope, id, props);
 
+    /*
+    * Patient and doctor Dynamo tables
+    */
     const dynamoDoctorsTable = new dynamodb.Table(this, "doctors", {
       partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
@@ -53,51 +56,9 @@ export class InfraStack extends cdk.Stack {
     });
 
     /*
-     * Setup rollback operations for patients table
-     */
-    /* Deny administrator access to sensitive medical info */
-    const lambdaDdbAccess = createPythonLambda(
-      this,
-      "util",
-      "cloudtrail_ddb_access"
-    );
-    const snsTopicDdb = new sns.Topic(this, "DynamoDBAlert", {
-      displayName: "DynamoDB illegal access alert",
-    });
-    snsTopicDdb.addSubscription(new subs.EmailSubscription(config.email));
-    snsTopicDdb.grantPublish(lambdaDdbAccess);
-    lambdaDdbAccess.addEnvironment("SNS_ARN", snsTopicDdb.topicArn);
-    lambdaDdbAccess.addEnvironment("TABLE_NAME", dynamoPatientsTable.tableName);
-    lambdaDdbAccess.addEventSource(
-      new DynamoEventSource(dynamoPatientsTable, {
-        startingPosition: lambda.StartingPosition.TRIM_HORIZON,
-        batchSize: 1,
-        bisectBatchOnError: true,
-        retryAttempts: 10,
-      })
-    );
-
-    lambdaDdbAccess.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: [
-          "dynamodb:DeleteItem",
-          "dynamodb:PutItem",
-          "dynamodb:DescribeStream",
-          "dynamodb:GetRecords",
-          "dynamodb:GetShardIterator",
-          "dynamodb:ListStreams",
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-        ],
-        effect: iam.Effect.ALLOW,
-        resources: ["*"],
-      })
-    );
-
-    /*
      * Cognito and user authentication
      */
+    // Create post-authentication trigger to update doctors and patients table when new Cognito users are registered
     const lambdaCognitoHandler = createPythonLambda(
       this,
       "util",
@@ -113,7 +74,8 @@ export class InfraStack extends cdk.Stack {
       "PATIENT_TABLE",
       dynamoPatientsTable.tableName
     );
-
+    
+    // Create userpool for website users
     const authPool = new cognito.UserPool(this, "crm-users", {
       customAttributes: {
         type: new cognito.StringAttribute(),
@@ -141,11 +103,13 @@ export class InfraStack extends cdk.Stack {
     //   sourceArn: "arn:aws:ses:us-west-2:018904123317:identity/z5122502.cs9447@cse.unsw.edu.au"
     // };
 
+    // Create domain for hosted ui sign in
     new cognito.CfnUserPoolDomain(this, "crm-users-login", {
       domain: `login-${this.stackName}-${config.env}`,
       userPoolId: authPool.userPoolId,
     });
 
+    // Create app client for user pool
     const authClient = new cognito.UserPoolClient(this, "app_client", {
       userPool: authPool,
       enabledAuthFlows: [cognito.AuthFlow.USER_PASSWORD],
@@ -168,7 +132,7 @@ export class InfraStack extends cdk.Stack {
     );
     const cfnAuthClient = authClient.node
       .defaultChild as cognito.CfnUserPoolClient;
-    cfnAuthClient.addDependsOn(cfnResourceServer); // maybe its this
+    cfnAuthClient.addDependsOn(cfnResourceServer);
     cfnAuthClient.readAttributes = [
       "email",
       "email_verified",
@@ -190,12 +154,14 @@ export class InfraStack extends cdk.Stack {
       `https://${config.env}.aws9447.me/login`,
     ];
 
+    // Create IAM policy to allow API lambdas to work with user pool, to verify user type
     const lambdaCognitoPolicy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       sid: "cognitoadminlambda",
     });
     lambdaCognitoPolicy.addResources(authPool.userPoolArn);
     lambdaCognitoPolicy.addActions("cognito-idp:*");
+
 
     /*
      * Lambdas for doctor CRUD
@@ -227,8 +193,14 @@ export class InfraStack extends cdk.Stack {
       "TABLE_NAME",
       dynamoDoctorsTable.tableName
     );
-    lambdaDoctorGet.addEnvironment("TABLE_NAME", dynamoDoctorsTable.tableName);
-    lambdaDoctorList.addEnvironment("TABLE_NAME", dynamoDoctorsTable.tableName);
+    lambdaDoctorGet.addEnvironment(
+      "TABLE_NAME", 
+      dynamoDoctorsTable.tableName
+    );
+    lambdaDoctorList.addEnvironment(
+      "TABLE_NAME", 
+      dynamoDoctorsTable.tableName
+    );
     lambdaDoctorDelete.addEnvironment(
       "TABLE_NAME",
       dynamoDoctorsTable.tableName
@@ -301,9 +273,11 @@ export class InfraStack extends cdk.Stack {
     dynamoPatientsTable.grantReadWriteData(lambdaPatientDelete);
     dynamoPatientsTable.grantReadWriteData(lambdaPatientUpdate);
 
+
     /*
      * API Gateway
      */
+    // Create API
     const api = new apigateway.RestApi(this, "application", {
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
@@ -322,7 +296,7 @@ export class InfraStack extends cdk.Stack {
       exportName: this.stackName + "-APIGateway",
     });
 
-    const apiSchemas = getModels(this, api);
+    // Add authorizer, linked to Cognito userpool
     const apiAuth = new apigateway.CfnAuthorizer(this, "cognito-auth", {
       name: "cognito-auth",
       identitySource: "method.request.header.Authorization",
@@ -330,10 +304,10 @@ export class InfraStack extends cdk.Stack {
       type: apigateway.AuthorizationType.COGNITO,
       providerArns: [authPool.userPoolArn],
     });
+    // Create authorization options variables for use in adding API methods
     const requestValidator = api.addRequestValidator("DefaultValidator", {
       validateRequestBody: true,
     });
-
     const authOptions: apigateway.MethodOptions = {
       authorizer: {
         authorizationType: apigateway.AuthorizationType.COGNITO,
@@ -342,6 +316,10 @@ export class InfraStack extends cdk.Stack {
       requestValidator: requestValidator,
       authorizationScopes: ["doqutore/application"],
     };
+
+    // Get models for doctors and patients, for request body verification
+    const apiSchemas = getModels(this, api);
+    // Specify API structure - resources, methods and lambdas to execute
     const resourceUser = api.root.addResource("user");
     resourceUser.addMethod(
       "GET",
@@ -420,12 +398,66 @@ export class InfraStack extends cdk.Stack {
       authOptions
     );
 
+
+    /*-----------------------------------------------------------------------------*/
+    /*
+    * Infrastructure for IR cases
+    */
+
+    /*
+     * Illegal write rollback IR
+     * Setup rollback operations for patients table
+     */
+    /* Deny administrator access to sensitive medical info */
+    // Build lambda and sns topic
+    const lambdaDdbAccess = createPythonLambda(
+      this,
+      "util",
+      "cloudtrail_ddb_access"
+    );
+    const snsTopicDdb = new sns.Topic(this, "DynamoDBAlert", {
+      displayName: "DynamoDB illegal access alert",
+    });
+    snsTopicDdb.addSubscription(new subs.EmailSubscription(config.email));
+    snsTopicDdb.grantPublish(lambdaDdbAccess);
+    lambdaDdbAccess.addEnvironment("SNS_ARN", snsTopicDdb.topicArn);
+    lambdaDdbAccess.addEnvironment("TABLE_NAME", dynamoPatientsTable.tableName);
+    // Add mapping to invoke lamdba from Dynamodb stream
+    lambdaDdbAccess.addEventSource(
+      new DynamoEventSource(dynamoPatientsTable, {
+        startingPosition: lambda.StartingPosition.TRIM_HORIZON,
+        batchSize: 1,
+        bisectBatchOnError: true,
+        retryAttempts: 10,
+      })
+    );
+
+    // Give power to work with patients table and to write logs
+    lambdaDdbAccess.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "dynamodb:DeleteItem",
+          "dynamodb:PutItem",
+          "dynamodb:DescribeStream",
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
+          "dynamodb:ListStreams",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+        ],
+        effect: iam.Effect.ALLOW,
+        resources: ["*"],
+      })
+    );
+
+
     /*
      * Honeytoken IR
      * in infra-stack for the moment because it needs access to the lambdas
-     * Could export all 10 of the lambdas
+     * Could export all 10 of the lambdas to move it to monitoring-stack
      */
-    // sns topic
+    // sns topic for sending notifications
     const snsTopicHT = new sns.Topic(this, "HoneytokenSNS", {
       displayName: "Honeytoken SNS",
     });
@@ -434,8 +466,8 @@ export class InfraStack extends cdk.Stack {
     );
 
     // block user lambda
-    // const lambdaBlockUser = createPythonLambda(this, 'util', 'block_user');
     const lambdaBlockUser = createPythonLambda(this, "api", "block_user");
+    // Give power to add deny all policy to AWS user
     const denyAllPolicy = new iam.PolicyStatement({
       actions: ["iam:AttachUserPolicy"],
       effect: iam.Effect.ALLOW,
@@ -444,6 +476,7 @@ export class InfraStack extends cdk.Stack {
         ArnEquals: { "iam:PolicyARN": "arn:aws:iam::aws:policy/AWSDenyAll" },
       },
     });
+    // Give power to disable and globally sign out Cognito users
     const cognitoPolicy = new iam.PolicyStatement({
       actions: [
         "cognito-idp:AdminDisableUser",
@@ -452,6 +485,8 @@ export class InfraStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       resources: [authPool.userPoolArn],
     });
+    // Give power to publish to sns topic
+    // snsTopicHT.grantPublish(lambdaBlockUser);
     const snsPolicy = new iam.PolicyStatement({
       actions: ["SNS:Publish"],
       effect: iam.Effect.ALLOW,
@@ -462,6 +497,7 @@ export class InfraStack extends cdk.Stack {
     lambdaBlockUser.addToRolePolicy(snsPolicy);
     lambdaBlockUser.addEnvironment("SNS_TOPIC_ARN", snsTopicHT.topicArn);
     lambdaBlockUser.addEnvironment("USERPOOL_ID", authPool.userPoolId);
+    // Add permission so that subscription filter can invoke this lambda
     lambdaBlockUser.addPermission("cloudwatchinvokeblockuser", {
       principal: new iam.ServicePrincipal(ServicePrincipals.LOGS),
     });
@@ -473,6 +509,8 @@ export class InfraStack extends cdk.Stack {
       timeToLiveAttribute: "expiry",
     });
     revokedTokensTable.grantWriteData(lambdaBlockUser);
+    lambdaBlockUser.addEnvironment("TABLE_NAME", revokedTokensTable.tableName);
+    // add to lambdas so they can check the table before processing request
     revokedTokensTable.grantReadData(lambdaDoctorGet);
     revokedTokensTable.grantReadData(lambdaDoctorCreate);
     revokedTokensTable.grantReadData(lambdaDoctorDelete);
@@ -483,7 +521,6 @@ export class InfraStack extends cdk.Stack {
     revokedTokensTable.grantReadData(lambdaPatientDelete);
     revokedTokensTable.grantReadData(lambdaPatientList);
     revokedTokensTable.grantReadData(lambdaPatientUpdate);
-    lambdaBlockUser.addEnvironment("TABLE_NAME", revokedTokensTable.tableName);
     lambdaDoctorGet.addEnvironment(
       "TOKENS_TABLE_NAME",
       revokedTokensTable.tableName
@@ -524,6 +561,7 @@ export class InfraStack extends cdk.Stack {
       "TOKENS_TABLE_NAME",
       revokedTokensTable.tableName
     );
+
 
     /*
      * General purpose
