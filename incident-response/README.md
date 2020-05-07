@@ -74,3 +74,20 @@ Wizard and demo of the incident can be executed using below command.
 ```bash
 $ python ddb_access_ir.py
 ```
+
+#### 4. Rate limiting
+This cURL script just hits the endpoint around 1000 times which should be enough to trigger the WAF. It runs requests sequentially
+```sh
+$ ./demo-waf.sh
+```
+
+#### 5. Brute-Forcing Cognito
+First, we have a script to create a cognito user in `create-cognito-user.sh`. This creates a user which we can use to log in to the cognito pool. The password will be sent to the phone
+number within the script. Modify the variables at the beginning of the script to set attributes.
+
+```sh
+$ ./create-cognito-user.sh
+```
+
+This selenium script goes to the login page and tries to log in with the specified username and a random password for 15 times. This will allow it to trigger Cognito's suspicious login
+detection.

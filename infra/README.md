@@ -16,12 +16,10 @@ We are using Typescript and Python throughout the code base.
 ## Steps
 
 To get started with deploying the complete stack follow the steps below.
-The stacks is divided into two parts:
-
-- <b>Infrastructure Stack</b>: contains all infrastructure for CRM.
-- <b>Monitoring Stack</b>: contains active monitoring for different components.
-
-
+The stacks is divided into threee parts:
+* <b>Infrastructure Stack</b>: contains all infrastructure for CRM. 
+* <b>Frontend Stack</b>: contains the configurations for cloudfront, API Gateway domains and S3 buckets
+* <b>Monitoring Stack</b>: contains active monitoring for different components.
 
 1. You have to be in the root of the project to follow the below steps. i.e. venv should be in the root of the folder.
 2. Make a new virtual environment for python.
