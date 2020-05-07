@@ -9,14 +9,10 @@ iam = boto3.client('iam')
 cognito = boto3.client('cognito-idp')
 sns = boto3.client('sns')
 
-#logger = logging.getLogger()
-#logger.setLevel(logging.INFO)
-
 # this is in api folder because I get permission issues with lambdas in util folder
 # ideally it would be in util folder
 
-# [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb* || event=*5555*]
-
+# Logs event and errors
 
 table_name = os.environ.get('TABLE_NAME')
 table = get_table(table_name)
@@ -67,11 +63,14 @@ def main(event, context):
         # not possible with current setup afaik
     
 
+# sns.publish() wrapper
 def publish(subject: str, message: str):
     sns.publish(TopicArn = snsarn, Subject=subject, Message=message)
 
 # Subscription filter destination receives event compressed and encoded
 # This decompresses, decomposes and loads relevant part into JSON
+# subscription filter format, which informs extractedFields in this function:
+# [type=INFO, timestamp=*Z, requestid=*-*, event=*fc409bbc-ed87-4394-b94e-eb6954311bbb* || event=*a3a...*]
 def interpretEvent(event: dict) -> dict:
     encodeddata = event['awslogs']['data']
     decodeddata = base64.b64decode(encodeddata)
@@ -108,11 +107,11 @@ def disableUser(username: str) -> (bool, str):
     # sign out and disable user
     try:
         response = cognito.admin_user_global_sign_out(UserPoolId = userpoolid, Username = username)
-        print(response)
+        # print(response)
         if response['ResponseMetadata']['HTTPStatusCode'] != 200:
             raise Exception()
         response = cognito.admin_disable_user(UserPoolId = userpoolid, Username = username)
-        print(response)
+        # print(response)
         if response['ResponseMetadata']['HTTPStatusCode'] != 200:
             raise Exception()
         return False, "User signed out and disabled\n"
