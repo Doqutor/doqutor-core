@@ -31,7 +31,7 @@ $ python cloudtrail_ir.py
 
 
 #### 2. Honeyrecord accessed by website user:
-If a cognito user accesses a honeyrecord through the API, the user will be signed out and disabled, and the abused token will be invalidated by adding it to a revoked tokens database.
+If a cognito user accesses a honeyrecord through the API, the user will be signed out and disabled, and the abused token will be invalidated by adding it to a revoked tokens database. Note that the user used in this step will be disabled.
 
 Note that the honeyrecord generation script runhoneygen.py serves as part of the deployment stack, intended to be run after cdk deploy. The relevant lambdas (patients_get and patients_delete) will also need to be run once before the script is executed, to create the log groups that will be monitored. The lambdas could be run through the website/API or the API Gateway test console.
 
