@@ -56,7 +56,7 @@ Run gettoken.py and follow the instructions:
     2. Login using cognito user and extract access_token from login result, eg by  
     a) Logging in through hosted ui (with query parameters '&response_type=token&scope=doqutore/application&redirect_uri=http://localhost' following client_id) and extracting access_token from redirect url  
     b) Logging in through website and getting config:token from localstorage  
-    c) Perhaps using cognito initiate-auth using aws cli (?)
+    c) Use cognito initiate-auth using aws cli
  
  3. <b>Simulate</b>  
 Run honeyrecordsim.py.
