@@ -158,6 +158,8 @@ export class MonitoringStack extends cdk.Stack {
     ddbExcessReadAlarmDoc.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
     ddbExcessReadAlarmPat.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
    
+      
+    //Front-end IR and Infrastructure
 
     /*
     * WAF
