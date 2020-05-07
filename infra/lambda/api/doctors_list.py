@@ -17,7 +17,6 @@ def main(event, context):
     role = get_role(user)
     if role != 'doctor' and role != 'patient':
         return send_error(403, 'you are not authorized to view this resource')
-        # patients view doctors
 
 
     data = table.scan()

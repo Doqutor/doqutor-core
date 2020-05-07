@@ -24,15 +24,17 @@ def main(event, context):
     role = get_role(user)
     if role != 'doctor' and role != 'patient':
         return send_error(403, 'you are not authorized to view this resource')
-        # maybe change this so patients can view doctors
 
+    # extract requested id from event
     params = event['pathParameters']
     _id = params['id']
 
+    # retrieve item from database
     data = table.get_item(Key={
         'id': _id
     })
 
+    # Return item or error if it wasn't found
     if "Item" in data:
         return send_response(200, data["Item"])
     
