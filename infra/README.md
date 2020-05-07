@@ -89,7 +89,7 @@ ParamZoneId=<route53 zone id for frontend> \
 
 3. Finally, we can deploy the monitoring stack. Again, we just use the cdk.
 ```bash
-cdk deploy "doqutor-infrastructure"
+cdk deploy "doqutor-monitoring"
 ```
 
 4. Back to step 2, the IAM account created can then be used to set up a GitHub pipeline to redeploy the site in case of modification.
