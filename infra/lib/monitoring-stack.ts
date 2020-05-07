@@ -276,6 +276,7 @@ export class MonitoringStack extends cdk.Stack {
 
 
     /*
+    * Front-end IR and Infrastructure
     * Detecting S3 bucket tampering
     */
     trail.addS3EventSelector(
