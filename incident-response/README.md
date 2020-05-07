@@ -12,14 +12,14 @@ To simulate incident response we must install requirements and additional packag
  ```
 
 ----
+# Simulations
+
 #### 1. Illicit modifications to the frontend S3 bucket
 When an illicit change (i.e. a change that was not deployed by the CI/CD pipeline) is detected, a full rerun of the pipeline will be commissioned.
 
 To trigger this action: try adding, deleting or modifying any file in the frontend S3 bucket. Name of the s3 bucket would be: `s3://doqutore-frontend-frontends3bucket-*`
 
 
-
-# Simulations
 #### 2. Set up dummy user: 
 Set up a dummy user for demonstration. You must have admin rights to access this user. This user was already created with your stack. 
 ```bash
@@ -28,7 +28,7 @@ $ python setup_user.py
  You can manually create a user using IAM. [Create an IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html "Create AWS IAM user guide") and change your [local AWS config](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html "Configuring the AWS CLI"). 
 
 
-#### 2.1. CloudTrail stopped by user: 
+##### 2.1. CloudTrail stopped by user: 
 If a user shuts down any CloudTrail instance, the user will be blocked by attaching <b>AWSDenyAll</b> policy to the user.
 To simulate with a wizard
 ```bash
