@@ -86,6 +86,7 @@ A Web Application Firewall (WAF) can be used to detect and prevent most of these
 Once the WAF detects more than our threshold of requests in a certain timeframe, it immediately starts to block access to the web application. In addition to this, a sample of the requests coming through the WAF is taken for further analysis for the developers to gain some insight from possible attacks. If the number of blocked requests from a source reaches a further 128 requests from the baseline of blocked requests, we will then notify the administrator about the problem.
 
 Simulate this incident with the given [demo]().
+![File add to s3 bucket](https://github.com/Doqutor/doqutor-core/blob/master/images/waf.png?raw=true)
 
 ### Features
 - AWS [Lambda](./infra/lambda/api) functions as serverless REST API's.

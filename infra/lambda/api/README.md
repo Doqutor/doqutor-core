@@ -2,7 +2,7 @@
 
 These lambdas perform the CRUD database operations to back the API defined through API Gateway.  
 The API is structured as represented below using HTTP request notation.
-The API architecture uses a REST approach, with the URI uniquely specifying resource through the format ‘collection/item’, and the HTTP request method/verb specifying the operation. This system is clear, conforms to HTTP semantics and allows all our functions to be included within the same API endpoint. This made setup and maintenance of both API Gateway and the frontend’s API interaction easier. Results are returned as JSON using the models defined in the [API schema](/infra/lib/api-schema.ts)
+The API architecture uses a REST approach, with the URI uniquely specifying resource through the format ‘collection/item’, and the HTTP request method/verb specifying the operation. This system is clear, conforms to HTTP semantics and allows all our functions to be included within the same API endpoint. This made setup and maintenance of both API Gateway and the frontend’s API interaction easier. Results are returned as JSON using the models defined in the [API schema](/infra/lib/api-schema.ts).
 
 ## API Routes
 

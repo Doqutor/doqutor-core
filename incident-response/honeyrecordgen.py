@@ -44,8 +44,9 @@ def generateAge() -> int:
 def generateInsuranceid() -> str:
     return str(random.randint(10**5, (10**7)-1))
 
-def generatePerson() -> dict:
-    name = generateName()
+def generatePerson(name: str = None) -> dict:
+    if name is None:
+        name = generateName()
     return {
         'id': str(uuid.uuid4()),
         'name': name,
@@ -65,9 +66,6 @@ def extractArgs(argv: list) -> (int, str, str, list):
         exit()
 
     n = int(sys.argv[1])
-    if n < 1 or n > 21:
-        print("n must be at least 1. Maximum n is 21 as filter patterns can only be up to 1024 bytes in length")
-        exit()
     tablename = sys.argv[2]#.rstrip()
     destarn = sys.argv[3]#.rstrip()
     loggroupNames = sys.argv[4:]
@@ -152,21 +150,33 @@ def clearExistingFilters(loggroupNames: list, table) -> bool:
 
 #--------------------------------------------------------------------------------------------
 
-# Add records to database
-# return True to indicate error
+# Generate and add records to database
+# return idlist, error. True to indicate error, false to indicate success.
 def addRecords(table, n: int) -> (list, bool):
     ids = []
+    
     # maybe ask if would like to provide particular names, comma separated?
-    for i in range(n):
-        item = generatePerson()
+    names = input(f'To add specific names, enter them comma separated here. The first {n} names will be used. If you enter less than {n} names, the rest will be auto-generated. Whitespace will be stripped. Or press enter to skip.\n').split(',')
+    if names == ['']:
+        names = []
+    for _ in range(n-len(names)):
+        names.append(generateName())
+
+    print()
+    print('Added records:')
+    for name in names[:n]:
+        item = generatePerson(name)
         try:
             data = table.put_item(Item=item, ConditionExpression='attribute_not_exists(id)')
             if data['ResponseMetadata']['HTTPStatusCode'] != 200:
                 print(data)
                 return ids, True
             ids.append(item['id'])
+            print(item)
         except dynamodbexceptions.ConditionalCheckFailedException:
             i -= 1
+    # print(names)
+    print()
     return ids, False
 
 def createPattern(ids: list) -> str:
@@ -176,7 +186,6 @@ def createPattern(ids: list) -> str:
     for i in range(1, len(ids)):
         filterPattern += '||event=*' + ids[i] + '*'
     filterPattern += ']'
-    print(filterPattern)
     return filterPattern
 
 def addSubscriptions(loggroupNames: list, filterPattern: str, destarn: str):
@@ -192,13 +201,18 @@ def addSubscriptions(loggroupNames: list, filterPattern: str, destarn: str):
 #----------------------------------------------------------------------------
 
 def generate(numRecords: str, tablename: str, destarn: str, loggroupNames: list):
-    table = dynamodb.Table(tablename)
-    existing = clearExistingFilters(loggroupNames, table)
-    if not existing:
-        ids, err = addRecords(table, numRecords)
-        if err is False:
-            filterPattern = createPattern(ids)
-            addSubscriptions(loggroupNames, filterPattern, destarn)
+    if numRecords < 1 or numRecords > 21:
+        print("n must be at least 1. Maximum n is 21 as filter patterns can only be up to 1024 bytes in length")
+    else:
+        table = dynamodb.Table(tablename)
+        existing = clearExistingFilters(loggroupNames, table)
+        if not existing:
+            ids, err = addRecords(table, numRecords)
+            if err is False:
+                filterPattern = createPattern(ids)
+                addSubscriptions(loggroupNames, filterPattern, destarn)
+                print('Filter pattern:')
+                print(filterPattern)
 
 
 if __name__ == "__main__":
