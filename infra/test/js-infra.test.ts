@@ -18,6 +18,7 @@ test("Empty Stack", () => {
       randomBytes(3).toString("hex"),
     env: "test",
     email: "yourNotificationChannel.com",
+    githubKey: "somekey"
   };
   // WHEN
   const stack = new JsInfra.InfraStack(app, "MyTestStack", config, {});
