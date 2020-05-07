@@ -83,13 +83,16 @@ aws cloudformation deploy --template-file lib/frontend-stack.json --stack-name d
 --parameter-overrides \
 ParamDomainName=prod.doqutor.me \
 ParamCFCertificateARN=<arn of certificate> \
-ParamZoneId=<route53 zone id for frontend>
+ParamZoneId=<route53 zone id for frontend> \
+--capabilities CAPABILITY_NAMED_IAM # required for the creation of the frontend deployment user
 ```
 
 3. Finally, we can deploy the monitoring stack. Again, we just use the cdk.
 ```bash
 cdk deploy "doqutor-infrastructure"
 ```
+
+4. Back to step 2, the IAM account created can then be used to set up a GitHub pipeline to redeploy the site in case of modification.
 
 Note: Complete implementation of one of our IRs requires running a python script after deploying. See "Generate honeyrecords" in the [incident-response readme](../incident-response/README.md#2-honeyrecord-accessed-by-website-user).
 
