@@ -28,18 +28,7 @@ export class MonitoringStack extends cdk.Stack {
     const trail = new cloudtrail.Trail(this, "cloudtrail", {
       sendToCloudWatchLogs: true,
     });
-    trail.addS3EventSelector(
-      [
-        cdk.Fn.join("", [
-          "arn:aws:s3:::",
-          cdk.Fn.importValue("doqutore-frontend-S3Bucket"),
-          "/",
-        ]),
-      ],
-      {
-        readWriteType: cloudtrail.ReadWriteType.WRITE_ONLY,
-      }
-    );
+    
     const snsTopic = new sns.Topic(this, "CloudtrailAlert", {
       displayName: "Cloudtrail Alert",
     });
@@ -102,55 +91,7 @@ export class MonitoringStack extends cdk.Stack {
     rule.addTarget(new targets.LambdaFunction(lambdaCloudtrailLogging));
     rule.addTarget(new targets.SnsTopic(snsTopic));
 
-    /*
-     * Events for detecting that s3 was tampered with
-     */
-    /*
-     * Events for detecting that s3 was tampered with
-     */
-    const frontendPattern: events.EventPattern = {
-      source: ["aws.s3"],
-      detail: {
-        eventSource: [ServicePrincipals.S3],
-        eventName: ["DeleteObject", "PutObject"],
-        requestParameters: {
-          bucketName: [
-            cdk.Fn.importValue(config.prefix + "-frontend-S3Bucket"),
-          ],
-        },
-      },
-    };
-
-    const frontendSnsTopic = new sns.Topic(this, "FrontendAlert", {
-      displayName: "Frontend Alert",
-    });
-    frontendSnsTopic.addSubscription(emailSubscription);
-
-    const frontendRule = new events.Rule(this, "s3Modified", {
-      eventPattern: frontendPattern,
-      description:
-        "If the frontend S3 bucket is modified then this event will fire",
-    });
-
-    const lambdaFrontendCloudtrailLogging = createPythonLambda(
-      this,
-      "util",
-      "cloudtrail_retrigger_pipeline",
-      1
-    );
-    lambdaFrontendCloudtrailLogging.addEnvironment(
-      "SNS_ARN",
-      frontendSnsTopic.topicArn
-    );
-    lambdaFrontendCloudtrailLogging.addEnvironment(
-      "GITHUB_KEY",
-      config.githubKey
-    );
-    frontendSnsTopic.grantPublish(lambdaFrontendCloudtrailLogging);
-
-    frontendRule.addTarget(
-      new targets.LambdaFunction(lambdaFrontendCloudtrailLogging)
-    );
+    
 
     /*
      * CloudWatch rulesets here
@@ -204,6 +145,68 @@ export class MonitoringStack extends cdk.Stack {
     ddbExcessReadAlarmDoc.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
     ddbExcessReadAlarmPat.addAlarmAction(new cw_actions.SnsAction(snsTopicCw));
 
+
+
+    /*
+     * Events for detecting that s3 was tampered with
+     */
+
+    trail.addS3EventSelector(
+      [
+        cdk.Fn.join("", [
+          "arn:aws:s3:::",
+          cdk.Fn.importValue("doqutore-frontend-S3Bucket"),
+          "/",
+        ]),
+      ],
+      {
+        readWriteType: cloudtrail.ReadWriteType.WRITE_ONLY,
+      }
+    );
+    
+    const frontendPattern: events.EventPattern = {
+      source: ["aws.s3"],
+      detail: {
+        eventSource: [ServicePrincipals.S3],
+        eventName: ["DeleteObject", "PutObject"],
+        requestParameters: {
+          bucketName: [
+            cdk.Fn.importValue(config.prefix + "-frontend-S3Bucket"),
+          ],
+        },
+      },
+    };
+
+    const frontendSnsTopic = new sns.Topic(this, "FrontendAlert", {
+      displayName: "Frontend Alert",
+    });
+    frontendSnsTopic.addSubscription(emailSubscription);
+
+    const frontendRule = new events.Rule(this, "s3Modified", {
+      eventPattern: frontendPattern,
+      description:
+        "If the frontend S3 bucket is modified then this event will fire",
+    });
+
+    const lambdaFrontendCloudtrailLogging = createPythonLambda(
+      this,
+      "util",
+      "cloudtrail_retrigger_pipeline",
+      1
+    );
+    lambdaFrontendCloudtrailLogging.addEnvironment(
+      "SNS_ARN",
+      frontendSnsTopic.topicArn
+    );
+    lambdaFrontendCloudtrailLogging.addEnvironment(
+      "GITHUB_KEY",
+      config.githubKey
+    );
+    frontendSnsTopic.grantPublish(lambdaFrontendCloudtrailLogging);
+
+    frontendRule.addTarget(
+      new targets.LambdaFunction(lambdaFrontendCloudtrailLogging)
+    );
    
     // WAF
     // only allow 128 requests per 5 minutes, a pretty generous limit for a small practice
