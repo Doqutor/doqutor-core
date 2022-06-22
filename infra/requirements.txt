@@ -55,7 +55,7 @@ constructs==2.0.0
 docutils==0.15.2
 jmespath==0.9.5
 jsii==1.1.0
-numpy==1.17.0
+numpy==1.22.0
 publication==0.0.3
 python-dateutil==2.8.1
 s3transfer==0.3.3
