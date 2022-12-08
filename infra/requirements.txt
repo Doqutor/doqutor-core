@@ -50,7 +50,7 @@ boto3==1.12.32
 botocore==1.15.32
 cattrs==1.0.0
 cdk-watchful==0.4.6
-certifi==2019.11.28
+certifi==2022.12.7
 constructs==2.0.0
 docutils==0.15.2
 jmespath==0.9.5
